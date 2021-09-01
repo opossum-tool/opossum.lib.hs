@@ -1,3 +1,7 @@
+-- SPDX-FileCopyrightText: Maximilian Huber
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+
 {-# LANGUAGE LambdaCase #-}
 module Main where
 

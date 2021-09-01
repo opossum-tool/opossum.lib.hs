@@ -1,3 +1,7 @@
+-- SPDX-FileCopyrightText: Maximilian Huber
+--
+-- SPDX-License-Identifier: BSD-3-Clause
+
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
