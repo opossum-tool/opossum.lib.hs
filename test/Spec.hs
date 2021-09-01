@@ -8,7 +8,7 @@ import Control.Exception (evaluate)
 import System.Exit
 import Data.FileEmbed (embedFile)
 import Data.Either
-import System.FilePath (</>)
+import System.FilePath ((</>))
 import qualified Data.Set as Set
 import qualified Data.List as List
 import qualified Data.ByteString.Lazy as B
