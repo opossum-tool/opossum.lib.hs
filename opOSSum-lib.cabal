@@ -26,12 +26,27 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Opossum.Opossum
+      Opossum.OpossumUtils
   other-modules:
       Paths_opOSSum_lib
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , aeson-pretty
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , cryptohash-md5
+    , filepath
+    , mtl
+    , process
+    , random
+    , text
+    , unordered-containers
+    , uuid
+    , vector
   default-language: Haskell2010
 
 executable opOSSum-lib-exe
@@ -42,8 +57,21 @@ executable opOSSum-lib-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , aeson-pretty
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , cryptohash-md5
+    , filepath
+    , mtl
     , opOSSum-lib
+    , process
+    , random
+    , text
+    , unordered-containers
+    , uuid
+    , vector
   default-language: Haskell2010
 
 test-suite opOSSum-lib-test
@@ -55,6 +83,21 @@ test-suite opOSSum-lib-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , aeson
+    , aeson-pretty
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , cryptohash-md5
+    , filepath
+    , hspec
+    , mtl
     , opOSSum-lib
+    , process
+    , random
+    , text
+    , unordered-containers
+    , uuid
+    , vector
   default-language: Haskell2010

@@ -20,7 +20,43 @@ extra-source-files:
 description:         Please see the README on GitHub at <https://github.com/maxhbr/opOSSum-lib#readme>
 
 dependencies:
+- aeson
+- aeson-pretty
+# - attoparsec
 - base >= 4.7 && < 5
+# - base16-bytestring
+- bytestring
+# - cassava
+- containers
+- cryptohash-md5
+# - curl
+# - directory
+# - extra
+# - file-embed
+- filepath
+# - graphviz
+# - hashable
+# - hexml
+# - http-client
+# - lens
+# - lens-aeson
+# - lucid
+- mtl
+# - network-uri
+# - opensource
+# - pandoc
+# - pandoc-types
+# - raw-strings-qq
+# - sqlite-simple
+# - temporary
+- text
+# - transformers
+- unordered-containers
+- vector
+# - yaml
+- process
+- uuid
+- random
 
 library:
   source-dirs: src
@@ -46,3 +82,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - opOSSum-lib
+    - hspec
+    - QuickCheck
