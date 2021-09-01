@@ -36,7 +36,7 @@ dependencies:
 # - curl
 # - directory
 # - extra
-# - file-embed
+- file-embed
 - filepath
 # - graphviz
 # - hashable
@@ -57,7 +57,7 @@ dependencies:
 # - transformers
 - unordered-containers
 - vector
-# - yaml
+- yaml
 - process
 - uuid
 - random

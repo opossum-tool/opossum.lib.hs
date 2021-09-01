@@ -38,6 +38,7 @@ library
     , bytestring
     , containers
     , cryptohash-md5
+    , file-embed
     , filepath
     , mtl
     , process
@@ -46,6 +47,7 @@ library
     , unordered-containers
     , uuid
     , vector
+    , yaml
     , zlib
   default-language: Haskell2010
 
@@ -63,6 +65,7 @@ executable opOSSum-lib-exe
     , bytestring
     , containers
     , cryptohash-md5
+    , file-embed
     , filepath
     , mtl
     , opOSSum-lib
@@ -72,6 +75,7 @@ executable opOSSum-lib-exe
     , unordered-containers
     , uuid
     , vector
+    , yaml
     , zlib
   default-language: Haskell2010
 
@@ -91,6 +95,7 @@ test-suite opOSSum-lib-test
     , bytestring
     , containers
     , cryptohash-md5
+    , file-embed
     , filepath
     , hspec
     , mtl
@@ -101,5 +106,6 @@ test-suite opOSSum-lib-test
     , unordered-containers
     , uuid
     , vector
+    , yaml
     , zlib
   default-language: Haskell2010
