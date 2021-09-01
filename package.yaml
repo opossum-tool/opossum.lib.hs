@@ -57,6 +57,7 @@ dependencies:
 - process
 - uuid
 - random
+- zlib
 
 library:
   source-dirs: src

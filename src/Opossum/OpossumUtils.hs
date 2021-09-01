@@ -15,6 +15,7 @@ import Opossum.Opossum
 
 import System.IO (Handle, hPutStrLn, hClose, stdout)
 import qualified System.IO as IO
+import qualified Codec.Compression.GZip as GZip
 import qualified Data.List as List
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as A
@@ -39,9 +40,6 @@ cleanupLicense (Just "") = Nothing
 cleanupLicense (Just t) = case T.stripPrefix ", " t of
     Nothing -> Just t
     t'      -> t'
-
-matchesCoordinates :: Opossum_Coordinates -> Opossum_Coordinates -> Bool
-matchesCoordinates = undefined
 
 mergifyEA :: Opossum_ExternalAttribution -> Opossum_ExternalAttribution -> Maybe Opossum_ExternalAttribution
 mergifyEA
@@ -68,7 +66,7 @@ mergifyEA
   , _preselected = preselected'
   }) 
  = if (and [ source == source'
-           , coordinates `matchesCoordinates` coordinates'
+           , coordinates == coordinates'
            , (cleanupLicense licenseName) == (cleanupLicense licenseName')])
    then Just (left{ _attributionConfidence = (attributionConfidence `min` attributionConfidence')
                   , _copyright = mergifyCopyright copyright copyright'
@@ -130,17 +128,19 @@ dropDir directoryName (hhc@Opossum{ _resources = rs, _resourcesToAttributions = 
   filterRTAS = Map.filterWithKey (\key -> const (not (directoryName `List.isSubsequenceOf` key))) 
   in hhc{ _resources = filterResources rs, _resourcesToAttributions = filterRTAS rtas}
 
+parseOpossum :: FP.FilePath -> IO Opossum
+parseOpossum fp = do
+  hPutStrLn IO.stderr ("parse: " ++ fp)
+  bs <- (if (FP.takeExtension fp) == ".gz"
+         then GZip.decompress
+         else id) <$> B.readFile fp
+  case A.eitherDecode' bs of
+    Right hhc -> return hhc
+    Left err  -> do
+        fail err
+
 computeMergedOpossum :: [FilePath] -> IO B.ByteString
-computeMergedOpossum inputPaths = let
-    parseOpossum :: FP.FilePath -> IO Opossum
-    parseOpossum fp = do
-      hPutStrLn IO.stderr ("parse: " ++ fp)
-      bs <- B.readFile fp
-      case A.eitherDecode' bs of
-        Right hhc -> return hhc
-        Left err  -> do
-            fail err
-  in do
+computeMergedOpossum inputPaths = do
     hhcs <- mapM parseOpossum inputPaths
     let finalOpossum = clusterifyOpossum $ mconcat (map unDot hhcs)
     return (A.encodePretty finalOpossum)
