@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Opossum.Opossum
+      Opossum.OpossumSPDXUtils
       Opossum.OpossumUtils
   other-modules:
       Paths_opOSSum_lib
@@ -39,6 +40,7 @@ library
     , bytestring
     , containers
     , cryptohash-md5
+    , fgl
     , file-embed
     , filepath
     , mtl
@@ -69,6 +71,7 @@ executable opOSSum-lib-exe
     , bytestring
     , containers
     , cryptohash-md5
+    , fgl
     , file-embed
     , filepath
     , mtl
@@ -102,6 +105,7 @@ test-suite opOSSum-lib-test
     , bytestring
     , containers
     , cryptohash-md5
+    , fgl
     , file-embed
     , filepath
     , hspec

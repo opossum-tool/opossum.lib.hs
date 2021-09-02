@@ -32,6 +32,7 @@ dependencies:
 - cryptohash-md5
 - file-embed
 - filepath
+- fgl
 - mtl
 - text
 - unordered-containers

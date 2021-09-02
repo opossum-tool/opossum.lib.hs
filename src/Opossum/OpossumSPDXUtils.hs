@@ -1,4 +1,37 @@
-import SPDX.SPDX
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE StrictData #-}
+module Opossum.OpossumSPDXUtils
+  ( spdxToOpossum
+  , parseSpdxToOpossum
+  ) where
+
+import Opossum.Opossum
+
+import SPDX.Document
+
+import System.IO (Handle, hPutStrLn, hClose, stdout)
+import qualified System.IO as IO
+import qualified Codec.Compression.GZip as GZip
+import qualified Data.List as List
+import qualified Data.Aeson as A
+import qualified Data.Aeson.Types as A
+import qualified Data.Aeson.Encode.Pretty as A
+import qualified Data.Map as Map
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Vector as V
+import qualified System.FilePath as FP
+import qualified Data.ByteString.Lazy as B
+import Data.UUID (UUID)
+import qualified Data.Maybe as Maybe
+import System.Random (randomIO)
+import           System.FilePath
+import qualified Data.Graph.Inductive.Graph as G
+import qualified Data.Graph.Inductive.Query.BFS as G
+import qualified Data.ByteString.Lazy.Char8 as C8
 
 spdxToOpossum :: SPDXDocument -> IO Opossum
 spdxToOpossum = let
@@ -25,7 +58,7 @@ spdxToOpossum = let
             , _attributionConfidence = 100
             , _comment = (Just . T.pack . C8.unpack . A.encodePretty) raw
             , _originId = Nothing
-            , _identifier = mempty
+            , _coordinates = Opossum_Coordinates Nothing Nothing Nothing Nothing
             , _copyright = Just $ T.pack copyright 
             , _licenseName = Just $ T.pack $ show license -- TODO
             , _licenseText = Nothing -- TODO
@@ -62,7 +95,7 @@ spdxToOpossum = let
           , _attributionConfidence = 100
           , _comment = (Just . T.pack . C8.unpack . A.encodePretty) raw
           , _originId = Nothing
-          , _identifier = PURL (Just "pkg") Nothing Nothing name version Nothing Nothing
+          , _coordinates = Opossum_Coordinates Nothing Nothing ((Just . T.pack) name) (fmap T.pack version)
           , _copyright = case copyright of
             SPDXJust copyright' -> (Just . T.pack)  copyright'
             _                   -> Nothing
@@ -116,8 +149,8 @@ spdxToOpossum = let
             uuid <- randomIO
             return $ mempty
               { _resources = fpToResources (case s of 
-                Left _ -> FileType_File
-                _      -> FileType_Folder) rsFull
+                Left _ -> True 
+                _      -> False) rsFull
               , _externalAttributions = Map.singleton uuid ea
               , _resourcesToAttributions = Map.singleton rsFull [uuid]
               }

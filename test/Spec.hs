@@ -19,12 +19,18 @@ import qualified Data.Yaml as Y
 import qualified Data.Vector as V
 import qualified Data.Map as Map
 
+import SPDX.Document
+
 import Opossum.Opossum
 import Opossum.OpossumUtils
+import Opossum.OpossumSPDXUtils
 
 
 opossumFileBS :: B.ByteString
 opossumFileBS = B.fromStrict $(embedFile "test/data/zephyr-bundle.json.opossum.json")
+
+spdxYamlFileBS :: B.ByteString
+spdxYamlFileBS = B.fromStrict $(embedFile "test/data/document.spdx.yml")
 
 opossumSpec = do
   describe "Opossum Model" $ let 
@@ -171,19 +177,19 @@ opossumSpec = do
         (ea1 `mergifyEA` ea2) `shouldBe` Nothing
         (ea1 `mergifyEA` ea3) `shouldBe` (Just ea3)
 
-  -- describe "Opossum Utils SPDX Converter" $ do
-  --   opossum_from_ort <- runIO $ case (Y.decodeEither' (B.toStrict spdxYamlFileBS) :: Either Y.ParseException SPDXDocument) of
-  --     Right spdxFile -> spdxToOpossum spdxFile
-  --     Left err -> fail (show err)
+  describe "Opossum Utils SPDX Converter" $ do
+    opossum_from_ort <- runIO $ case (Y.decodeEither' (B.toStrict spdxYamlFileBS) :: Either Y.ParseException SPDXDocument) of
+      Right spdxFile -> spdxToOpossum spdxFile
+      Left err -> fail (show err)
 
-  --   it "num of resources from spdx should match" $ do
-  --     countFiles (_resources opossum_from_ort) `shouldBe` 0
-  --   it "num of externalAttributions from spdx should match" $ do
-  --     length (_externalAttributions opossum_from_ort) `shouldBe` 352
-  --   it "num of resourcesToAttributions from spdx should match" $ do
-  --     length (_resourcesToAttributions opossum_from_ort) `shouldBe` 298
-  --   it "num of frequentLicenses should from spdx match" $ do
-  --     length (_frequentLicenses opossum_from_ort) `shouldBe` 0
+    it "num of resources from spdx should match" $ do
+      countFiles (_resources opossum_from_ort) `shouldBe` 0
+    it "num of externalAttributions from spdx should match" $ do
+      length (_externalAttributions opossum_from_ort) `shouldBe` 352
+    it "num of resourcesToAttributions from spdx should match" $ do
+      length (_resourcesToAttributions opossum_from_ort) `shouldBe` 298
+    it "num of frequentLicenses should from spdx match" $ do
+      length (_frequentLicenses opossum_from_ort) `shouldBe` 0
 
 
 main :: IO ()

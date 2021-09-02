@@ -9,6 +9,7 @@ import System.Environment (getArgs)
 import qualified Data.ByteString.Lazy.Char8 as C8
 import Opossum.Opossum
 import Opossum.OpossumUtils
+import Opossum.OpossumSPDXUtils
 
 help :: IO ()
 help = do
@@ -17,5 +18,5 @@ help = do
 main :: IO ()
 main = getArgs >>= \case
     "--merge-opossums":args -> computeMergedOpossum args >>= C8.putStrLn
-    -- "--spdx-to-opossums":[spdx] -> parseSpdxToOpossum spdx >>= C8.putStrLn
+    "--spdx-to-opossums":[spdx] -> parseSpdxToOpossum spdx >>= C8.putStrLn
     _ -> help
