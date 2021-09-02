@@ -3,7 +3,18 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    name: spdx-document
+    version: 0.1.0.0
+    git: https://github.com/maxhbr/spdx-document-hs
+    pantry-tree:
+      size: 6317
+      sha256: 3fb8ba449b754485df0ff5c4fa14f58f1ecff730574d6d696d5a977738cac705
+    commit: da3496dceedb36c615d3e02a5836c15811b02d35
+  original:
+    git: https://github.com/maxhbr/spdx-document-hs
+    commit: da3496dceedb36c615d3e02a5836c15811b02d35
 snapshots:
 - completed:
     size: 587126

@@ -32,7 +32,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      aeson
+      Cabal
+    , aeson
     , aeson-pretty
     , base >=4.7 && <5
     , bytestring
@@ -43,6 +44,8 @@ library
     , mtl
     , process
     , random
+    , spdx
+    , spdx-document
     , text
     , unordered-containers
     , uuid
@@ -59,7 +62,8 @@ executable opOSSum-lib-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      Cabal
+    , aeson
     , aeson-pretty
     , base >=4.7 && <5
     , bytestring
@@ -71,6 +75,8 @@ executable opOSSum-lib-exe
     , opOSSum-lib
     , process
     , random
+    , spdx
+    , spdx-document
     , text
     , unordered-containers
     , uuid
@@ -88,7 +94,8 @@ test-suite opOSSum-lib-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      QuickCheck
+      Cabal
+    , QuickCheck
     , aeson
     , aeson-pretty
     , base >=4.7 && <5
@@ -102,6 +109,8 @@ test-suite opOSSum-lib-test
     , opOSSum-lib
     , process
     , random
+    , spdx
+    , spdx-document
     , text
     , unordered-containers
     , uuid

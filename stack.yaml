@@ -7,3 +7,7 @@ resolver:
 
 packages:
 - .
+
+extra-deps:
+- git: https://github.com/maxhbr/spdx-document-hs
+  commit: da3496dceedb36c615d3e02a5836c15811b02d35
