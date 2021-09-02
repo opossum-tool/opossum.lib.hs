@@ -116,7 +116,7 @@ spdxToOpossum = let
       , _SPDX_packages = packages
       , _SPDX_relationships = relationships
       }) -> let
-        hhcMetadata = mempty { _metadata = Just (Opossum_Metadata name "") }
+        opossumMetadata = mempty { _metadata = Just (Opossum_Metadata name "") }
         (graph, idsToIdxs, indxsToIds) = spdxDocumentToGraph spdx
         trees = map (\root -> let
           indx = Map.findWithDefault (undefined) root idsToIdxs
@@ -156,10 +156,10 @@ spdxToOpossum = let
               }
       in do
         pieces <- mapM initToOpossum inits
-        return $ mconcat (hhcMetadata : pieces)
+        return $ mconcat (opossumMetadata : pieces)
 
 parseSpdxToOpossum :: FilePath -> IO B.ByteString
 parseSpdxToOpossum inputPath = do
   spdx <- parseSPDXDocument inputPath
-  hhc <- spdxToOpossum spdx
-  return (A.encodePretty hhc)
+  opossum <- spdxToOpossum spdx
+  return (A.encodePretty opossum)

@@ -103,17 +103,17 @@ clusterifyEAMap = let
     in (`clusterifyEAMap'` []) . Map.assocs
 
 clusterifyOpossum :: Opossum -> Opossum
-clusterifyOpossum (hhc@Opossum { _externalAttributions = eas , _resourcesToAttributions = rtas }) = let
+clusterifyOpossum (opossum@Opossum { _externalAttributions = eas , _resourcesToAttributions = rtas }) = let
     clusters = clusterifyEAMap eas
     newEas = (Map.fromList . map (\(uuid, ea, _) -> (uuid, ea))) clusters
     lookupMap = ( Map.fromList . concatMap (\(uuid, _, uuids) -> map (\uuid' -> (uuid', uuid)) uuids)) clusters
     newRtas = (Map.map (\uuids -> List.nub (map (\uuid -> Map.findWithDefault uuid uuid lookupMap) uuids))) rtas
-  in hhc { _externalAttributions = newEas
+  in opossum { _externalAttributions = newEas
          , _resourcesToAttributions = newRtas
          }
 
 unDot :: Opossum -> Opossum
-unDot (hhc@Opossum { _resources = rs , _resourcesToAttributions = rtas }) = let
+unDot (opossum@Opossum { _resources = rs , _resourcesToAttributions = rtas }) = let
   undotResources (rs@Opossum_Resources { _dirs = dirs }) = let
     contentOfDot = Map.findWithDefault mempty "." dirs
     dirsWithoutDot = Map.delete "." dirs
@@ -121,16 +121,16 @@ unDot (hhc@Opossum { _resources = rs , _resourcesToAttributions = rtas }) = let
   undotRTAS = Map.mapKeys (\k -> case List.stripPrefix "/." k of
     Nothing -> k
     Just k' -> k')
-  in hhc{ _resources = undotResources rs , _resourcesToAttributions = undotRTAS rtas }
+  in opossum{ _resources = undotResources rs , _resourcesToAttributions = undotRTAS rtas }
 
 dropDir :: FilePath -> Opossum -> Opossum
-dropDir directoryName (hhc@Opossum{ _resources = rs, _resourcesToAttributions = rtas}) = let
+dropDir directoryName (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas}) = let
   filterResources (rs@Opossum_Resources { _dirs = dirs }) = let
     filteredDirs = Map.filterWithKey (\key -> const (not (directoryName == key))) dirs
     filteredAndCleanedDirs = Map.map filterResources filteredDirs
     in rs{ _dirs = filteredAndCleanedDirs }
   filterRTAS = Map.filterWithKey (\key -> const (not (directoryName `List.isSubsequenceOf` key))) 
-  in hhc{ _resources = filterResources rs, _resourcesToAttributions = filterRTAS rtas}
+  in opossum{ _resources = filterResources rs, _resourcesToAttributions = filterRTAS rtas}
 
 parseOpossum :: FP.FilePath -> IO Opossum
 parseOpossum fp = do
@@ -139,12 +139,12 @@ parseOpossum fp = do
          then GZip.decompress
          else id) <$> B.readFile fp
   case A.eitherDecode' bs of
-    Right hhc -> return hhc
+    Right opossum -> return opossum
     Left err  -> do
         fail err
 
 computeMergedOpossum :: [FilePath] -> IO B.ByteString
 computeMergedOpossum inputPaths = do
-    hhcs <- mapM parseOpossum inputPaths
-    let finalOpossum = clusterifyOpossum $ mconcat (map unDot hhcs)
+    opossums <- mapM parseOpossum inputPaths
+    let finalOpossum = clusterifyOpossum $ mconcat (map unDot opossums)
     return (A.encodePretty finalOpossum)

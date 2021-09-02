@@ -258,12 +258,12 @@ instance A.FromJSON Opossum where
             Just fls -> fls
             Nothing -> []) (v A..:? "frequentLicenses"))
 instance Semigroup Opossum where
-    hhc1 <> hhc2 = let
-          mergedResources = _resources hhc1 <> _resources hhc2 
-          mergedExternalAttributions = Map.union (_externalAttributions hhc1) (_externalAttributions hhc2)
-          mergedResourcesToAttributions = Map.unionWith (++) (_resourcesToAttributions hhc1) (_resourcesToAttributions hhc2) -- TODO: nub
-          mergedFrequentLicenses = List.nub (_frequentLicenses hhc1 ++ _frequentLicenses hhc2)
-        in Opossum (_metadata hhc1) 
+    opossum1 <> opossum2 = let
+          mergedResources = _resources opossum1 <> _resources opossum2 
+          mergedExternalAttributions = Map.union (_externalAttributions opossum1) (_externalAttributions opossum2)
+          mergedResourcesToAttributions = Map.unionWith (++) (_resourcesToAttributions opossum1) (_resourcesToAttributions opossum2) -- TODO: nub
+          mergedFrequentLicenses = List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
+        in Opossum (_metadata opossum1) 
                mergedResources
                mergedExternalAttributions
                mergedResourcesToAttributions
