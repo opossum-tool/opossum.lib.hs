@@ -30,17 +30,20 @@ dependencies:
 - bytestring
 - containers
 - cryptohash-md5
+- directory
+- extra
+- fgl
 - file-embed
 - filepath
-- fgl
 - mtl
+- process
+- random
+- regex-compat
 - text
 - unordered-containers
+- uuid
 - vector
 - yaml
-- process
-- uuid
-- random
 - zlib
 # spdx stuff:
 - Cabal

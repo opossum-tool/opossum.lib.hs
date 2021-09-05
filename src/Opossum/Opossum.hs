@@ -9,8 +9,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StrictData #-}
 module Opossum.Opossum
-  ( Opossum_Metadata (..)
-  , Opossum_Resources (..), countFiles
+  ( Opossum_Resources (..), countFiles
   , fpToResources, fpsToResources
   , Opossum_FrequentLicense (..)
   , Opossum_Coordinates (..)
@@ -43,21 +42,6 @@ objectNoNulls = let
   dropNulls ((_,A.Null):ps) = dropNulls ps
   dropNulls (p:ps)          = p : (dropNulls ps)
   in A.object . dropNulls
-
-data Opossum_Metadata
-  = Opossum_Metadata
-  { projectId :: String
-  , fileCreationDate :: String
-  } deriving (Show, Generic)
-instance A.ToJSON Opossum_Metadata where
-  toJSON (Opossum_Metadata pid fcd) = A.object
-    [ "projectId" A..= (T.pack pid)
-    , "fileCreationDate" A..= (T.pack fcd)
-    ]
-instance A.FromJSON Opossum_Metadata where
-  parseJSON = A.withObject "Opossum_FrequentLicense" $ \v -> do
-    Opossum_Metadata <$> v A..: "projectId"
-                 <*> v A..: "fileCreationDate"
 
 data Opossum_Resources
   = Opossum_Resources 
@@ -225,7 +209,7 @@ instance A.FromJSON Opossum_FrequentLicense where
 
 data Opossum
   = Opossum
-  { _metadata :: Maybe Opossum_Metadata
+  { _metadata :: Maybe A.Value
   , _resources :: Opossum_Resources
   , _externalAttributions :: Map.Map UUID Opossum_ExternalAttribution
   , _resourcesToAttributions :: Map.Map FilePath [UUID]

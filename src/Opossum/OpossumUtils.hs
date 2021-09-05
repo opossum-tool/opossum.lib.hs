@@ -13,6 +13,8 @@ module Opossum.OpossumUtils
   , dropDir
   , computeMergedOpossum
   , mergifyEA
+  , opossumFromFileTree
+  , unshiftPathToResources, unshiftPathToOpossum
   ) where
 
 import Opossum.Opossum
@@ -25,13 +27,18 @@ import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as A
 import qualified Data.Aeson.Encode.Pretty as A
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import qualified System.FilePath as FP
 import qualified Data.ByteString.Lazy as B
+import Text.Regex (mkRegex, subRegex)
 import Data.UUID (UUID)
 import System.Random (randomIO)
+import System.Directory.Extra (listFilesRecursive)
+import System.Directory (withCurrentDirectory)
+import System.FilePath ((</>))
 
 mergifyCopyright :: Maybe Text -> Maybe Text -> Maybe Text
 mergifyCopyright left Nothing = left
@@ -90,8 +97,8 @@ clusterifyEAMap = let
         clusterifyEAMap' [] out               = out
         clusterifyEAMap' (i:ins) out = let
             clusterifyEAMap'' :: (UUID, Opossum_ExternalAttribution)
-                             -> [(UUID, Opossum_ExternalAttribution, [UUID])]
-                             -> [(UUID, Opossum_ExternalAttribution, [UUID])]
+                              -> [(UUID, Opossum_ExternalAttribution, [UUID])]
+                              -> [(UUID, Opossum_ExternalAttribution, [UUID])]
             clusterifyEAMap'' (uuid, ea) []                              = [(uuid, ea, [])]
             clusterifyEAMap'' (uuid, ea) (ins@(in'@(uuid', ea', uuids):ins')) 
                 | uuid == uuid' = ins
@@ -109,19 +116,22 @@ clusterifyOpossum (opossum@Opossum { _externalAttributions = eas , _resourcesToA
     lookupMap = ( Map.fromList . concatMap (\(uuid, _, uuids) -> map (\uuid' -> (uuid', uuid)) uuids)) clusters
     newRtas = (Map.map (\uuids -> List.nub (map (\uuid -> Map.findWithDefault uuid uuid lookupMap) uuids))) rtas
   in opossum { _externalAttributions = newEas
-         , _resourcesToAttributions = newRtas
-         }
+             , _resourcesToAttributions = newRtas
+             }
 
 unDot :: Opossum -> Opossum
 unDot (opossum@Opossum { _resources = rs , _resourcesToAttributions = rtas }) = let
+  undotResources :: Opossum_Resources -> Opossum_Resources
   undotResources (rs@Opossum_Resources { _dirs = dirs }) = let
     contentOfDot = Map.findWithDefault mempty "." dirs
     dirsWithoutDot = Map.delete "." dirs
-    in rs {_dirs = dirsWithoutDot} <> contentOfDot
-  undotRTAS = Map.mapKeys (\k -> case List.stripPrefix "/." k of
-    Nothing -> k
-    Just k' -> k')
-  in opossum{ _resources = undotResources rs , _resourcesToAttributions = undotRTAS rtas }
+    recurse :: Opossum_Resources -> Opossum_Resources
+    recurse (rs@Opossum_Resources { _dirs = dirs }) = rs {_dirs = Map.map undotResources dirs}
+    in recurse $ rs {_dirs = dirsWithoutDot} <> contentOfDot
+  undotRTAS = Map.mapKeys (\path -> (subRegex (mkRegex "/(\\.?/)+") path "/"))
+  in opossum{ _resources = undotResources rs
+            , _resourcesToAttributions = undotRTAS rtas
+            }
 
 dropDir :: FilePath -> Opossum -> Opossum
 dropDir directoryName (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas}) = let
@@ -130,7 +140,24 @@ dropDir directoryName (opossum@Opossum{ _resources = rs, _resourcesToAttribution
     filteredAndCleanedDirs = Map.map filterResources filteredDirs
     in rs{ _dirs = filteredAndCleanedDirs }
   filterRTAS = Map.filterWithKey (\key -> const (not (directoryName `List.isSubsequenceOf` key))) 
-  in opossum{ _resources = filterResources rs, _resourcesToAttributions = filterRTAS rtas}
+  in opossum{ _resources = filterResources rs
+            , _resourcesToAttributions = filterRTAS rtas
+            }
+
+unshiftPathToResources :: FilePath -> Opossum_Resources -> Opossum_Resources
+unshiftPathToResources prefix resources = let
+    unshiftPathToResources' :: [FilePath] -> Opossum_Resources -> Opossum_Resources
+    unshiftPathToResources' []     = id
+    unshiftPathToResources' (p:ps) = \rs -> Opossum_Resources (Map.singleton p (unshiftPathToResources' ps rs)) Set.empty
+  in ((`unshiftPathToResources'` resources) . (map FP.dropTrailingPathSeparator) . FP.splitPath) prefix
+
+unshiftPathToOpossum :: FilePath -> Opossum -> Opossum
+unshiftPathToOpossum prefix (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas }) = let
+  rsWithPrefix = unshiftPathToResources prefix rs
+  rtasWithPrefix = Map.mapKeys (prefix </>) rtas
+  in unDot $ opossum{ _resources = rsWithPrefix
+                    , _resourcesToAttributions = rtasWithPrefix
+                    }
 
 parseOpossum :: FP.FilePath -> IO Opossum
 parseOpossum fp = do
@@ -148,3 +175,14 @@ computeMergedOpossum inputPaths = do
     opossums <- mapM parseOpossum inputPaths
     let finalOpossum = clusterifyOpossum $ mconcat (map unDot opossums)
     return (A.encodePretty finalOpossum)
+
+opossumFromFileTree :: FilePath -> IO B.ByteString
+opossumFromFileTree dir = withCurrentDirectory dir $ do
+  resources <- fpsToResources <$> listFilesRecursive "."
+  (return . A.encodePretty . unDot) $
+    Opossum { _metadata = Nothing
+            , _resources = resources
+            , _externalAttributions = Map.empty
+            , _resourcesToAttributions = Map.empty
+            , _frequentLicenses = []
+            }

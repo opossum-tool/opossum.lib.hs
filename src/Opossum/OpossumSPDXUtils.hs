@@ -108,7 +108,8 @@ spdxToOpossum = let
     spdxFileOrPackageToEA (Left f) = spdxFileToEA f
     spdxFileOrPackageToEA (Right p) = spdxPackageToEA p
     in \(spdx@SPDXDocument
-      { _SPDX_comment = _
+      { _SPDX_SPDXID = spdxid
+      , _SPDX_comment = _
       , _SPDX_creationInfo = _
       , _SPDX_name = name
       , _SPDX_documentDescribes = roots
@@ -116,7 +117,7 @@ spdxToOpossum = let
       , _SPDX_packages = packages
       , _SPDX_relationships = relationships
       }) -> let
-        opossumMetadata = mempty { _metadata = Just (Opossum_Metadata name "") }
+        opossumMetadata = mempty { _metadata = Just (A.object ["projectId" A..= spdxid, "projectTitle" A..= name]) }
         (graph, idsToIdxs, indxsToIds) = spdxDocumentToGraph spdx
         trees = map (\root -> let
           indx = Map.findWithDefault (undefined) root idsToIdxs

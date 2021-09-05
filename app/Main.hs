@@ -14,9 +14,13 @@ import Opossum.OpossumSPDXUtils
 help :: IO ()
 help = do
     putStrLn " --merge-opossums FILE [FILE [...]]"
+    putStrLn " --spdx-to-opossum SPDX_JSON"
+    putStrLn " --spdx-to-opossum SPDX_YAML"
+    putStrLn " --opossum-from-filetree DIR"
 
 main :: IO ()
 main = getArgs >>= \case
     "--merge-opossums":args -> computeMergedOpossum args >>= C8.putStrLn
-    "--spdx-to-opossums":[spdx] -> parseSpdxToOpossum spdx >>= C8.putStrLn
+    "--spdx-to-opossum":[spdx] -> parseSpdxToOpossum spdx >>= C8.putStrLn
+    "--opossum-from-filetree":[dir] -> opossumFromFileTree dir >>= C8.putStrLn
     _ -> help
