@@ -10,11 +10,22 @@ packages:
     git: https://github.com/maxhbr/spdx-document-hs
     pantry-tree:
       size: 6317
-      sha256: 063cd9cf727c1ced7a4f82a362e071c8ff4516b52017dbb745e1de716a913db6
-    commit: 22dedd7d0b4c1c654ac17e6a4ba3b9ec3317628c
+      sha256: f23df7b5f7786339a9b7281f58b2d721d0de871c490248100b58cd12800776ae
+    commit: 10341381c7f991440b6c9db8f3904429700b8610
   original:
     git: https://github.com/maxhbr/spdx-document-hs
-    commit: 22dedd7d0b4c1c654ac17e6a4ba3b9ec3317628c
+    commit: 10341381c7f991440b6c9db8f3904429700b8610
+- completed:
+    name: packageurl
+    version: 0.1.0.0
+    git: https://github.com/maxhbr/packageurl-hs
+    pantry-tree:
+      size: 568
+      sha256: 3dea9de3375c19deee39458e35181ef82690d4bf81ebcb1292ea6c982fb3fa23
+    commit: a8f6625ccec9ae2ca4e10cd3162f30aa4a333e62
+  original:
+    git: https://github.com/maxhbr/packageurl-hs
+    commit: a8f6625ccec9ae2ca4e10cd3162f30aa4a333e62
 - completed:
     hackage: spdx-1.0.0.2@sha256:7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed,2008
     pantry-tree:

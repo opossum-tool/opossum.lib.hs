@@ -36,6 +36,7 @@ dependencies:
 - file-embed
 - filepath
 - mtl
+- packageurl
 - process
 - random
 - regex-compat

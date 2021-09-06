@@ -10,6 +10,7 @@ module Opossum.OpossumScancodeUtils
   ) where
 
 import Opossum.Opossum
+import PURL.PURL
 
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Aeson as A
@@ -25,7 +26,8 @@ import qualified System.FilePath as FP
 import qualified Control.Monad.State as MTL
 import qualified Distribution.SPDX as SPDX
 import qualified Distribution.Parsec as SPDX
-import SPDX.Document (parseLicenses)
+import System.Random (randomIO)
+import SPDX.Document.Common (parseLicenses, renderSpdxLicense)
 
 import Debug.Trace (trace)
 
@@ -113,14 +115,16 @@ import Debug.Trace (trace)
 -}
 data ScancodePackage
   = ScancodePackage
-  { _scp_purl :: Maybe String
+  { _scp_purl :: Maybe PURL
   , _scp_licenses :: Maybe SPDX.LicenseExpression
   , _scp_copyright :: Maybe String
   , _scp_dependencies :: [ScancodePackage]
   } deriving (Eq, Show)
 instance A.FromJSON ScancodePackage where
   parseJSON = A.withObject "ScancodePackage" $ \v -> do
-    purl <- v A..:? "purl"
+    purl <- v A..:? "purl" >>= (\case 
+                                    Just purl -> return $ parsePURL purl
+                                    Nothing   -> return Nothing)
     dependencies <- (v A..:? "dependencies" >>= (\case
                                                      Just dependencies -> mapM A.parseJSON dependencies
                                                      Nothing -> return [])) :: A.Parser [ScancodePackage]
@@ -150,9 +154,15 @@ instance A.FromJSON ScancodeFileEntry where
     license <- v A..:? "license_expressions" >>= (\case
                                                      Just lics -> return $ parseLicenses lics
                                                      Nothing -> return Nothing)
-    copyrights <- v A..:? "copyrights" >>= (\case 
-                                                Just copyrights -> return copyrights
-                                                Nothing -> return [])
+    copyrights <- do
+      listOfCopyrightObjects <- (v A..:? "copyrights" :: A.Parser (Maybe A.Array))
+      case listOfCopyrightObjects of
+        Just cos -> let
+          getValueFromCopyrightObject = A.withObject "CopyrightsEntry" $ \v' ->
+            v' A..: "value" :: A.Parser String
+          in mapM getValueFromCopyrightObject (V.toList cos)
+        Nothing -> return []
+    copyrights <- return []
     packages <- v A..: "packages"
     return (ScancodeFileEntry path license copyrights packages)
 
@@ -164,7 +174,7 @@ instance A.FromJSON ScancodeFile where
   parseJSON = A.withObject "ScancodeFile" $ \v -> do
     ScancodeFile <$> v A..: "files"
 
-parseScancodeBS :: B.ByteString -> Opossum
+parseScancodeBS :: B.ByteString -> IO Opossum
 parseScancodeBS bs =
   case (A.eitherDecode bs :: Either String ScancodeFile) of
     Right (ScancodeFile scFiles) -> let
@@ -175,14 +185,27 @@ parseScancodeBS bs =
                               }) = let
           source = Opossum_ExternalAttribution_Source "Scancode" 50
           resources = fpToResources True path
-          coordinates = undefined
-          ea = Opossum_ExternalAttribution source 50 Nothing Nothing coordinates ((Just . T.pack . unlines) copyrights) ((Just . T.pack . show) licenses) Nothing False
-
-          in Opossum Nothing resources Map.empty Map.empty []
+          ea = \coordinates -> Opossum_ExternalAttribution source 50 Nothing Nothing coordinates ((Just . T.pack . unlines) copyrights) (fmap (T.pack . renderSpdxLicense) licenses) Nothing False
+          opossumForEA = \coordinates -> do
+            uuid <- randomIO
+            return $ Opossum Nothing resources (Map.singleton uuid (ea coordinates)) (Map.singleton ("/" FP.</> path) [uuid]) []
+          opossumFromPackage package = let
+            coordinates = case _scp_purl package of
+              Just purl -> purlToCoordinates purl
+              Nothing -> Opossum_Coordinates Nothing Nothing Nothing Nothing
+            in opossumForEA coordinates
+          in case packages of
+            [] -> if copyrights == [] && licenses /= Nothing
+                  then opossumForEA (Opossum_Coordinates Nothing Nothing Nothing Nothing)
+                  else return $ Opossum Nothing resources Map.empty Map.empty []
+            _  -> mconcat $ map opossumFromPackage packages
       in mconcat $ map fun scFiles
-    Left err -> undefined -- TODO
+    Left err -> do
+      putStrLn err
+      undefined -- TODO
 
 parseScancodeToOpossum :: FilePath -> IO B.ByteString
 parseScancodeToOpossum inputPath = do
-  opossum <- parseScancodeBS <$> B.readFile inputPath
-  return (A.encodePretty opossum)
+  let baseOpossum = Opossum (Just (A.object ["projectId" A..= ("0" :: String), "projectTitle" A..= inputPath, "fileCreationDate" A..= ("" :: String)])) mempty Map.empty Map.empty []
+  opossum <- B.readFile inputPath >>= parseScancodeBS
+  return (A.encodePretty (baseOpossum <> opossum))
