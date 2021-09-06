@@ -12,7 +12,7 @@ module Opossum.Opossum
   ( Opossum_Resources (..), countFiles
   , fpToResources, fpsToResources
   , Opossum_FrequentLicense (..)
-  , Opossum_Coordinates (..)
+  , Opossum_Coordinates (..), purlToCoordinates
   , Opossum_ExternalAttribution (..), Opossum_ExternalAttribution_Source (..)
   , Opossum (..)
   , writeOpossumStats
@@ -22,6 +22,7 @@ import GHC.Generics
 import Data.UUID (UUID)
 import System.Random (randomIO)
 import System.IO (Handle, hPutStrLn, hClose, stdout)
+import PURL.PURL
 import qualified System.IO as IO
 import qualified Data.List as List
 import qualified Data.Aeson as A
@@ -134,6 +135,15 @@ instance A.FromJSON Opossum_Coordinates where
         packageName <- v A..:? "packageName"
         packageVersion <- v A..:? "packageVersion"
         return $ Opossum_Coordinates packageType packageNamespace packageName packageVersion
+purlToCoordinates :: PURL -> Opossum_Coordinates
+purlToCoordinates (PURL { _PURL_type = type_
+                        , _PURL_namespace = namespace
+                        , _PURL_name = name
+                        , _PURL_version = version
+                        }) = Opossum_Coordinates (fmap (T.pack . show) type_)
+                                                 (fmap T.pack namespace)
+                                                 (Just $ T.pack name)
+                                                 (fmap T.pack version)
 
 data Opossum_ExternalAttribution
   = Opossum_ExternalAttribution
