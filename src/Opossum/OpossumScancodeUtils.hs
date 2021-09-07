@@ -10,6 +10,7 @@ module Opossum.OpossumScancodeUtils
   ) where
 
 import Opossum.Opossum
+import Opossum.OpossumUtils
 import PURL.PURL
 
 import qualified Data.ByteString.Lazy as B
@@ -174,32 +175,83 @@ instance A.FromJSON ScancodeFile where
   parseJSON = A.withObject "ScancodeFile" $ \v -> do
     ScancodeFile <$> v A..: "files"
 
+
+opossumFromScancodePackage :: ScancodePackage -> IO Opossum
+opossumFromScancodePackage (ScancodePackage { _scp_purl = purl
+                                            , _scp_licenses = licenses
+                                            , _scp_copyright = copyright
+                                            , _scp_dependencies = dependencies
+                                            }) = let
+    typeFromPurl = case purl of
+      Just (PURL{ _PURL_type = t }) -> "generic" `fromMaybe` (fmap show t)
+      _                             -> "generic"
+    pathFromPurl = typeFromPurl FP.</> case purl of 
+      Just (PURL{ _PURL_namespace = ns
+                , _PURL_name = n
+                , _PURL_version = v}) -> foldl1 (FP.</>) $ ( maybeToList ns ) ++ [(intercalate "@" $ [n] ++ (maybeToList v))]
+      _ -> "UNKNOWN"
+    coordinatesFromPurl = case purl of
+      Just (PURL{ _PURL_namespace = ns
+                , _PURL_name = n
+                , _PURL_version = v}) -> Opossum_Coordinates ((Just . T.pack) typeFromPurl) (fmap T.pack ns) ((Just . T.pack) n) (fmap T.pack v)
+      _ -> Opossum_Coordinates Nothing Nothing Nothing Nothing
+  in do
+    uuid <- randomIO
+    let source = Opossum_ExternalAttribution_Source "Scancode-Package" 50
+    let resources = fpToResources True pathFromPurl
+    let ea = Opossum_ExternalAttribution source
+                                          50
+                                          Nothing
+                                          Nothing
+                                          coordinatesFromPurl
+                                          (fmap T.pack copyright)
+                                          (fmap (T.pack . renderSpdxLicense) licenses)
+                                          Nothing
+                                          False
+
+    let o = Opossum Nothing
+                    resources
+                    (Map.singleton uuid ea)
+                    (Map.singleton ("/" FP.</> pathFromPurl) [uuid])
+                    []
+    os <- mapM opossumFromScancodePackage dependencies
+    return $ mconcat (o : (map (unshiftPathToOpossum pathFromPurl) os))
+
+scancodeFileEntryToOpossum :: ScancodeFileEntry -> IO Opossum
+scancodeFileEntryToOpossum (ScancodeFileEntry{ _scfe_file = path
+                                             , _scfe_license = licenses
+                                             , _scfe_copyrights = copyrights
+                                             , _scfe_packages = packages
+                                             }) = let
+
+    opossumFromLicenseAndCopyright = do
+      uuid <- randomIO
+      let source = Opossum_ExternalAttribution_Source "Scancode" 50
+      let resources = fpToResources True path
+      let ea = Opossum_ExternalAttribution source
+                                            50
+                                            Nothing
+                                            Nothing
+                                            (Opossum_Coordinates Nothing Nothing Nothing Nothing)
+                                            ((Just . T.pack . unlines) copyrights)
+                                            (fmap (T.pack . renderSpdxLicense) licenses)
+                                            Nothing
+                                            False
+      return $ Opossum Nothing
+                        resources
+                        (Map.singleton uuid ea)
+                        (Map.singleton ("/" FP.</> path) [uuid])
+                        []
+
+  in do
+    o <- opossumFromLicenseAndCopyright
+    os <- mapM opossumFromScancodePackage packages
+    return $ mconcat (o : (map (unshiftPathToOpossum path) os))
+
 parseScancodeBS :: B.ByteString -> IO Opossum
 parseScancodeBS bs =
   case (A.eitherDecode bs :: Either String ScancodeFile) of
-    Right (ScancodeFile scFiles) -> let
-        fun (ScancodeFileEntry{ _scfe_file = path
-                              , _scfe_license = licenses
-                              , _scfe_copyrights = copyrights
-                              , _scfe_packages = packages
-                              }) = let
-          source = Opossum_ExternalAttribution_Source "Scancode" 50
-          resources = fpToResources True path
-          ea = \coordinates -> Opossum_ExternalAttribution source 50 Nothing Nothing coordinates ((Just . T.pack . unlines) copyrights) (fmap (T.pack . renderSpdxLicense) licenses) Nothing False
-          opossumForEA = \coordinates -> do
-            uuid <- randomIO
-            return $ Opossum Nothing resources (Map.singleton uuid (ea coordinates)) (Map.singleton ("/" FP.</> path) [uuid]) []
-          opossumFromPackage package = let
-            coordinates = case _scp_purl package of
-              Just purl -> purlToCoordinates purl
-              Nothing -> Opossum_Coordinates Nothing Nothing Nothing Nothing
-            in opossumForEA coordinates
-          in case packages of
-            [] -> if copyrights == [] && licenses /= Nothing
-                  then opossumForEA (Opossum_Coordinates Nothing Nothing Nothing Nothing)
-                  else return $ Opossum Nothing resources Map.empty Map.empty []
-            _  -> mconcat $ map opossumFromPackage packages
-      in mconcat $ map fun scFiles
+    Right (ScancodeFile scFiles) -> mconcat $ map scancodeFileEntryToOpossum scFiles
     Left err -> do
       putStrLn err
       undefined -- TODO

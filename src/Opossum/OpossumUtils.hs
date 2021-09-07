@@ -129,7 +129,7 @@ unDot (opossum@Opossum { _resources = rs , _resourcesToAttributions = rtas }) = 
     recurse :: Opossum_Resources -> Opossum_Resources
     recurse (rs@Opossum_Resources { _dirs = dirs }) = rs {_dirs = Map.map undotResources dirs}
     in recurse $ rs {_dirs = dirsWithoutDot} <> contentOfDot
-  undotRTAS = Map.mapKeys (\path -> (subRegex (mkRegex "/(\\.?/)+") path "/"))
+  undotRTAS = Map.mapKeys (\path -> FP.normalise (subRegex (mkRegex "/(\\.?/)+") path "/"))
   in opossum{ _resources = undotResources rs
             , _resourcesToAttributions = undotRTAS rtas
             }
@@ -155,7 +155,7 @@ unshiftPathToResources prefix resources = let
 unshiftPathToOpossum :: FilePath -> Opossum -> Opossum
 unshiftPathToOpossum prefix (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas }) = let
   rsWithPrefix = unshiftPathToResources prefix rs
-  rtasWithPrefix = Map.mapKeys (prefix </>) rtas
+  rtasWithPrefix = Map.mapKeys (FP.normalise . (("/" </> prefix ++ "/") ++)) rtas
   in unDot $ opossum{ _resources = rsWithPrefix
                     , _resourcesToAttributions = rtasWithPrefix
                     }

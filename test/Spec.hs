@@ -38,14 +38,14 @@ opossumSpec = do
                       ,  "root" </> "subfolder" </> "file2"
                       , "root" </> "file3"
                       ]
-      parsedResources = (Opossum_Resources
-                          (Map.singleton "root" (Opossum_Resources
-                                                  (Map.singleton "subfolder" (Opossum_Resources
-                                                                          Map.empty
-                                                                          (Set.fromList [ "file1"
-                                                                                        , "file2"])))
-                                                  (Set.singleton "file3")))
-                          (Set.empty))
+      parsedResources = Opossum_Resources
+                         (Map.singleton "root" (Opossum_Resources
+                                                 (Map.singleton "subfolder" (Opossum_Resources
+                                                                         Map.empty
+                                                                         (Set.fromList [ "file1"
+                                                                                       , "file2"])))
+                                                 (Set.singleton "file3")))
+                         Set.empty
       serializedResources = B.concat
         [ "{"
         ,   "\"root\":{"

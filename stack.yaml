@@ -12,6 +12,6 @@ extra-deps:
 - git: https://github.com/maxhbr/spdx-document-hs
   commit: 10341381c7f991440b6c9db8f3904429700b8610
 - git: https://github.com/maxhbr/packageurl-hs
-  commit: a8f6625ccec9ae2ca4e10cd3162f30aa4a333e62
+  commit: 46934ff557cf21ec8bcc66c02b1683426fcdb1ff
 - spdx-1.0.0.2@sha256:7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed,2008
 
