@@ -234,6 +234,7 @@ data Opossum
   , _externalAttributions :: Map.Map UUID Opossum_ExternalAttribution
   , _resourcesToAttributions :: Map.Map FilePath [UUID]
   , _attributionBreakpoints :: [FilePath]
+  , _filesWithChildren :: [FilePath]
   , _frequentLicenses :: [Opossum_FrequentLicense]
   } deriving (Show, Generic)
 instance A.ToJSON Opossum where
@@ -243,12 +244,14 @@ instance A.ToJSON Opossum where
         externalAttributions
         resourcesToAttributions
         attributionBreakpoints
+        filesWithChildren
         frequentLicenses) = objectNoNulls
           [ "metadata" A..= metadata
           , "resources" A..= resources
           , "externalAttributions" A..= externalAttributions
           , "resourcesToAttributions" A..= resourcesToAttributions
           , "attributionBreakpoints" A..= attributionBreakpoints
+          , "filesWithChildren" A..= filesWithChildren
           , "frequentLicenses" A..= frequentLicenses
           ]
 instance A.FromJSON Opossum where
@@ -258,6 +261,7 @@ instance A.FromJSON Opossum where
       externalAttributionsParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "externalAttributions"
       resourcesToAttributionsParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "resourcesToAttributions"
       attributionBreakpointsParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "attributionBreakpoints"
+      filesWithChildrenParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "filesWithChildren"
       frequentLicensesParser = fmap (\case 
             Just fls -> fls
             Nothing -> []) (v A..:? "frequentLicenses")
@@ -266,6 +270,7 @@ instance A.FromJSON Opossum where
         <*> externalAttributionsParser
         <*> resourcesToAttributionsParser
         <*> attributionBreakpointsParser
+        <*> filesWithChildrenParser
         <*> frequentLicensesParser
 instance Semigroup Opossum where
     opossum1 <> opossum2 = let
@@ -278,15 +283,17 @@ instance Semigroup Opossum where
           mergedExternalAttributions = Map.union (_externalAttributions opossum1) (_externalAttributions opossum2)
           mergedResourcesToAttributions = Map.unionWith (++) (_resourcesToAttributions opossum1) (_resourcesToAttributions opossum2) -- TODO: nub
           mergedAttributionBreakpoints = List.nub (_attributionBreakpoints opossum1 ++ _attributionBreakpoints opossum2)
+          mergedFilesWithChildren = List.nub (_filesWithChildren opossum1 ++ _filesWithChildren opossum2)
           mergedFrequentLicenses = List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
         in Opossum mergedMetadata
                    mergedResources
                    mergedExternalAttributions
                    mergedResourcesToAttributions
                    mergedAttributionBreakpoints
+                   mergedFilesWithChildren
                    mergedFrequentLicenses
 instance Monoid Opossum where
-    mempty = Opossum Nothing mempty Map.empty Map.empty [] []
+    mempty = Opossum Nothing mempty Map.empty Map.empty [] [] []
 
 writeOpossumStats :: Opossum -> IO ()
 writeOpossumStats (Opossum { _metadata = m
@@ -294,6 +301,7 @@ writeOpossumStats (Opossum { _metadata = m
                    , _externalAttributions = eas
                    , _resourcesToAttributions = rtas
                    , _attributionBreakpoints = abs
+                   , _filesWithChildren = fwcs
                    , _frequentLicenses = fls
                    }) = do
                      putStrLn ("metadata: " ++ show m)
@@ -301,4 +309,5 @@ writeOpossumStats (Opossum { _metadata = m
                      putStrLn ("externalAttributions: #=" ++ (show (length eas)))
                      putStrLn ("resourcesToAttributions: #=" ++ (show (length rtas)))
                      putStrLn ("attributionBreakpoints: #=" ++ (show (length abs)))
+                     putStrLn ("filesWithChildren: #=" ++ (show (length fwcs)))
                      putStrLn ("frequentLicenses: #=" ++ (show (length fls)))

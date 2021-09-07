@@ -215,6 +215,7 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl
                     (Map.singleton ("/" FP.</> pathFromPurl) [uuid])
                     ["/" ++ typeFromPurl ++ "/"]
                     []
+                    []
     os <- mapM opossumFromScancodePackage dependencies
     return $ mconcat (o : (map (unshiftPathToOpossum pathFromPurl) os))
 
@@ -229,7 +230,7 @@ scancodeFileEntryToOpossum (ScancodeFileEntry{ _scfe_file = path
       uuid <- randomIO
       let resources = fpToResources True path
       if null copyrights &&  licenses == Nothing
-      then return $ Opossum Nothing resources Map.empty Map.empty [] []
+      then return $ Opossum Nothing resources Map.empty Map.empty [] [("/" FP.</> path ++ "/")] []
       else do
         let source = Opossum_ExternalAttribution_Source "Scancode" 50
         let ea = Opossum_ExternalAttribution source
@@ -242,11 +243,12 @@ scancodeFileEntryToOpossum (ScancodeFileEntry{ _scfe_file = path
                                               Nothing
                                               False
         return $ Opossum Nothing
-                          resources
-                          (Map.singleton uuid ea)
-                          (Map.singleton ("/" FP.</> path) [uuid])
-                          []
-                          []
+                         resources
+                         (Map.singleton uuid ea)
+                         (Map.singleton ("/" FP.</> path) [uuid])
+                         []
+                         [("/" FP.</> path ++ "/")]
+                         []
 
   in do
     o <- opossumFromLicenseAndCopyright
@@ -263,6 +265,7 @@ parseScancodeBS bs =
 
 parseScancodeToOpossum :: FilePath -> IO Opossum
 parseScancodeToOpossum inputPath = do
-  let baseOpossum = Opossum (Just (A.object ["projectId" A..= ("0" :: String), "projectTitle" A..= inputPath, "fileCreationDate" A..= ("" :: String)])) mempty Map.empty Map.empty [] []
+  hPutStrLn IO.stderr ("parse: " ++ inputPath)
+  let baseOpossum = Opossum (Just (A.object ["projectId" A..= ("0" :: String), "projectTitle" A..= inputPath, "fileCreationDate" A..= ("" :: String)])) mempty Map.empty Map.empty [] [] []
   opossum <- B.readFile inputPath >>= parseScancodeBS
   return (normaliseOpossum (baseOpossum <> opossum))

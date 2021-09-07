@@ -161,6 +161,7 @@ spdxToOpossum = let
 
 parseSpdxToOpossum :: FilePath -> IO Opossum
 parseSpdxToOpossum inputPath = do
+  hPutStrLn IO.stderr ("parse: " ++ inputPath)
   spdx <- parseSPDXDocument inputPath
   opossum <- spdxToOpossum spdx
   return opossum

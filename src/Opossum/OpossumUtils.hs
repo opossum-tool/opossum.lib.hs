@@ -136,12 +136,12 @@ unDot (opossum@Opossum { _resources = rs , _resourcesToAttributions = rtas }) = 
 
 normaliseOpossum :: Opossum -> Opossum
 normaliseOpossum opossum = case unDot opossum of 
-  opossum'@Opossum { _resources = rs, _resourcesToAttributions = rtas , _attributionBreakpoints = abs } -> let
+  opossum'@Opossum { _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs } -> let
     normaliseId :: FilePath -> FilePath
     normaliseId fp = FP.normalise $ if isPathAFileInResources fp rs
                                     then fp
                                     else fp ++ "/"
-    in opossum' {_resourcesToAttributions = Map.mapKeysWith (++) normaliseId rtas, _attributionBreakpoints = map normaliseId abs}
+    in opossum' {_resourcesToAttributions = Map.mapKeysWith (++) normaliseId rtas, _attributionBreakpoints = map normaliseId abs, _filesWithChildren = map normaliseId fwcs}
 
 dropDir :: FilePath -> Opossum -> Opossum
 dropDir directoryName (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas}) = let
@@ -162,13 +162,14 @@ unshiftPathToResources prefix resources = let
   in ((`unshiftPathToResources'` resources) . (map FP.dropTrailingPathSeparator) . FP.splitPath) prefix
 
 unshiftPathToOpossum :: FilePath -> Opossum -> Opossum
-unshiftPathToOpossum prefix (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas , _attributionBreakpoints = abs }) = let
+unshiftPathToOpossum prefix (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs }) = let
   rsWithPrefix = unshiftPathToResources prefix rs
   unshiftToID = FP.normalise . (("/" </> prefix ++ "/") ++)
   rtasWithPrefix = Map.mapKeys unshiftToID rtas
   in unDot $ opossum{ _resources = rsWithPrefix
                     , _resourcesToAttributions = rtasWithPrefix
                     , _attributionBreakpoints = map unshiftToID abs
+                    , _filesWithChildren = map unshiftToID fwcs
                     }
 
 parseOpossum :: FP.FilePath -> IO Opossum
