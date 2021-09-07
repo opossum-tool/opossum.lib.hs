@@ -30,18 +30,12 @@ import           Data.UUID                      ( UUID )
 import qualified Data.Vector                   as V
 import qualified System.FilePath               as FP
 import           System.FilePath
-import           System.IO                      ( Handle
-                                                , hClose
-                                                , hPutStrLn
-                                                , stdout
-                                                )
 import qualified System.IO                     as IO
 import           System.IO                      ( Handle
                                                 , hClose
                                                 , hPutStrLn
                                                 , stdout
                                                 )
-import qualified System.IO                     as IO
 import           System.Random                  ( randomIO )
 
 spdxToOpossum :: SPDXDocument -> IO Opossum
