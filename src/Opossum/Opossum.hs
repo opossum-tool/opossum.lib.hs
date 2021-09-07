@@ -253,15 +253,20 @@ instance A.FromJSON Opossum where
             Nothing -> []) (v A..:? "frequentLicenses"))
 instance Semigroup Opossum where
     opossum1 <> opossum2 = let
+          mergedMetadata = let
+            getMetadataHM :: Maybe A.Value -> HM.HashMap T.Text A.Value
+            getMetadataHM (Just (A.Object hm)) = hm
+            getMetadataHM _                    = HM.empty 
+            in (Just . A.Object) $ (getMetadataHM (_metadata opossum1)) `HM.union` (getMetadataHM (_metadata opossum2))
           mergedResources = _resources opossum1 <> _resources opossum2 
           mergedExternalAttributions = Map.union (_externalAttributions opossum1) (_externalAttributions opossum2)
           mergedResourcesToAttributions = Map.unionWith (++) (_resourcesToAttributions opossum1) (_resourcesToAttributions opossum2) -- TODO: nub
           mergedFrequentLicenses = List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
-        in Opossum (_metadata opossum1) 
-               mergedResources
-               mergedExternalAttributions
-               mergedResourcesToAttributions
-               mergedFrequentLicenses
+        in Opossum mergedMetadata
+                   mergedResources
+                   mergedExternalAttributions
+                   mergedResourcesToAttributions
+                   mergedFrequentLicenses
 instance Monoid Opossum where
     mempty = Opossum Nothing mempty Map.empty Map.empty []
 

@@ -6,7 +6,11 @@
 module Main where
 
 import System.Environment (getArgs)
+import qualified System.FilePath as FP
 import qualified Data.ByteString.Lazy.Char8 as C8
+import System.Directory (doesDirectoryExist)
+import qualified Data.Aeson.Encode.Pretty as A
+
 import Opossum.Opossum
 import Opossum.OpossumUtils
 import Opossum.OpossumSPDXUtils
@@ -14,16 +18,33 @@ import Opossum.OpossumScancodeUtils
 
 help :: IO ()
 help = do
-    putStrLn " --merge-opossums FILE [FILE [...]]"
-    putStrLn " --spdx-to-opossum SPDX_JSON"
-    putStrLn " --spdx-to-opossum SPDX_YAML"
-    putStrLn " --scancode-to-opossum SCANCODE_JSON"
-    putStrLn " --opossum-from-filetree DIR"
+    putStrLn " ARG [ARG [ARG ...]]]"
+    putStrLn "where ARG one of "
+    putStrLn "FILE                       <-- parse opossum file"
+    putStrLn "DIR                        <-- generate opossum from file tree"
+    putStrLn " --spdx SPDX_JSON          <-- parse .spdx.json"
+    putStrLn " --spdx SPDX_YAML          <-- parse .spdx.yaml"
+    putStrLn " --scancode SCANCODE_JSON  <-- parse scancode json"
+
+fun :: Opossum -> [String] -> IO Opossum
+fun pre []                         = return pre
+fun pre ("--spdx": (f : args))     = do
+    o <- parseSpdxToOpossum f
+    fmap (pre <>) (fun o args)
+fun pre ("--scancode": (f : args)) = do
+    o <- parseScancodeToOpossum f
+    fmap (pre <>) (fun o args)
+fun pre (f :args)                  = do
+    fIsDirectory <- doesDirectoryExist f
+    o <- if fIsDirectory
+         then opossumFromFileTree f
+         else parseOpossum f 
+    fmap (pre <>) (fun o args)
+    
 
 main :: IO ()
 main = getArgs >>= \case
-    "--merge-opossums":args -> computeMergedOpossum args >>= C8.putStrLn
-    "--spdx-to-opossum":[spdx] -> parseSpdxToOpossum spdx >>= C8.putStrLn
-    "--scancode-to-opossum":[spdx] -> parseScancodeToOpossum spdx >>= C8.putStrLn
-    "--opossum-from-filetree":[dir] -> opossumFromFileTree dir >>= C8.putStrLn
-    _ -> help
+    ["--help"] -> help
+    args       -> do 
+      o <- fun mempty args
+      C8.putStrLn (A.encodePretty (clusterifyOpossum o))

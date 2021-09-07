@@ -159,8 +159,8 @@ spdxToOpossum = let
         pieces <- mapM initToOpossum inits
         return $ mconcat (opossumMetadata : pieces)
 
-parseSpdxToOpossum :: FilePath -> IO B.ByteString
+parseSpdxToOpossum :: FilePath -> IO Opossum
 parseSpdxToOpossum inputPath = do
   spdx <- parseSPDXDocument inputPath
   opossum <- spdxToOpossum spdx
-  return (A.encodePretty opossum)
+  return opossum

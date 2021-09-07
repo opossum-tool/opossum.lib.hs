@@ -204,8 +204,8 @@ parseScancodeBS bs =
       putStrLn err
       undefined -- TODO
 
-parseScancodeToOpossum :: FilePath -> IO B.ByteString
+parseScancodeToOpossum :: FilePath -> IO Opossum
 parseScancodeToOpossum inputPath = do
   let baseOpossum = Opossum (Just (A.object ["projectId" A..= ("0" :: String), "projectTitle" A..= inputPath, "fileCreationDate" A..= ("" :: String)])) mempty Map.empty Map.empty []
   opossum <- B.readFile inputPath >>= parseScancodeBS
-  return (A.encodePretty (baseOpossum <> opossum))
+  return (baseOpossum <> opossum)

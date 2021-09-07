@@ -11,6 +11,7 @@ module Opossum.OpossumUtils
   ( clusterifyOpossum 
   , unDot
   , dropDir
+  , parseOpossum
   , computeMergedOpossum
   , mergifyEA
   , opossumFromFileTree
@@ -176,10 +177,10 @@ computeMergedOpossum inputPaths = do
     let finalOpossum = clusterifyOpossum $ mconcat (map unDot opossums)
     return (A.encodePretty finalOpossum)
 
-opossumFromFileTree :: FilePath -> IO B.ByteString
+opossumFromFileTree :: FilePath -> IO Opossum
 opossumFromFileTree dir = withCurrentDirectory dir $ do
   resources <- fpsToResources <$> listFilesRecursive "."
-  (return . A.encodePretty . unDot) $
+  (return . unDot) $
     Opossum { _metadata = Nothing
             , _resources = resources
             , _externalAttributions = Map.empty
