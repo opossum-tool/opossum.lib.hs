@@ -213,6 +213,7 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl
                     resources
                     (Map.singleton uuid ea)
                     (Map.singleton ("/" FP.</> pathFromPurl) [uuid])
+                    ["/" ++ typeFromPurl ++ "/"]
                     []
     os <- mapM opossumFromScancodePackage dependencies
     return $ mconcat (o : (map (unshiftPathToOpossum pathFromPurl) os))
@@ -226,22 +227,26 @@ scancodeFileEntryToOpossum (ScancodeFileEntry{ _scfe_file = path
 
     opossumFromLicenseAndCopyright = do
       uuid <- randomIO
-      let source = Opossum_ExternalAttribution_Source "Scancode" 50
       let resources = fpToResources True path
-      let ea = Opossum_ExternalAttribution source
-                                            50
-                                            Nothing
-                                            Nothing
-                                            (Opossum_Coordinates Nothing Nothing Nothing Nothing)
-                                            ((Just . T.pack . unlines) copyrights)
-                                            (fmap (T.pack . renderSpdxLicense) licenses)
-                                            Nothing
-                                            False
-      return $ Opossum Nothing
-                        resources
-                        (Map.singleton uuid ea)
-                        (Map.singleton ("/" FP.</> path) [uuid])
-                        []
+      if null copyrights &&  licenses == Nothing
+      then return $ Opossum Nothing resources Map.empty Map.empty [] []
+      else do
+        let source = Opossum_ExternalAttribution_Source "Scancode" 50
+        let ea = Opossum_ExternalAttribution source
+                                              50
+                                              Nothing
+                                              Nothing
+                                              (Opossum_Coordinates Nothing Nothing Nothing Nothing)
+                                              ((Just . T.pack . unlines) copyrights)
+                                              (fmap (T.pack . renderSpdxLicense) licenses)
+                                              Nothing
+                                              False
+        return $ Opossum Nothing
+                          resources
+                          (Map.singleton uuid ea)
+                          (Map.singleton ("/" FP.</> path) [uuid])
+                          []
+                          []
 
   in do
     o <- opossumFromLicenseAndCopyright
@@ -258,6 +263,6 @@ parseScancodeBS bs =
 
 parseScancodeToOpossum :: FilePath -> IO Opossum
 parseScancodeToOpossum inputPath = do
-  let baseOpossum = Opossum (Just (A.object ["projectId" A..= ("0" :: String), "projectTitle" A..= inputPath, "fileCreationDate" A..= ("" :: String)])) mempty Map.empty Map.empty []
+  let baseOpossum = Opossum (Just (A.object ["projectId" A..= ("0" :: String), "projectTitle" A..= inputPath, "fileCreationDate" A..= ("" :: String)])) mempty Map.empty Map.empty [] []
   opossum <- B.readFile inputPath >>= parseScancodeBS
-  return (baseOpossum <> opossum)
+  return (normaliseOpossum (baseOpossum <> opossum))

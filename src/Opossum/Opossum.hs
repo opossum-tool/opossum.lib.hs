@@ -11,6 +11,7 @@
 module Opossum.Opossum
   ( Opossum_Resources (..), countFiles
   , fpToResources, fpsToResources
+  , isPathAFileInResources
   , Opossum_FrequentLicense (..)
   , Opossum_Coordinates (..), purlToCoordinates
   , Opossum_ExternalAttribution (..), Opossum_ExternalAttribution_Source (..)
@@ -94,6 +95,15 @@ fpsToResources :: [FilePath] -> Opossum_Resources
 fpsToResources = mconcat . map (fpToResources True)
 countFiles :: Opossum_Resources -> Int
 countFiles (Opossum_Resources dirs files) = length files + ((sum . map countFiles . Map.elems) dirs)
+
+isPathAFileInResources :: FilePath -> Opossum_Resources -> Bool
+isPathAFileInResources = let
+    isPathAFileInResources' :: [FilePath] -> Opossum_Resources -> Bool
+    isPathAFileInResources' [f] (Opossum_Resources{_files = fs}) = f `Set.member` fs
+    isPathAFileInResources' (f:fp) (Opossum_Resources{_dirs = ds}) = case Map.lookup f ds of
+      Just resources -> isPathAFileInResources' fp resources
+      Nothing        -> True
+  in \fp -> isPathAFileInResources' (FP.splitPath fp)
 
 data Opossum_ExternalAttribution_Source
   = Opossum_ExternalAttribution_Source String Double
@@ -223,6 +233,7 @@ data Opossum
   , _resources :: Opossum_Resources
   , _externalAttributions :: Map.Map UUID Opossum_ExternalAttribution
   , _resourcesToAttributions :: Map.Map FilePath [UUID]
+  , _attributionBreakpoints :: [FilePath]
   , _frequentLicenses :: [Opossum_FrequentLicense]
   } deriving (Show, Generic)
 instance A.ToJSON Opossum where
@@ -231,11 +242,13 @@ instance A.ToJSON Opossum where
         resources
         externalAttributions
         resourcesToAttributions
+        attributionBreakpoints
         frequentLicenses) = objectNoNulls
           [ "metadata" A..= metadata
           , "resources" A..= resources
           , "externalAttributions" A..= externalAttributions
           , "resourcesToAttributions" A..= resourcesToAttributions
+          , "attributionBreakpoints" A..= attributionBreakpoints
           , "frequentLicenses" A..= frequentLicenses
           ]
 instance A.FromJSON Opossum where
@@ -244,13 +257,16 @@ instance A.FromJSON Opossum where
       resourcesParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "resources"
       externalAttributionsParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "externalAttributions"
       resourcesToAttributionsParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "resourcesToAttributions"
+      attributionBreakpointsParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "attributionBreakpoints"
+      frequentLicensesParser = fmap (\case 
+            Just fls -> fls
+            Nothing -> []) (v A..:? "frequentLicenses")
     Opossum <$> v A..:? "metadata"
         <*> resourcesParser
         <*> externalAttributionsParser
         <*> resourcesToAttributionsParser
-        <*> (fmap (\case 
-            Just fls -> fls
-            Nothing -> []) (v A..:? "frequentLicenses"))
+        <*> attributionBreakpointsParser
+        <*> frequentLicensesParser
 instance Semigroup Opossum where
     opossum1 <> opossum2 = let
           mergedMetadata = let
@@ -261,24 +277,28 @@ instance Semigroup Opossum where
           mergedResources = _resources opossum1 <> _resources opossum2 
           mergedExternalAttributions = Map.union (_externalAttributions opossum1) (_externalAttributions opossum2)
           mergedResourcesToAttributions = Map.unionWith (++) (_resourcesToAttributions opossum1) (_resourcesToAttributions opossum2) -- TODO: nub
+          mergedAttributionBreakpoints = List.nub (_attributionBreakpoints opossum1 ++ _attributionBreakpoints opossum2)
           mergedFrequentLicenses = List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
         in Opossum mergedMetadata
                    mergedResources
                    mergedExternalAttributions
                    mergedResourcesToAttributions
+                   mergedAttributionBreakpoints
                    mergedFrequentLicenses
 instance Monoid Opossum where
-    mempty = Opossum Nothing mempty Map.empty Map.empty []
+    mempty = Opossum Nothing mempty Map.empty Map.empty [] []
 
 writeOpossumStats :: Opossum -> IO ()
 writeOpossumStats (Opossum { _metadata = m
                    , _resources = rs
                    , _externalAttributions = eas
                    , _resourcesToAttributions = rtas
+                   , _attributionBreakpoints = abs
                    , _frequentLicenses = fls
                    }) = do
                      putStrLn ("metadata: " ++ show m)
                      putStrLn ("resources: #files=" ++ (show (countFiles rs)))
                      putStrLn ("externalAttributions: #=" ++ (show (length eas)))
                      putStrLn ("resourcesToAttributions: #=" ++ (show (length rtas)))
+                     putStrLn ("attributionBreakpoints: #=" ++ (show (length abs)))
                      putStrLn ("frequentLicenses: #=" ++ (show (length fls)))

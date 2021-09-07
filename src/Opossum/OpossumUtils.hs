@@ -9,7 +9,7 @@
 {-# LANGUAGE StrictData #-}
 module Opossum.OpossumUtils
   ( clusterifyOpossum 
-  , unDot
+  , unDot, normaliseOpossum
   , dropDir
   , parseOpossum
   , computeMergedOpossum
@@ -134,6 +134,15 @@ unDot (opossum@Opossum { _resources = rs , _resourcesToAttributions = rtas }) = 
             , _resourcesToAttributions = undotRTAS rtas
             }
 
+normaliseOpossum :: Opossum -> Opossum
+normaliseOpossum opossum = case unDot opossum of 
+  opossum'@Opossum { _resources = rs, _resourcesToAttributions = rtas , _attributionBreakpoints = abs } -> let
+    normaliseId :: FilePath -> FilePath
+    normaliseId fp = FP.normalise $ if isPathAFileInResources fp rs
+                                    then fp
+                                    else fp ++ "/"
+    in opossum' {_resourcesToAttributions = Map.mapKeysWith (++) normaliseId rtas, _attributionBreakpoints = map normaliseId abs}
+
 dropDir :: FilePath -> Opossum -> Opossum
 dropDir directoryName (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas}) = let
   filterResources (rs@Opossum_Resources { _dirs = dirs }) = let
@@ -153,11 +162,13 @@ unshiftPathToResources prefix resources = let
   in ((`unshiftPathToResources'` resources) . (map FP.dropTrailingPathSeparator) . FP.splitPath) prefix
 
 unshiftPathToOpossum :: FilePath -> Opossum -> Opossum
-unshiftPathToOpossum prefix (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas }) = let
+unshiftPathToOpossum prefix (opossum@Opossum{ _resources = rs, _resourcesToAttributions = rtas , _attributionBreakpoints = abs }) = let
   rsWithPrefix = unshiftPathToResources prefix rs
-  rtasWithPrefix = Map.mapKeys (FP.normalise . (("/" </> prefix ++ "/") ++)) rtas
+  unshiftToID = FP.normalise . (("/" </> prefix ++ "/") ++)
+  rtasWithPrefix = Map.mapKeys unshiftToID rtas
   in unDot $ opossum{ _resources = rsWithPrefix
                     , _resourcesToAttributions = rtasWithPrefix
+                    , _attributionBreakpoints = map unshiftToID abs
                     }
 
 parseOpossum :: FP.FilePath -> IO Opossum
@@ -180,10 +191,4 @@ computeMergedOpossum inputPaths = do
 opossumFromFileTree :: FilePath -> IO Opossum
 opossumFromFileTree dir = withCurrentDirectory dir $ do
   resources <- fpsToResources <$> listFilesRecursive "."
-  (return . unDot) $
-    Opossum { _metadata = Nothing
-            , _resources = resources
-            , _externalAttributions = Map.empty
-            , _resourcesToAttributions = Map.empty
-            , _frequentLicenses = []
-            }
+  (return . unDot) $ mempty { _resources = resources }
