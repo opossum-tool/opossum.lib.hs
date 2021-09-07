@@ -23,6 +23,7 @@ import Data.Maybe (fromMaybe, maybeToList)
 import qualified Data.Text as T
 import qualified Data.Map as Map
 import qualified Data.Vector as V
+import qualified System.IO as IO
 import qualified System.FilePath as FP
 import qualified Control.Monad.State as MTL
 import qualified Distribution.SPDX as SPDX
