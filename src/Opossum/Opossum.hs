@@ -275,8 +275,8 @@ data Opossum = Opossum
   , _resources               :: Opossum_Resources
   , _externalAttributions    :: Map.Map UUID Opossum_ExternalAttribution
   , _resourcesToAttributions :: Map.Map FilePath [UUID]
-  , _attributionBreakpoints  :: [FilePath]
-  , _filesWithChildren       :: [FilePath]
+  , _attributionBreakpoints  :: Set.Set FilePath
+  , _filesWithChildren       :: Set.Set FilePath
   , _frequentLicenses        :: [Opossum_FrequentLicense]
   }
   deriving (Show, Generic)
@@ -334,10 +334,8 @@ instance Semigroup Opossum where
         (++)
         (_resourcesToAttributions opossum1)
         (_resourcesToAttributions opossum2) -- TODO: nub
-      mergedAttributionBreakpoints = List.nub
-        (_attributionBreakpoints opossum1 ++ _attributionBreakpoints opossum2)
-      mergedFilesWithChildren =
-        List.nub (_filesWithChildren opossum1 ++ _filesWithChildren opossum2)
+      mergedAttributionBreakpoints = (_attributionBreakpoints opossum1 <> _attributionBreakpoints opossum2) -- TODO: nub
+      mergedFilesWithChildren = (_filesWithChildren opossum1 <> _filesWithChildren opossum2) -- TODO: nub
       mergedFrequentLicenses =
         List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
     in
@@ -349,7 +347,7 @@ instance Semigroup Opossum where
               mergedFilesWithChildren
               mergedFrequentLicenses
 instance Monoid Opossum where
-  mempty = Opossum Nothing mempty Map.empty Map.empty [] [] []
+  mempty = Opossum Nothing mempty mempty mempty mempty mempty mempty
 
 writeOpossumStats :: Opossum -> IO ()
 writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributions = eas, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _frequentLicenses = fls })

@@ -158,8 +158,8 @@ normaliseOpossum opossum = case unDot opossum of
              $ if isPathAFileInResources fp rs then fp else fp ++ "/"
        in  opossum'
              { _resourcesToAttributions = Map.mapKeysWith (++) normaliseId rtas
-             , _attributionBreakpoints  = map normaliseId abs
-             , _filesWithChildren       = map normaliseId fwcs
+             , _attributionBreakpoints  = Set.map normaliseId abs
+             , _filesWithChildren       = Set.map normaliseId fwcs
              }
 
 dropDir :: FilePath -> Opossum -> Opossum
@@ -197,8 +197,8 @@ unshiftPathToOpossum prefix (opossum@Opossum { _resources = rs, _resourcesToAttr
         rtasWithPrefix = Map.mapKeys unshiftToID rtas
     in  unDot $ opossum { _resources               = rsWithPrefix
                         , _resourcesToAttributions = rtasWithPrefix
-                        , _attributionBreakpoints  = map unshiftToID abs
-                        , _filesWithChildren       = map unshiftToID fwcs
+                        , _attributionBreakpoints  = Set.map unshiftToID abs
+                        , _filesWithChildren       = Set.map unshiftToID fwcs
                         }
 
 parseOpossum :: FP.FilePath -> IO Opossum
