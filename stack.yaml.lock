@@ -5,27 +5,27 @@
 
 packages:
 - completed:
-    name: spdx-document
+    name: spdx-tools
     version: 0.1.0.0
-    git: https://github.com/maxhbr/spdx-document-hs
+    git: https://github.com/maxhbr/spdx-tools-hs
     pantry-tree:
-      size: 6317
-      sha256: f23df7b5f7786339a9b7281f58b2d721d0de871c490248100b58cd12800776ae
-    commit: 10341381c7f991440b6c9db8f3904429700b8610
+      size: 6314
+      sha256: ff2594144b548aa2cfcb8a2c1ace67fc9175434c333b9bcb5555a12c59faecc9
+    commit: b2b50d21e96ef89048414300e77904e23ff0dc35
   original:
-    git: https://github.com/maxhbr/spdx-document-hs
-    commit: 10341381c7f991440b6c9db8f3904429700b8610
+    git: https://github.com/maxhbr/spdx-tools-hs
+    commit: b2b50d21e96ef89048414300e77904e23ff0dc35
 - completed:
     name: packageurl
     version: 0.1.0.0
     git: https://github.com/maxhbr/packageurl-hs
     pantry-tree:
       size: 570
-      sha256: 0d63d0900e0b3997b5b3d78b4236bc322c343b543605d208baf6998d1e38c95a
-    commit: 46934ff557cf21ec8bcc66c02b1683426fcdb1ff
+      sha256: f51f1e469594528921baa6fd2cc1e4812af57e26055e6478d3039fe29564c68d
+    commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
   original:
     git: https://github.com/maxhbr/packageurl-hs
-    commit: 46934ff557cf21ec8bcc66c02b1683426fcdb1ff
+    commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
 - completed:
     hackage: spdx-1.0.0.2@sha256:7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed,2008
     pantry-tree:
@@ -35,8 +35,8 @@ packages:
     hackage: spdx-1.0.0.2@sha256:7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed,2008
 snapshots:
 - completed:
-    size: 587126
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/8.yaml
-    sha256: 93a107557e8691ed5ca17beaee41e68222b142c48868fc8c04a4181fb233477d
+    size: 586923
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/9.yaml
+    sha256: 9f9fe35c949414146840a985fb228fd397c504d1781b834bfc9ab935f4d27df6
   original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/8.yaml
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/9.yaml

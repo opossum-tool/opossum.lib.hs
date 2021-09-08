@@ -52,7 +52,7 @@ library
     , random
     , regex-compat
     , spdx
-    , spdx-document
+    , spdx-tools
     , text
     , unordered-containers
     , uuid
@@ -88,7 +88,7 @@ executable opOSSum-lib-exe
     , random
     , regex-compat
     , spdx
-    , spdx-document
+    , spdx-tools
     , text
     , unordered-containers
     , uuid
@@ -127,7 +127,7 @@ test-suite opOSSum-lib-test
     , random
     , regex-compat
     , spdx
-    , spdx-document
+    , spdx-tools
     , text
     , unordered-containers
     , uuid

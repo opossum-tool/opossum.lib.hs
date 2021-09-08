@@ -49,7 +49,7 @@ dependencies:
 # spdx stuff:
 - Cabal
 - spdx
-- spdx-document
+- spdx-tools
 
 library:
   source-dirs: src
