@@ -168,7 +168,7 @@ data ScancodeFileEntry = ScancodeFileEntry
   deriving (Eq, Show)
 instance A.FromJSON ScancodeFileEntry where
   parseJSON = A.withObject "ScancodeFileEntry" $ \v -> do
-    path     <- v A..: "path"
+    path    <- v A..: "path"
     is_file <-
       (\case
         ("file" :: String) -> True
@@ -260,17 +260,15 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
 scancodeFileEntryToOpossum :: ScancodeFileEntry -> IO Opossum
 scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file = is_file, _scfe_license = licenses, _scfe_copyrights = copyrights, _scfe_packages = packages })
   = let
-      filesWithChildren = if is_file
-                          then Set.singleton ("/" FP.</> path ++ "/")
-                          else mempty
+      filesWithChildren =
+        if is_file then Set.singleton ("/" FP.</> path ++ "/") else mempty
       opossumFromLicenseAndCopyright = do
         uuid <- randomIO
         let resources = fpToResources True path
         if null copyrights && licenses == Nothing
-          then return $ mempty
-            { _resources         = resources
-            , _filesWithChildren = filesWithChildren
-            }
+          then return $ mempty { _resources         = resources
+                               , _filesWithChildren = filesWithChildren
+                               }
           else do
             let source = Opossum_ExternalAttribution_Source "Scancode" 50
             let ea = Opossum_ExternalAttribution
@@ -289,12 +287,13 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
               , _resourcesToAttributions = (Map.singleton ("/" FP.</> path)
                                                           [uuid]
                                            )
-              , _filesWithChildren = filesWithChildren
+              , _filesWithChildren       = filesWithChildren
               }
-    in  do
-          o  <- opossumFromLicenseAndCopyright
-          os <- mapM opossumFromScancodePackage packages
-          return $ mconcat (o : (map (unshiftPathToOpossum path) os))
+    in
+      do
+        o  <- opossumFromLicenseAndCopyright
+        os <- mapM opossumFromScancodePackage packages
+        return $ mconcat (o : (map (unshiftPathToOpossum path) os))
 
 parseScancodeBS :: B.ByteString -> IO Opossum
 parseScancodeBS bs = case (A.eitherDecode bs :: Either String ScancodeFile) of
