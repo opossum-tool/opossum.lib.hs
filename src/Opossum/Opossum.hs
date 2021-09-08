@@ -33,6 +33,7 @@ import qualified Data.Map                      as Map
 import qualified Data.Maybe                    as Maybe
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
+import qualified Data.Vector                   as V
 import           Data.UUID                      ( UUID )
 import           GHC.Generics
 import           PURL.PURL
@@ -353,10 +354,12 @@ instance Monoid Opossum where
 writeOpossumStats :: Opossum -> IO ()
 writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributions = eas, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _frequentLicenses = fls })
   = do
-    putStrLn ("metadata: " ++ show m)
-    putStrLn ("resources: #files=" ++ (show (countFiles rs)))
-    putStrLn ("externalAttributions: #=" ++ (show (length eas)))
-    putStrLn ("resourcesToAttributions: #=" ++ (show (length rtas)))
-    putStrLn ("attributionBreakpoints: #=" ++ (show (length abs)))
-    putStrLn ("filesWithChildren: #=" ++ (show (length fwcs)))
-    putStrLn ("frequentLicenses: #=" ++ (show (length fls)))
+    hPutStrLn IO.stderr ("metadata: " ++ show m)
+    hPutStrLn IO.stderr ("resources: #files=" ++ show (countFiles rs))
+    hPutStrLn IO.stderr ("externalAttributions: #=" ++ show (length eas))
+    mapM_ (\easOfType -> hPutStrLn IO.stderr ("externalAttributions of type '" ++ head easOfType ++ "' #=" ++ show (length easOfType)))
+      (List.groupBy (==) (List.sort $ map ((\ (Opossum_ExternalAttribution_Source s _) -> s) . _source) (Map.elems eas)))
+    hPutStrLn IO.stderr ("resourcesToAttributions: #=" ++ show (length rtas))
+    hPutStrLn IO.stderr ("attributionBreakpoints: #=" ++ show (length abs))
+    hPutStrLn IO.stderr ("filesWithChildren: #=" ++ show (length fwcs))
+    hPutStrLn IO.stderr ("frequentLicenses: #=" ++ show (length fls))

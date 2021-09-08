@@ -53,9 +53,16 @@ main = getArgs >>= \case
   ["--help"] -> help
   args       -> do
     o <- fun mempty args
+    writeOpossumStats o
+
     hPutStrLn IO.stderr "normalize ..."
     let !normalizedO = normaliseOpossum o
+    writeOpossumStats normalizedO
+
     hPutStrLn IO.stderr "clusterify ..."
     let !clusterifiedO = clusterifyOpossum normalizedO
+    writeOpossumStats clusterifiedO
+
     hPutStrLn IO.stderr "encode ..."
+
     C8.putStrLn (A.encodePretty clusterifiedO)
