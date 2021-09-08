@@ -160,6 +160,7 @@ instance A.FromJSON ScancodePackage where
     return $ ScancodePackage purl license copyright dependencies
 data ScancodeFileEntry = ScancodeFileEntry
   { _scfe_file       :: FilePath
+  , _scfe_is_file    :: Bool
   , _scfe_license    :: Maybe SPDX.LicenseExpression
   , _scfe_copyrights :: [String]
   , _scfe_packages   :: [ScancodePackage]
@@ -168,7 +169,7 @@ data ScancodeFileEntry = ScancodeFileEntry
 instance A.FromJSON ScancodeFileEntry where
   parseJSON = A.withObject "ScancodeFileEntry" $ \v -> do
     path     <- v A..: "path"
-    filetype <-
+    is_file <-
       (\case
         ("file" :: String) -> True
         _                  -> False
@@ -198,7 +199,7 @@ instance A.FromJSON ScancodeFileEntry where
         Nothing -> return []
     copyrights <- return []
     packages   <- v A..: "packages"
-    return (ScancodeFileEntry path license copyrights packages)
+    return (ScancodeFileEntry path is_file license copyrights packages)
 
 data ScancodeFile = ScancodeFile
   { _scf_files :: [ScancodeFileEntry]
@@ -257,15 +258,18 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
         return $ mconcat (o : (map (unshiftPathToOpossum pathFromPurl) os))
 
 scancodeFileEntryToOpossum :: ScancodeFileEntry -> IO Opossum
-scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_license = licenses, _scfe_copyrights = copyrights, _scfe_packages = packages })
+scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file = is_file, _scfe_license = licenses, _scfe_copyrights = copyrights, _scfe_packages = packages })
   = let
+      filesWithChildren = if is_file
+                          then Set.singleton ("/" FP.</> path ++ "/")
+                          else mempty
       opossumFromLicenseAndCopyright = do
         uuid <- randomIO
         let resources = fpToResources True path
         if null copyrights && licenses == Nothing
           then return $ mempty
             { _resources         = resources
-            , _filesWithChildren = Set.singleton ("/" FP.</> path ++ "/")
+            , _filesWithChildren = filesWithChildren
             }
           else do
             let source = Opossum_ExternalAttribution_Source "Scancode" 50
@@ -285,7 +289,7 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_license
               , _resourcesToAttributions = (Map.singleton ("/" FP.</> path)
                                                           [uuid]
                                            )
-              , _filesWithChildren = Set.singleton ("/" FP.</> path ++ "/")
+              , _filesWithChildren = filesWithChildren
               }
     in  do
           o  <- opossumFromLicenseAndCopyright
