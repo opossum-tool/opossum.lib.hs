@@ -4,11 +4,11 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           opOSSum-lib
+name:           opossum-lib
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/maxhbr/opOSSum-lib#readme>
-homepage:       https://github.com/maxhbr/opOSSum-lib#readme
-bug-reports:    https://github.com/maxhbr/opOSSum-lib/issues
+description:    Please see the README on GitHub at <https://github.com/opossum-tool/opossum.lib.hs#readme>
+homepage:       https://github.com/opossum-tool/opossum.lib.hs#readme
+bug-reports:    https://github.com/opossum-tool/opossum.lib.hs/issues
 author:         Maximillian Huber
 maintainer:     gh@maxhbr.de
 copyright:      Maximilian Huber
@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/maxhbr/opOSSum-lib
+  location: https://github.com/opossum-tool/opossum.lib.hs
 
 library
   exposed-modules:
@@ -30,7 +30,7 @@ library
       Opossum.OpossumSPDXUtils
       Opossum.OpossumUtils
   other-modules:
-      Paths_opOSSum_lib
+      Paths_opossum_lib
   hs-source-dirs:
       src
   build-depends:
@@ -61,10 +61,10 @@ library
     , zlib
   default-language: Haskell2010
 
-executable opOSSum-lib-exe
+executable opossum-lib-exe
   main-is: Main.hs
   other-modules:
-      Paths_opOSSum_lib
+      Paths_opossum_lib
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -82,7 +82,7 @@ executable opOSSum-lib-exe
     , file-embed
     , filepath
     , mtl
-    , opOSSum-lib
+    , opossum-lib
     , packageurl
     , process
     , random
@@ -97,11 +97,11 @@ executable opOSSum-lib-exe
     , zlib
   default-language: Haskell2010
 
-test-suite opOSSum-lib-test
+test-suite opossum-lib-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_opOSSum_lib
+      Paths_opossum_lib
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -121,7 +121,7 @@ test-suite opOSSum-lib-test
     , filepath
     , hspec
     , mtl
-    , opOSSum-lib
+    , opossum-lib
     , packageurl
     , process
     , random

@@ -63,7 +63,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - opOSSum-lib
+    - opossum-lib
 
 tests:
   opossum-lib-test:
@@ -74,6 +74,6 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - opOSSum-lib
+    - opossum-lib
     - hspec
     - QuickCheck
