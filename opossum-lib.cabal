@@ -13,7 +13,7 @@ author:         Maximillian Huber
 maintainer:     gh@maxhbr.de
 copyright:      Maximilian Huber
 license:        BSD3
-license-file:   LICENSE
+license-file:   LICENSES/BSD-3-Clause.txt
 build-type:     Simple
 extra-source-files:
     README.md

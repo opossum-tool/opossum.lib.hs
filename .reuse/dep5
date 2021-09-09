@@ -1,0 +1,15 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: https://github.com/opossum-tool/opossum.lib.hs
+
+Files: *.json
+       *.json.gz
+       .gitignore
+Copyright: Maximilian Huber
+           TNG Technology Consulting GmbH <https://www.tngtech.com>
+License: BSD-3-Clause
+
+Files: opossum-lib.cabal
+       stack.yaml.lock
+       test/data/document.spdx.yml
+Copyright: $generated
+License: CC0-1.0
