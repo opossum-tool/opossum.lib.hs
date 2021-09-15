@@ -6,11 +6,11 @@ curPwd="$(pwd)"
 root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 stackyaml="$root/stack.yaml"
 
-echo "build:..."
+>&2 echo "build:..."
 stack --stack-yaml "$stackyaml"\
       build
 
-echo "run:..."
+>&2 echo "run:..."
 time stack --stack-yaml "$stackyaml" \
       exec -- opossum-lib-exe \
       "$@"
