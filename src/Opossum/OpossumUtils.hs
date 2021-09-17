@@ -69,6 +69,7 @@ mergifyEA
 mergifyEA left@(Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _preselected = preselected }) (Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _preselected = preselected' })
   = if (and
           [ source == source'
+          , coordinatesAreNotNull coordinates
           , coordinates == coordinates'
           , (cleanupLicense licenseName) == (cleanupLicense licenseName')
           ]

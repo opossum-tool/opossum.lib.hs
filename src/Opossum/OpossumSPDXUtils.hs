@@ -84,7 +84,7 @@ spdxToOpossum =
     spdxFileOrPackageToEA (Left  f) = spdxFileToEA f
     spdxFileOrPackageToEA (Right p) = spdxPackageToEA p
   in
-    \(spdx@SPDXDocument { _SPDX_SPDXID = spdxid, _SPDX_comment = _, _SPDX_creationInfo = _, _SPDX_name = name, _SPDX_documentDescribes = roots, _SPDX_files = files, _SPDX_packages = packages, _SPDX_relationships = relationships }) ->
+    \(spdx@SPDXDocument { _SPDX_SPDXID = spdxid, _SPDX_comment = _, _SPDX_creationInfo = _, _SPDX_name = name, _SPDX_files = files, _SPDX_packages = packages, _SPDX_relationships = relationships }) ->
       let
         opossumMetadata = mempty
           { _metadata = Just
@@ -96,7 +96,7 @@ spdxToOpossum =
             let indx = Map.findWithDefault (undefined) root idsToIdxs
             in  G.lbft indx graph :: [G.LPath SPDXRelationship]
           )
-          roots
+          (getRootsFromDocument spdx)
         inits =
           let addS
                 :: [G.LNode SPDXRelationship]

@@ -18,6 +18,7 @@ module Opossum.Opossum
   , Opossum_FrequentLicense(..)
   , Opossum_Coordinates(..)
   , purlToCoordinates
+  , coordinatesAreNotNull
   , Opossum_ExternalAttribution(..)
   , Opossum_ExternalAttribution_Source(..)
   , Opossum(..)
@@ -34,8 +35,8 @@ import qualified Data.Map                      as Map
 import qualified Data.Maybe                    as Maybe
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
-import qualified Data.Vector                   as V
 import           Data.UUID                      ( UUID )
+import qualified Data.Vector                   as V
 import           GHC.Generics
 import           PURL.PURL
 import qualified System.FilePath               as FP
@@ -182,6 +183,9 @@ purlToCoordinates (PURL { _PURL_type = type_, _PURL_namespace = namespace, _PURL
                         (fmap T.pack namespace)
                         (Just $ T.pack name)
                         (fmap T.pack version)
+coordinatesAreNotNull :: Opossum_Coordinates -> Bool
+coordinatesAreNotNull (Opossum_Coordinates Nothing Nothing _ Nothing) = False
+coordinatesAreNotNull _ = True
 
 data Opossum_ExternalAttribution = Opossum_ExternalAttribution
   { _source                :: Opossum_ExternalAttribution_Source
@@ -335,8 +339,10 @@ instance Semigroup Opossum where
         (++)
         (_resourcesToAttributions opossum1)
         (_resourcesToAttributions opossum2) -- TODO: nub
-      mergedAttributionBreakpoints = (_attributionBreakpoints opossum1 <> _attributionBreakpoints opossum2) -- TODO: nub
-      mergedFilesWithChildren = (_filesWithChildren opossum1 <> _filesWithChildren opossum2) -- TODO: nub
+      mergedAttributionBreakpoints =
+        (_attributionBreakpoints opossum1 <> _attributionBreakpoints opossum2) -- TODO: nub
+      mergedFilesWithChildren =
+        (_filesWithChildren opossum1 <> _filesWithChildren opossum2) -- TODO: nub
       mergedFrequentLicenses =
         List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
     in
@@ -356,8 +362,20 @@ writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributio
     hPutStrLn IO.stderr ("metadata: " ++ show m)
     hPutStrLn IO.stderr ("resources: #files=" ++ show (countFiles rs))
     hPutStrLn IO.stderr ("externalAttributions: #=" ++ show (length eas))
-    mapM_ (\easOfType -> hPutStrLn IO.stderr ("externalAttributions of type '" ++ head easOfType ++ "' #=" ++ show (length easOfType)))
-      (List.groupBy (==) (List.sort $ map ((\ (Opossum_ExternalAttribution_Source s _) -> s) . _source) (Map.elems eas)))
+    mapM_
+      (\easOfType -> hPutStrLn
+        IO.stderr
+        ("externalAttributions of type '" ++ head easOfType ++ "' #=" ++ show
+          (length easOfType)
+        )
+      )
+      (List.groupBy
+        (==)
+        (List.sort $ map
+          ((\(Opossum_ExternalAttribution_Source s _) -> s) . _source)
+          (Map.elems eas)
+        )
+      )
     hPutStrLn IO.stderr ("resourcesToAttributions: #=" ++ show (length rtas))
     hPutStrLn IO.stderr ("attributionBreakpoints: #=" ++ show (length abs))
     hPutStrLn IO.stderr ("filesWithChildren: #=" ++ show (length fwcs))

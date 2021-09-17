@@ -34,8 +34,10 @@ import qualified Data.Text                     as T
 import qualified Data.Vector                   as V
 import qualified Distribution.Parsec           as SPDX
 import qualified Distribution.SPDX             as SPDX
-import           SPDX.Document.Common           ( parseLicenses
+import           SPDX.Document.Common           ( parseLicenseExpression
+                                                , parseLicenses
                                                 , renderSpdxLicense
+                                                , spdxMaybeToMaybe
                                                 )
 import qualified System.FilePath               as FP
 import           System.IO                      ( Handle
@@ -156,10 +158,12 @@ instance A.FromJSON ScancodePackage where
       ) :: A.Parser [ScancodePackage]
     license <-
       v
-      A..:? "license_expressions"
+      A..:? "license_expression"
       >>=   (\case
-              Just lics -> return $ parseLicenses lics
-              Nothing   -> return Nothing
+              Just "unknown" -> return Nothing
+              Just lics ->
+                (return . spdxMaybeToMaybe . parseLicenseExpression) lics
+              Nothing -> return Nothing
             )
     copyright <- v A..:? "copyright"
     return $ ScancodePackage purl license copyright dependencies
@@ -248,7 +252,7 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
               (fmap T.pack copyright)
               (fmap (T.pack . renderSpdxLicense) licenses)
               Nothing
-              False
+              True
 
         let
           o = mempty
@@ -305,6 +309,7 @@ parseScancodeBS bs = case (A.eitherDecode bs :: Either String ScancodeFile) of
   Right (ScancodeFile scFiles) ->
     mconcat $ map scancodeFileEntryToOpossum scFiles
   Left err -> do
+    hPutStrLn IO.stderr err
     putStrLn err
     undefined -- TODO
 
