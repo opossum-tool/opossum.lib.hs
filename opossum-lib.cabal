@@ -27,6 +27,7 @@ library
       Opossum.Opossum
       Opossum.OpossumDependencyCheckUtils
       Opossum.OpossumScancodeUtils
+      Opossum.OpossumScanossUtils
       Opossum.OpossumSPDXUtils
       Opossum.OpossumUtils
   other-modules:
