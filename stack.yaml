@@ -10,7 +10,7 @@ packages:
 
 extra-deps:
 - git: https://github.com/maxhbr/spdx-tools-hs
-  commit: 9e810e4c55747cef79af647056483864012612e9
+  commit: 5dfb63dfd6c1629208369c9bbc9b401b59aff3b3
 - git: https://github.com/maxhbr/packageurl-hs
   commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
 - spdx-1.0.0.2@sha256:7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed,2008

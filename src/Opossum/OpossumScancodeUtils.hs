@@ -310,7 +310,6 @@ parseScancodeBS bs = case (A.eitherDecode bs :: Either String ScancodeFile) of
     mconcat $ map scancodeFileEntryToOpossum scFiles
   Left err -> do
     hPutStrLn IO.stderr err
-    putStrLn err
     undefined -- TODO
 
 parseScancodeToOpossum :: FilePath -> IO Opossum
