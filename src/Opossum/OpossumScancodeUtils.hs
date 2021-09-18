@@ -13,9 +13,9 @@
 module Opossum.OpossumScancodeUtils
   ( parseScancodeToOpossum
   , parseScancodeBS
-  , ScancodeFile (..)
-  , ScancodeFileEntry (..)
-  , ScancodePackage (..)
+  , ScancodeFile(..)
+  , ScancodeFileEntry(..)
+  , ScancodePackage(..)
   ) where
 
 import           Opossum.Opossum
@@ -31,8 +31,10 @@ import           Data.List                      ( intercalate )
 import qualified Data.List                     as List
 import qualified Data.Map                      as Map
 import           Data.Maybe                     ( fromMaybe
+                                                , isJust
                                                 , maybeToList
                                                 )
+import           Data.Monoid
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
 import qualified Data.Vector                   as V
@@ -194,13 +196,32 @@ instance A.FromJSON ScancodeFileEntry where
     -- sha256 <- v `getHash` "sha256"
     -- sha512 <- v `getHash` "sha512"
     -- let idFromHashes = mconcat $ sha1 ++ md5 ++ sha256 ++ sha512
+    let applyAll = appEndo . mconcat . map Endo
+    licenseTransformator <- do
+      licenseObjects    <- (v A..: "licenses" :: A.Parser [A.Object])
+      licenseNameTuples <- mapM
+        (\v' -> do
+          key     <- v' A..: "key" :: A.Parser T.Text
+          spdxkey <- v' A..:? "spdx_license_key" :: A.Parser (Maybe T.Text)
+          return (key, spdxkey)
+        )
+        licenseObjects
+      ( return
+        . (\fun -> T.unpack . fun . T.pack)
+        . applyAll
+        . map (\(k1, Just s1) -> T.replace k1 s1)
+        . List.sortBy
+            (\(k1, _) -> \(k2, _) -> (T.length k1) `compare` (T.length k2))
+        . filter (\(_, spdxkey) -> isJust spdxkey)
+        )
+        licenseNameTuples
     license <-
       v
       A..:? "license_expressions"
-      >>=   (\case
-              Just lics -> return $ parseLicenses lics
-              Nothing   -> return Nothing
-            )
+      >>=   (return . (\case
+              Just lics -> parseLicenses (map licenseTransformator lics)
+              Nothing   -> Nothing
+            ))
     copyrights <- do
       listOfCopyrightObjects <-
         (v A..:? "copyrights" :: A.Parser (Maybe A.Array))
@@ -210,7 +231,7 @@ instance A.FromJSON ScancodeFileEntry where
                 $ \v' -> v' A..: "value" :: A.Parser String
           in  mapM getValueFromCopyrightObject (V.toList cos)
         Nothing -> return []
-    packages   <- v A..: "packages"
+    packages <- v A..: "packages"
     return (ScancodeFileEntry path is_file license copyrights packages)
 
 data ScancodeFile = ScancodeFile
