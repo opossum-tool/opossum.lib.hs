@@ -12,6 +12,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Opossum.OpossumScancodeUtils
   ( parseScancodeToOpossum
+  , parseScancodeBS
+  , ScancodeFile (..)
+  , ScancodeFileEntry (..)
+  , ScancodePackage (..)
   ) where
 
 import           Opossum.Opossum
@@ -206,7 +210,6 @@ instance A.FromJSON ScancodeFileEntry where
                 $ \v' -> v' A..: "value" :: A.Parser String
           in  mapM getValueFromCopyrightObject (V.toList cos)
         Nothing -> return []
-    copyrights <- return []
     packages   <- v A..: "packages"
     return (ScancodeFileEntry path is_file license copyrights packages)
 

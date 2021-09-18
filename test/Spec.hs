@@ -31,6 +31,7 @@ import           Opossum.Opossum
 import           Opossum.OpossumSPDXUtils
 import           Opossum.OpossumUtils
 import           Opossum.OpossumDependencyCheckUtils
+import           Opossum.OpossumScancodeUtils
 
 
 opossumFileBS :: B.ByteString
@@ -39,6 +40,9 @@ opossumFileBS =
 
 spdxYamlFileBS :: B.ByteString
 spdxYamlFileBS = B.fromStrict $(embedFile "test/data/document.spdx.yml")
+
+scancodeJsonBS :: B.ByteString
+scancodeJsonBS = B.fromStrict $(embedFile "test/data/tools-java.scancode.json")
 
 dependencyCheckJsonBS :: B.ByteString
 dependencyCheckJsonBS = B.fromStrict $(embedFile "test/data/dependency-check-report.json")
@@ -299,6 +303,19 @@ opossumSpec = do
       length (_resourcesToAttributions opossum_from_ort) `shouldBe` 298
     it "num of frequentLicenses should from spdx match" $ do
       length (_frequentLicenses opossum_from_ort) `shouldBe` 0
+
+  describe "Opossum Utils ScanCode Converter" $ do
+    it "should parse json file" $ do
+      let decoded = (A.eitherDecode scancodeJsonBS :: Either String ScancodeFile)
+          files = (_scf_files . (fromRight (ScancodeFile []))) decoded
+          pomFile = head $ filter (\f -> _scfe_file f == "pom.xml") files
+      (isRight decoded) `shouldBe` True
+      _scfe_file pomFile `shouldBe` "pom.xml"
+      _scfe_copyrights pomFile `shouldBe` [ "Copyright (c) 2020 Source Auditor Inc. Gary O'Neall" ]
+
+    opossumFromSC <- runIO $ parseScancodeBS scancodeJsonBS
+    it "should parse json to opossum" $ do
+      countFiles (_resources opossumFromSC) `shouldBe` 105
 
   describe "Opossum Utils Dependency-Check Converter" $ do
 
