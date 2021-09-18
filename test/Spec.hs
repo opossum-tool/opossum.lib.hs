@@ -30,6 +30,7 @@ import           SPDX.Document
 import           Opossum.Opossum
 import           Opossum.OpossumSPDXUtils
 import           Opossum.OpossumUtils
+import           Opossum.OpossumDependencyCheckUtils
 
 
 opossumFileBS :: B.ByteString
@@ -38,6 +39,9 @@ opossumFileBS =
 
 spdxYamlFileBS :: B.ByteString
 spdxYamlFileBS = B.fromStrict $(embedFile "test/data/document.spdx.yml")
+
+dependencyCheckJsonBS :: B.ByteString
+dependencyCheckJsonBS = B.fromStrict $(embedFile "test/data/dependency-check-report.json")
 
 opossumSpec = do
   describe "Opossum Model"
@@ -143,7 +147,7 @@ opossumSpec = do
                 [ "{"
                 , "    \"packageName\": \"adduser\","
                 , "    \"packageVersion\": \"3.118\","
-                , "    \"url\": \"\","
+                , "    \"url\": \"https://github.com/some/repo\","
                 , "    \"licenseName\": \"MIT AND GPL-2.0-or-later\","
                 , "    \"copyright\": \"Some Copyright\","
                 , "    \"source\": {"
@@ -157,6 +161,7 @@ opossumSpec = do
                                                          Nothing
                                                          (Just "adduser")
                                                          (Just "3.118")
+                                                         Nothing
               expected_ea = Opossum_ExternalAttribution
                 expected_source
                 100
@@ -166,7 +171,8 @@ opossumSpec = do
                 (Just "Some Copyright")
                 (Just "MIT AND GPL-2.0-or-later")
                 Nothing
-                False
+                (Just "https://github.com/some/repo")
+                mempty
             ea <-
               case
                 (A.eitherDecode ea_str :: Either
@@ -199,6 +205,7 @@ opossumSpec = do
                                                          Nothing
                                                          (Just "adduser")
                                                          (Just "3.118")
+                                                         Nothing
               expected_ea = Opossum_ExternalAttribution
                 expected_source
                 100
@@ -208,7 +215,8 @@ opossumSpec = do
                 (Just "Some Copyright")
                 Nothing
                 Nothing
-                True
+                Nothing
+                justPreselectedFlags
             ea <-
               case
                 (A.eitherDecode ea_str :: Either
@@ -234,7 +242,7 @@ opossumSpec = do
   describe "Opossum Utils"
     $ let source = Opossum_ExternalAttribution_Source "test" 100
           expected_coordinates version =
-            Opossum_Coordinates Nothing Nothing (Just "name") (Just version)
+            Opossum_Coordinates Nothing Nothing (Just "name") (Just version) Nothing
           ea1 = Opossum_ExternalAttribution source
                                             100
                                             Nothing
@@ -243,7 +251,8 @@ opossumSpec = do
                                             Nothing
                                             Nothing
                                             Nothing
-                                            False
+                                            Nothing
+                                            mempty
           ea2 = Opossum_ExternalAttribution source
                                             100
                                             Nothing
@@ -252,7 +261,8 @@ opossumSpec = do
                                             Nothing
                                             Nothing
                                             Nothing
-                                            False
+                                            Nothing
+                                            mempty
           ea3 = Opossum_ExternalAttribution source
                                             100
                                             Nothing
@@ -261,7 +271,8 @@ opossumSpec = do
                                             Nothing
                                             Nothing
                                             Nothing
-                                            True
+                                            Nothing
+                                            justPreselectedFlags
       in  do
             it "mergifyEA" $ do
               (ea1 `mergifyEA` ea1) `shouldBe` (Just ea1)
@@ -289,6 +300,20 @@ opossumSpec = do
     it "num of frequentLicenses should from spdx match" $ do
       length (_frequentLicenses opossum_from_ort) `shouldBe` 0
 
+  describe "Opossum Utils Dependency-Check Converter" $ do
+
+    it "should parse json to Package" $ do
+      let jsonStr = "{ \"id\": \"pkg:nuget\\/Antlr4BuildTasks@8.13\" }"
+      let decoded = (A.eitherDecode jsonStr :: Either String DependencyCheckPackage)
+      (isRight decoded) `shouldBe` True
+
+    it "should parse json file" $ do
+      let decoded = (A.eitherDecode dependencyCheckJsonBS :: Either String DependencyCheckFile)
+      (isRight decoded) `shouldBe` True
+
+    opossumFromDC <- runIO $ parseDependencyCheckBS dependencyCheckJsonBS
+    it "should parse json to opossum" $ do
+      countFiles (_resources opossumFromDC) `shouldBe` 62
 
 main :: IO ()
 main = hspec $ opossumSpec

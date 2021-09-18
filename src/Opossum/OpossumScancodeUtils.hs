@@ -232,12 +232,8 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
             ++ [(intercalate "@" $ [n] ++ (maybeToList v))]
         _ -> "UNKNOWN"
       coordinatesFromPurl = case purl of
-        Just (PURL { _PURL_namespace = ns, _PURL_name = n, _PURL_version = v })
-          -> Opossum_Coordinates ((Just . T.pack) typeFromPurl)
-                                 (fmap T.pack ns)
-                                 ((Just . T.pack) n)
-                                 (fmap T.pack v)
-        _ -> Opossum_Coordinates Nothing Nothing Nothing Nothing
+        Just purl -> purlToCoordinates purl
+        _         -> Opossum_Coordinates Nothing Nothing Nothing Nothing Nothing
     in
       do
         uuid <- randomIO
@@ -252,7 +248,8 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
               (fmap T.pack copyright)
               (fmap (T.pack . renderSpdxLicense) licenses)
               Nothing
-              True
+              Nothing
+              justPreselectedFlags
 
         let
           o = mempty
@@ -285,11 +282,12 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
                   50
                   Nothing
                   Nothing
-                  (Opossum_Coordinates Nothing Nothing Nothing Nothing)
+                  (Opossum_Coordinates Nothing Nothing Nothing Nothing Nothing)
                   ((Just . T.pack . unlines) copyrights)
                   (fmap (T.pack . renderSpdxLicense) licenses)
                   Nothing
-                  False
+                  Nothing
+                  mempty
             return $ mempty
               { _resources               = resources
               , _externalAttributions    = (Map.singleton uuid ea)

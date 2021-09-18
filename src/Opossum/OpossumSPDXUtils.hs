@@ -52,12 +52,17 @@ spdxToOpossum =
         { _source = Opossum_ExternalAttribution_Source "SPDXFile" 100
         , _attributionConfidence = 100
         , _comment = (Just . T.pack . C8.unpack . A.encodePretty) raw
-        , _originId = Nothing
-        , _coordinates = Opossum_Coordinates Nothing Nothing Nothing Nothing
-        , _copyright = Just $ T.pack copyright
-        , _licenseName = Just $ T.pack $ show license -- TODO
-        , _licenseText = Nothing -- TODO
-        , _preselected = False
+        , _originId              = Nothing
+        , _coordinates           = Opossum_Coordinates Nothing
+                                                       Nothing
+                                                       Nothing
+                                                       Nothing
+                                                       Nothing
+        , _copyright             = Just $ T.pack copyright
+        , _licenseName           = Just $ T.pack $ show license -- TODO
+        , _licenseText           = Nothing -- TODO
+        , _url                   = Nothing
+        , _flags                 = mempty
         }
 
     spdxPackageToEA :: SPDXPackage -> Opossum_ExternalAttribution
@@ -71,12 +76,14 @@ spdxToOpossum =
                                                        Nothing
                                                        ((Just . T.pack) name)
                                                        (fmap T.pack version)
+                                                       Nothing
         , _copyright             = case copyright of
                                      SPDXJust copyright' -> (Just . T.pack) copyright'
                                      _ -> Nothing
         , _licenseName           = Just $ T.pack $ show license -- TODO
         , _licenseText           = Nothing -- TODO
-        , _preselected           = True
+        , _url                   = Nothing
+        , _flags                 = justPreselectedFlags
         }
 
     spdxFileOrPackageToEA

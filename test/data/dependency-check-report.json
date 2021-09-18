@@ -1,0 +1,1884 @@
+{
+  "reportSchema": "1.1",
+  "scanInfo": {
+    "engineVersion": "6.2.2",
+    "dataSource": [
+      {
+        "name": "NVD CVE Checked",
+        "timestamp": "2021-09-18T09:35:10"
+      },
+      {
+        "name": "NVD CVE Modified",
+        "timestamp": "2021-09-18T05:00:01"
+      },
+      {
+        "name": "VersionCheckOn",
+        "timestamp": "2021-09-18T09:35:10"
+      }
+    ]
+  },
+  "projectInfo": {
+    "name": "",
+    "reportDate": "2021-09-18T12:12:03.070766Z",
+    "credits": {
+      "NVD": "This report contains data retrieved from the National Vulnerability Database: http://nvd.nist.gov",
+      "NPM": "This report may contain data retrieved from the NPM Public Advisories: https://www.npmjs.com/advisories",
+      "RETIREJS": "This report may contain data retrieved from the RetireJS community: https://retirejs.github.io/retire.js/",
+      "OSSINDEX": "This report may contain data retrieved from the Sonatype OSS Index: https://ossindex.sonatype.org"
+    }
+  },
+  "dependencies": [
+    {
+      "isVirtual": false,
+      "fileName": "ATN.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ATN.js",
+      "md5": "2b9e41d85ff243bcfc3b036a9c20a38e",
+      "sha1": "c5f3e35550c0d9ab5a6d152e7d755eb0add47c28",
+      "sha256": "50116d86983e70272d1646cfa8c96ac5b6a234e6d2d03ac8819ffbd63d8a92c5",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ATNConfig.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ATNConfig.js",
+      "md5": "54cb7efc991178c0eaf3885d9f2a8713",
+      "sha1": "152a519047c604a42438e42d40d5dcd9fc77cc1a",
+      "sha256": "9198cfe1226a8307dd7240f0cabe4619546d6f9e56340110a4b3113a52399b44",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ATNConfigSet.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ATNConfigSet.js",
+      "md5": "7dcebe9da64f279359e20602a9fa9e06",
+      "sha1": "a3f9fba1c2177bd9e36a1403b43f4e5ec5c68372",
+      "sha256": "4d51e16bf2a5c86a6b17920edfb7a2100bb8b7275622afee78629718331c2ab2",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ATNDeserializationOptions.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ATNDeserializationOptions.js",
+      "md5": "50ea77e4a28fe1e34f8190e82e8d071b",
+      "sha1": "ecf3dd1a7315f0897e9d4018a6b0cc2919ede22a",
+      "sha256": "858e0bbd856b75f5927a732fd4de65c7a59fc6bedcebb0fc602e8a8b6ad731d5",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ATNDeserializer.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ATNDeserializer.js",
+      "md5": "8005f46c1bb82e809391e1cdde934c47",
+      "sha1": "57d097908b6ce63a874eb9a24244aa0e5bf0c5da",
+      "sha256": "e99a3ee3b6c2903fc2267f59039175db8dc33c0e09043a16d6e683319adc4593",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ATNSimulator.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ATNSimulator.js",
+      "md5": "9c2fc6a148bbc5e0768f2882b79ed114",
+      "sha1": "743e98cc70fcb17b010a26f6c7f9fea61af3ba34",
+      "sha256": "4068fa640c89e3eb433138b2ef0b5cdc2b6a3181e7a7e1fdc071fa6dfe04a9da",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ATNState.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ATNState.js",
+      "md5": "c82f1cb5a73170eee1d6bc9b2b5d9b26",
+      "sha1": "562a3084d33a7d6b2f6b26672047453b3937f38e",
+      "sha256": "b30f9cb4ffc8ae102da798d989d2699cbcf1fcc2c27203323071df3706493bec",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ATNType.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ATNType.js",
+      "md5": "fed455d138c7682009ebdc84fe4677a0",
+      "sha1": "65e9a674b31e11cdfbc3aa973ef0920f38d678ca",
+      "sha256": "97529fc44540f0cc49bd133db74e593f6a8cba7d07e8d8b1401bfe6324c4bd8d",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Antlr4.Test.csproj",
+      "filePath": "runtime-testsuite/test/org/antlr/v4/test/runtime/csharp/Antlr4.Test.csproj",
+      "md5": "84395c10d62f395d2b40ed52f6ea434a",
+      "sha1": "ad06e20a662f6f4eb73ddd3bb24efe3bb5dfd12d",
+      "sha256": "6795e7470f4f23990125b93338f210462e8e5444088b66d3c3001337e705d6f1",
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "file",
+            "name": "name",
+            "value": "Antlr4.Test"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGH",
+            "source": "file",
+            "name": "name",
+            "value": "Antlr4.Test"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "MEDIUM",
+            "source": "file",
+            "name": "name",
+            "value": "Antlr4.Test"
+          },
+          {
+            "type": "version",
+            "confidence": "MEDIUM",
+            "source": "file",
+            "name": "version",
+            "value": "4"
+          }
+        ]
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Antlr4.csproj",
+      "filePath": "runtime/CSharp/src/Antlr4.csproj",
+      "md5": "ea6f530c6c4136e69b799e5c7b811fe5",
+      "sha1": "f5da7cc9b57dacd763f7a475baf78490d0c94b8c",
+      "sha256": "d71336ff88c53adb244872b7124274137fd9e0566786dbde6b2ae5a12ecca2e0",
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "file",
+            "name": "name",
+            "value": "Antlr4"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGH",
+            "source": "file",
+            "name": "name",
+            "value": "Antlr4"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "MEDIUM",
+            "source": "file",
+            "name": "name",
+            "value": "Antlr4"
+          },
+          {
+            "type": "version",
+            "confidence": "MEDIUM",
+            "source": "file",
+            "name": "version",
+            "value": "4"
+          }
+        ]
+      }
+    },
+    {
+      "isVirtual": true,
+      "fileName": "Antlr4BuildTasks:8.13",
+      "filePath": "runtime/CSharp/tests/issue-2693/Test.csproj",
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "LOW",
+            "source": "msbuild",
+            "name": "id",
+            "value": "Antlr4BuildTasks"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "msbuild",
+            "name": "id",
+            "value": "Antlr4BuildTasks"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "msbuild",
+            "name": "version",
+            "value": "8.13"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:nuget/Antlr4BuildTasks@8.13",
+          "confidence": "HIGHEST",
+          "url": "https://ossindex.sonatype.org/component/pkg:nuget/Antlr4BuildTasks@8.13?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ],
+      "vulnerabilityIds": [
+        {
+          "id": "cpe:2.3:a:tasks:tasks:8.13:*:*:*:*:*:*:*",
+          "confidence": "LOW"
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "source": "NVD",
+          "name": "CVE-2020-22475",
+          "severity": "MEDIUM",
+          "cvssv2": {
+            "score": 4.6,
+            "accessVector": "LOCAL",
+            "accessComplexity": "LOW",
+            "authenticationr": "NONE",
+            "confidentialImpact": "PARTIAL",
+            "integrityImpact": "PARTIAL",
+            "availabilityImpact": "PARTIAL",
+            "severity": "MEDIUM",
+            "version": "2.0",
+            "exploitabilityScore": "3.9",
+            "impactScore": "6.4"
+          },
+          "cvssv3": {
+            "baseScore": 6.8,
+            "attackVector": "PHYSICAL",
+            "attackComplexity": "LOW",
+            "privilegesRequired": "NONE",
+            "userInteraction": "NONE",
+            "scope": "UNCHANGED",
+            "confidentialityImpact": "HIGH",
+            "integrityImpact": "HIGH",
+            "availabilityImpact": "HIGH",
+            "baseSeverity": "MEDIUM",
+            "exploitabilityScore": "0.9",
+            "impactScore": "5.9",
+            "version": "3.1"
+          },
+          "cwes": [
+            "CWE-276"
+          ],
+          "description": "\"Tasks\" application version before 9.7.3 is affected by insecure permissions. The VoiceCommandActivity application component allows arbitrary applications on a device to add tasks with no restrictions.",
+          "notes": "",
+          "references": [
+            {
+              "source": "MISC",
+              "url": "https://lyhinslab.org/index.php/2020/07/18/how-the-white-box-hacking-works-ok-google-i-wanna-pwn-this-app/",
+              "name": "https://lyhinslab.org/index.php/2020/07/18/how-the-white-box-hacking-works-ok-google-i-wanna-pwn-this-app/"
+            },
+            {
+              "source": "MISC",
+              "url": "https://www.exploit-db.com/exploits/49563",
+              "name": "https://www.exploit-db.com/exploits/49563"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:tasks:tasks:*:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true",
+                "versionEndExcluding": "9.7.3"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "isVirtual": false,
+      "fileName": "BufferedTokenStream.js",
+      "filePath": "runtime/JavaScript/src/antlr4/BufferedTokenStream.js",
+      "md5": "34584f5d7390826630f495b09e383e5e",
+      "sha1": "1172009428e3492c85b900f493b59816510ce136",
+      "sha256": "f177bd3df52ee6699553779a4ddfda931ac16e69bf30f4852fec1db0c005459a",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "CaseChangingStream.js",
+      "filePath": "doc/resources/CaseChangingStream.js",
+      "md5": "a858f78c118f5e1d5a8f566ed45ddfa9",
+      "sha1": "8df4e92c7462035e764532391a416633378c339c",
+      "sha256": "dd8959352e6f2f5730e6909037859a15e53702b61f1575a9c1916db01cce5a28",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "CharStreams.js",
+      "filePath": "runtime/JavaScript/src/antlr4/CharStreams.js",
+      "md5": "18668761b339c19e5e46c42c1d592930",
+      "sha1": "54355bfd428f75502879d9c8b3c7833bcc695f9c",
+      "sha256": "fcde4dd3df6317d829ca18c5413e5ef1fefd0b8acf44c32d25cb9bfb1d654eb2",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "CommonTokenFactory.js",
+      "filePath": "runtime/JavaScript/src/antlr4/CommonTokenFactory.js",
+      "md5": "c4efd06ac35333a40b77540ce0a35c9e",
+      "sha1": "04d2ee91f3ee64863c96173b793edb00ee5b8d87",
+      "sha256": "d508fe7d3d0da24142f112b2859a29f114861321bd24e867e02af1c12e9ff675",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "CommonTokenStream.js",
+      "filePath": "runtime/JavaScript/src/antlr4/CommonTokenStream.js",
+      "md5": "da904f417aa03d1aa669783c3139fa79",
+      "sha1": "8fb2bc10592ab0f5730fcabf3e6adf174c824acf",
+      "sha256": "ba4855994d166572652805d37f30aa20dd2d656ad6a6a11c3a554ccd6a2660f2",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "DFA.js",
+      "filePath": "runtime/JavaScript/src/antlr4/dfa/DFA.js",
+      "md5": "46a84e2d806dbdae2faae320d7ba1d42",
+      "sha1": "fd19a00678b81e532434de34c83a44b8d7f1475e",
+      "sha256": "a3892b252c1d3b8dd310318687ccf20cf22d319f6b61748b5fdc1134a0cf3e65",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "DFASerializer.js",
+      "filePath": "runtime/JavaScript/src/antlr4/dfa/DFASerializer.js",
+      "md5": "864f9346130386e6e7b49601345fcf5d",
+      "sha1": "0d0a173cd4ba0cc77ab34e9184dfb25c5b21de02",
+      "sha256": "3d467e307625d84190f237a32c192eaaf28e4657441d87dbc1a6f056332c5392",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "DFAState.js",
+      "filePath": "runtime/JavaScript/src/antlr4/dfa/DFAState.js",
+      "md5": "ec831a0a511467aa532463b258fa7a7c",
+      "sha1": "bf5188a89556458f06d647a5e2690e110b3b271d",
+      "sha256": "1a26c039c33d1a6f2e6c085d57b21cd56aa94eeedb5ec46ccbebe745090af67e",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "DiagnosticErrorListener.js",
+      "filePath": "runtime/JavaScript/src/antlr4/error/DiagnosticErrorListener.js",
+      "md5": "a39227eeb0584c3f6702c30d68808c91",
+      "sha1": "dfa97a2578237342546d8fa4c90755533ddb9991",
+      "sha256": "319a93bd8d797c774dde1ff43b7dd64ee6cb05d46a82674cb5c5ce334343a840",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ErrorListener.js",
+      "filePath": "runtime/JavaScript/src/antlr4/error/ErrorListener.js",
+      "md5": "b4757aa490570319dce37d6da034ad80",
+      "sha1": "30f24a0f111e528518dcc934008a128ddf701ae6",
+      "sha256": "991071df08f3e042293f6432d803cefbf9af665cb3da2b820be93e8ef9286c9f",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ErrorStrategy.js",
+      "filePath": "runtime/JavaScript/src/antlr4/error/ErrorStrategy.js",
+      "md5": "2402eccac7c14676ad363227d8e506d0",
+      "sha1": "f9af37ade4e1071d13e847341010f1afa1568a58",
+      "sha256": "0279850c851dbe67b16de9b8f31c78ee8411d2b40404f75c024e365319960dd6",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Errors.js",
+      "filePath": "runtime/JavaScript/src/antlr4/error/Errors.js",
+      "md5": "6818783e5b8e837f7fc620117bf0d8a5",
+      "sha1": "90a6c331c19e00609830a977751fd6c422f2d6be",
+      "sha256": "aee1d88842ec78916ec6f56d6429e245f2ba2e36c2817c23bd1289ed515ed842",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "FileStream.js",
+      "filePath": "runtime/JavaScript/src/antlr4/FileStream.js",
+      "md5": "bade4053e2808bb55f471d0754f4d9dc",
+      "sha1": "016da4f13a868b5fb2eb9a2a43f1f8223e286c06",
+      "sha256": "42a1106e715e16dd5ca49ddd88f8c7e8e5d07e25f80cb7cc7aab9b14191ca568",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "InputStream.js",
+      "filePath": "runtime/JavaScript/src/antlr4/InputStream.js",
+      "md5": "b15dd5220cc8f951e4ec4423c47b6c85",
+      "sha1": "378aa372689b60edc1fb1474ba1d37073fd3fbad",
+      "sha256": "a526f2c0edf01c7bda41b5154362f0b9bc4e1f14f4e7b094a3c00496074a56b8",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "IntervalSet.js",
+      "filePath": "runtime/JavaScript/src/antlr4/IntervalSet.js",
+      "md5": "5b7c957ff37b5de2f480916be6a367ad",
+      "sha1": "ce10a42261c512e9c11397f12a5cb0f313b3780e",
+      "sha256": "f231dcad209a13d68fa8472a1b1bc08e15ae4b99c60e8562b0371805fa5f8cba",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "LL1Analyzer.js",
+      "filePath": "runtime/JavaScript/src/antlr4/LL1Analyzer.js",
+      "md5": "d642285205f17e959051f5b82e9e8f81",
+      "sha1": "599c772354f55ae04d34e4f9f62f5eaf6825141b",
+      "sha256": "d3952ca9080d3cc478fd3f2823749d75f835f19f49ecc8c25aa9d621d2b246c4",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Lexer.js",
+      "filePath": "runtime/JavaScript/src/antlr4/Lexer.js",
+      "md5": "de9721a7f1c2c1c1909371784682abc0",
+      "sha1": "b956ce8e1c02314625c51b30921e603b643eb678",
+      "sha256": "6c11e5686652142f1a2bd521a1f9a12acb3d8005bd13de0670ad84dfc2b8bd4d",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "LexerATNSimulator.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/LexerATNSimulator.js",
+      "md5": "088dc6c28de0fabd2c6e269b6f7d20f2",
+      "sha1": "f78f8e91ee061b6081ef34ee9d445030583b06ef",
+      "sha256": "8d72b66a24384f334e56cb1c57546739eae97f07dbdcfe8f523ad750b203b617",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "LexerAction.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/LexerAction.js",
+      "md5": "4fe63bd48e250f0327214406de9dc647",
+      "sha1": "87cbea2c57596c03e7e2eefe6c703cbdac772c77",
+      "sha256": "c507dcf53cc8bb622d8cfd59cfb0ba2fd3d3f26fcab8e481c710df3560f02800",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "LexerActionExecutor.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/LexerActionExecutor.js",
+      "md5": "8cb7d2bc3ee96e460d9f0535162629fc",
+      "sha1": "a7154b7878e696ac6ca42b5a38e28ca15887f17b",
+      "sha256": "9acde65379e7ea6816edbec611a84eb4a7016496b82894e61780e903b85688ce",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Parser.js",
+      "filePath": "runtime/JavaScript/src/antlr4/Parser.js",
+      "md5": "56ed5f7665cd8c06f9f202e19849a2d2",
+      "sha1": "b4593ef08f5e934d52fe03264bafbd5d331ed3b3",
+      "sha256": "5e951a4b11587c06dbf6677e9ebec8c6ec7a3a4dd5aedfe4bf4776989589c639",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ParserATNSimulator.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/ParserATNSimulator.js",
+      "md5": "b5a89300fa494b1cf8c456cbeab1cdf1",
+      "sha1": "9b6dc96420449371577209d232ec5b8edf743c13",
+      "sha256": "9537e1f05a84038fa613c8b860c82407ddebf220aaffe3d76527732418248678",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "ParserRuleContext.js",
+      "filePath": "runtime/JavaScript/src/antlr4/ParserRuleContext.js",
+      "md5": "85b390cc212efdee1eef74e5fbc912a9",
+      "sha1": "64d04e304deb73b7f744015086bb6aea7b447182",
+      "sha256": "978ebb5522a6b8315f053c9c0ef3137300457dbb23846b51476c837858e1b31c",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "PredictionContext.js",
+      "filePath": "runtime/JavaScript/src/antlr4/PredictionContext.js",
+      "md5": "d0a0a698812bc9bf8a29b519705ca05e",
+      "sha1": "37393054491caf364a85529cf22b65b669856e3d",
+      "sha256": "59392900384629b41c3866037a7b3d0858aaff1532b697e928d6034c78b990a9",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "PredictionMode.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/PredictionMode.js",
+      "md5": "9ffa3cb545decf2200dbbe382154db19",
+      "sha1": "377152154698415519326ba201a8c611c0357529",
+      "sha256": "da0cf5593ddb3f8a1cfb19e9bd9bc5c12c50b845ef2bc98b7afbfc6c4f8915a6",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Recognizer.js",
+      "filePath": "runtime/JavaScript/src/antlr4/Recognizer.js",
+      "md5": "8cb04a99863e8954727c9294afdb7f12",
+      "sha1": "8726562a81a8c4c14618e89ff37831c9d145ad7d",
+      "sha256": "a264e6958fbe8f3234406e7168e368f07d5402f1382de13e60ae9ff0b6ccb581",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "RuleContext.js",
+      "filePath": "runtime/JavaScript/src/antlr4/RuleContext.js",
+      "md5": "07a84df0eb504c3bb477532dc6dc01ee",
+      "sha1": "52725258800cd90e9e08538036735669be9df474",
+      "sha256": "a91aba2c0ab24897229d7729ca53eba0df50e15dccf9fc148e793c33ab787e9f",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "SemanticContext.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/SemanticContext.js",
+      "md5": "f725b0238309dd2e17bbae4bf8ec8806",
+      "sha1": "841cb5588a7a4f020ac784d64fc115cead16f636",
+      "sha256": "d95e312abf8ceabec3f35d4b38f380c0a5da99f6935c7df8315b340b1495b41e",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Test.csproj",
+      "filePath": "runtime/CSharp/tests/issue-2693/Test.csproj",
+      "md5": "b19b37321abcbcb9490acf69a3b957cc",
+      "sha1": "acdd5ab1e0e4c23d7001f19a9f28259dd10e57e1",
+      "sha256": "40d804fbffb5a8b2888cf275e868263eccfe47cccaddbfff350d9927fae7e85a",
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "file",
+            "name": "name",
+            "value": "Test"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGH",
+            "source": "file",
+            "name": "name",
+            "value": "Test"
+          }
+        ],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "TestIntervalSet.test.js",
+      "filePath": "runtime/JavaScript/src/test/TestIntervalSet.test.js",
+      "md5": "96bd9de0ef55591b50ba248911165832",
+      "sha1": "8eb86c8a19e160d5ad9ea9364756e6f9204beb33",
+      "sha256": "fa677bb06231f38537dcb4025280cbd2208131a9cb5dc4ac2fd987c86e9a9424",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Token.js",
+      "filePath": "runtime/JavaScript/src/antlr4/Token.js",
+      "md5": "558e83b55965daec42a6d8aa2df9d20f",
+      "sha1": "1acd822ac3e2ea660b59003945943f0b4f6f5b76",
+      "sha256": "63491aac64410e2a4b644bd06c96bc310905ba94ae770239441eb8e11434cb80",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Transition.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/Transition.js",
+      "md5": "501f4d363af5ff42b3aa18d74f3797a4",
+      "sha1": "831484e2c7c9f556ac8b23687e394694995728b5",
+      "sha256": "acb1186a57c5c564d16ae9d4d7b62312fa7a4cb9e35116e4fbab173784ff4b00",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Tree.js",
+      "filePath": "runtime/JavaScript/src/antlr4/tree/Tree.js",
+      "md5": "2ea822472557dc03e48ea5c7edc6bf1f",
+      "sha1": "db796e12e62f8c138ef448f3d8e921113178e978",
+      "sha256": "3172d49a604ce7022c39d52b8f107c1c2a3ebae9743db8009a80146fb6af79a4",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Trees.js",
+      "filePath": "runtime/JavaScript/src/antlr4/tree/Trees.js",
+      "md5": "b0c6af30dd92892782b555f4efc4f370",
+      "sha1": "b373a8f3271339808ec95994157165856383ba5d",
+      "sha256": "91c7ddcf88f9e422e471ce5fdf705f3a55fbfdf2a25285c9d092c7593ad515d3",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "Utils.js",
+      "filePath": "runtime/JavaScript/src/antlr4/Utils.js",
+      "md5": "e284af9dc34d2c85b1681abda4baec2f",
+      "sha1": "a8b9b1598b10c2bc8fd12e40c51e548febb6f9b7",
+      "sha256": "19df419a4b2722d8a24e2d16baaf3ac84c0e196ceb9e0eb9b2415efa88dcf0cb",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "codepointat.js",
+      "filePath": "runtime/JavaScript/src/antlr4/polyfills/codepointat.js",
+      "md5": "b67a6c9f98068325576e16c5935f1c7d",
+      "sha1": "915a3342780dd2c3d2ef56c6c06fdd3276b2f889",
+      "sha256": "0e1717a4599d15bc2ab2a0d00e679e1acef737b5c9ca87a598af5c8911743382",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "fromcodepoint.js",
+      "filePath": "runtime/JavaScript/src/antlr4/polyfills/fromcodepoint.js",
+      "md5": "abf3f052640402a1255d193aac9d95a8",
+      "sha1": "088c60f469d4fba17f053de88eaac0119b57df70",
+      "sha256": "0f259001ab6559d33e94668e6bda3c3381f695c06e0badc17c615acfa8fca8cf",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": true,
+      "fileName": "glob-parent:3.1.0",
+      "filePath": "runtime/JavaScript/package-lock.json?glob-parent",
+      "projectReferences": [
+        "package-lock.json: transitive"
+      ],
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "package.json",
+            "name": "name",
+            "value": "glob-parent"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "name",
+            "value": "glob-parent"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "version",
+            "value": "3.1.0"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:npm/glob-parent@3.1.0",
+          "confidence": "HIGHEST",
+          "url": "https://ossindex.sonatype.org/component/pkg:npm/glob-parent@3.1.0?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "source": "NPM",
+          "name": "1751",
+          "unscored": "true",
+          "severity": "moderate",
+          "cwes": [],
+          "description": "`glob-parent` before 5.1.2 has a regular expression denial of service vulnerability. The enclosure regex used to check for strings ending in enclosure containing path separator.",
+          "notes": "",
+          "references": [
+            {
+              "source": "Advisory 1751: Regular expression denial of service",
+              "name": "- [CVE](https://nvd.nist.gov/vuln/detail/CVE-2020-28469)\n- [GitHub Advisory](https://github.com/advisories/GHSA-ww39-953v-wcq6)\n"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:glob-parent:\\<5.1.2:*:*:*:*:*:*:*"
+              }
+            }
+          ]
+        },
+        {
+          "source": "OSSINDEX",
+          "name": "CWE-400: Uncontrolled Resource Consumption ('Resource Exhaustion')",
+          "severity": "HIGH",
+          "cvssv3": {
+            "baseScore": 7.5,
+            "attackVector": "N",
+            "attackComplexity": "L",
+            "privilegesRequired": "N",
+            "userInteraction": "N",
+            "scope": "U",
+            "confidentialityImpact": "N",
+            "integrityImpact": "N",
+            "availabilityImpact": "H",
+            "baseSeverity": "HIGH"
+          },
+          "cwes": [
+            "CWE-400"
+          ],
+          "description": "The software does not properly restrict the size or amount of resources that are requested or influenced by an actor, which can be used to consume more resources than intended.",
+          "notes": "",
+          "references": [
+            {
+              "source": "OSSINDEX",
+              "url": "https://ossindex.sonatype.org/vulnerability/64cd5f21-8af4-4eae-ac7d-a53241ea693a?component-type=npm&component-name=glob-parent&utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2",
+              "name": "CWE-400: Uncontrolled Resource Consumption ('Resource Exhaustion')"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:glob-parent:3.1.0:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "isVirtual": true,
+      "fileName": "glob-parent:5.1.1",
+      "filePath": "runtime/JavaScript/yarn.lock?glob-parent",
+      "projectReferences": [
+        "yarn.lock: transitive"
+      ],
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "package.json",
+            "name": "name",
+            "value": "glob-parent"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "name",
+            "value": "glob-parent"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "version",
+            "value": "5.1.1"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:npm/glob-parent@5.1.1",
+          "confidence": "HIGHEST",
+          "url": "https://ossindex.sonatype.org/component/pkg:npm/glob-parent@5.1.1?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "source": "NPM",
+          "name": "1751",
+          "unscored": "true",
+          "severity": "moderate",
+          "cwes": [],
+          "description": "`glob-parent` before 5.1.2 has a regular expression denial of service vulnerability. The enclosure regex used to check for strings ending in enclosure containing path separator.",
+          "notes": "",
+          "references": [
+            {
+              "source": "Advisory 1751: Regular expression denial of service",
+              "name": "- [CVE](https://nvd.nist.gov/vuln/detail/CVE-2020-28469)\n- [GitHub Advisory](https://github.com/advisories/GHSA-ww39-953v-wcq6)\n"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:glob-parent:\\<5.1.2:*:*:*:*:*:*:*"
+              }
+            }
+          ]
+        },
+        {
+          "source": "OSSINDEX",
+          "name": "CWE-400: Uncontrolled Resource Consumption ('Resource Exhaustion')",
+          "severity": "HIGH",
+          "cvssv3": {
+            "baseScore": 7.5,
+            "attackVector": "N",
+            "attackComplexity": "L",
+            "privilegesRequired": "N",
+            "userInteraction": "N",
+            "scope": "U",
+            "confidentialityImpact": "N",
+            "integrityImpact": "N",
+            "availabilityImpact": "H",
+            "baseSeverity": "HIGH"
+          },
+          "cwes": [
+            "CWE-400"
+          ],
+          "description": "The software does not properly restrict the size or amount of resources that are requested or influenced by an actor, which can be used to consume more resources than intended.",
+          "notes": "",
+          "references": [
+            {
+              "source": "OSSINDEX",
+              "url": "https://ossindex.sonatype.org/vulnerability/64cd5f21-8af4-4eae-ac7d-a53241ea693a?component-type=npm&component-name=glob-parent&utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2",
+              "name": "CWE-400: Uncontrolled Resource Consumption ('Resource Exhaustion')"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:glob-parent:5.1.1:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "isVirtual": true,
+      "fileName": "hosted-git-info:2.8.8",
+      "filePath": "runtime/JavaScript/yarn.lock?hosted-git-info",
+      "projectReferences": [
+        "yarn.lock: transitive"
+      ],
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "package.json",
+            "name": "name",
+            "value": "hosted-git-info"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "name",
+            "value": "hosted-git-info"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "version",
+            "value": "2.8.8"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:npm/hosted-git-info@2.8.8",
+          "confidence": "HIGHEST",
+          "url": "https://ossindex.sonatype.org/component/pkg:npm/hosted-git-info@2.8.8?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "source": "NPM",
+          "name": "1677",
+          "unscored": "true",
+          "severity": "moderate",
+          "cwes": [],
+          "description": "`hosted-git-info` before versions 2.8.9 and 3.0.8 are vulnerable to Regular Expression Denial of Service (ReDoS) via regular expression shortcutMatch in the fromUrl function in index.js. The affected regular expression exhibits polynomial worst-case time complexity",
+          "notes": "",
+          "references": [
+            {
+              "source": "Advisory 1677: Regular Expression Denial of Service",
+              "name": "- [CVE](https://nvd.nist.gov/vuln/detail/CVE-2021-23362)\n- [GitHub Advisory](https://github.com/advisories/GHSA-43f8-2h32-f4cj)\n"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:hosted-git-info:\\<2.8.9\\|\\|\\>\\=3.0.0\\<3.0.8:*:*:*:*:*:*:*"
+              }
+            }
+          ]
+        },
+        {
+          "source": "OSSINDEX",
+          "name": "CVE-2021-23362",
+          "severity": "MEDIUM",
+          "cvssv3": {
+            "baseScore": 5.3,
+            "attackVector": "N",
+            "attackComplexity": "L",
+            "privilegesRequired": "N",
+            "userInteraction": "N",
+            "scope": "U",
+            "confidentialityImpact": "N",
+            "integrityImpact": "N",
+            "availabilityImpact": "L",
+            "baseSeverity": "MEDIUM"
+          },
+          "cwes": [],
+          "description": "The package hosted-git-info before 3.0.8 are vulnerable to Regular Expression Denial of Service (ReDoS) via regular expression shortcutMatch in the fromUrl function in index.js. The affected regular expression exhibits polynomial worst-case time complexity.",
+          "notes": "",
+          "references": [
+            {
+              "source": "OSSINDEX",
+              "url": "https://ossindex.sonatype.org/vulnerability/f16accd0-1194-4dfb-b658-295f0edeb695?component-type=npm&component-name=hosted-git-info&utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2",
+              "name": "[CVE-2021-23362] The package hosted-git-info before 3.0.8 are vulnerable to Regular Expression De..."
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:hosted-git-info:2.8.8:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true"
+              }
+            }
+          ]
+        },
+        {
+          "source": "OSSINDEX",
+          "name": "CWE-400: Uncontrolled Resource Consumption ('Resource Exhaustion')",
+          "severity": "HIGH",
+          "cvssv3": {
+            "baseScore": 7.5,
+            "attackVector": "N",
+            "attackComplexity": "L",
+            "privilegesRequired": "N",
+            "userInteraction": "N",
+            "scope": "U",
+            "confidentialityImpact": "N",
+            "integrityImpact": "N",
+            "availabilityImpact": "H",
+            "baseSeverity": "HIGH"
+          },
+          "cwes": [
+            "CWE-400"
+          ],
+          "description": "The software does not properly restrict the size or amount of resources that are requested or influenced by an actor, which can be used to consume more resources than intended.",
+          "notes": "",
+          "references": [
+            {
+              "source": "OSSINDEX",
+              "url": "https://ossindex.sonatype.org/vulnerability/6225b8be-43bb-4407-84d3-e0179f3987bd?component-type=npm&component-name=hosted-git-info&utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2",
+              "name": "CWE-400: Uncontrolled Resource Consumption ('Resource Exhaustion')"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:hosted-git-info:2.8.8:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "isVirtual": false,
+      "fileName": "index.js",
+      "filePath": "runtime/JavaScript/src/antlr4/atn/index.js",
+      "md5": "37a2e32e8d050217c222a1610a829ee4",
+      "sha1": "194bfc3ad7c213106ee4f7583a82b2e410e8b7fd",
+      "sha256": "969a9e9642becea2fcc9515c8010b6aecf730de81b6c2086cb57a4658cea5510",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "index.js",
+      "filePath": "runtime/JavaScript/src/antlr4/dfa/index.js",
+      "md5": "3fc0082356411892225f6087b9c025c4",
+      "sha1": "518b2c22412bd068e96cc2452b6ca4f4500bc689",
+      "sha256": "95088a0059755b378921699021397e7b29951869fc496010d1957f8c1c4f12e8",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "index.js",
+      "filePath": "runtime/JavaScript/src/antlr4/error/index.js",
+      "md5": "a39ffc2cd076a7539f386796249cb25d",
+      "sha1": "22171876a3b500fbe6da2a2ad9d6794f76995764",
+      "sha256": "8f21d7070c5c6125e6d6150edc34136c63221345d83492e8f7a691dd3922f63a",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "index.js",
+      "filePath": "runtime/JavaScript/src/antlr4/index.js",
+      "md5": "87cc509d759e523ce8840ee667549c6c",
+      "sha1": "330caa2a8059fb8744aa88d813af871abf469459",
+      "sha256": "10720923a13f965f2e79ede20a9ba4a98a92cb6185b307006673a6dfe6f5508f",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "index.js",
+      "filePath": "runtime/JavaScript/src/antlr4/tree/index.js",
+      "md5": "cbefa104ad09e3ca651398d8616de7fe",
+      "sha1": "be8e29dd8466921d2d4b7cc1869959ea5c2e590c",
+      "sha256": "e40d66e549e3effc0fb705be512e9e112f30a42f5d8e27fbbe087f1f28f4c8c6",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": true,
+      "fileName": "lodash:4.17.20",
+      "filePath": "runtime/JavaScript/yarn.lock?lodash",
+      "projectReferences": [
+        "yarn.lock: transitive"
+      ],
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "package.json",
+            "name": "name",
+            "value": "lodash"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "name",
+            "value": "lodash"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "version",
+            "value": "4.17.20"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:npm/lodash@4.17.20",
+          "confidence": "HIGHEST",
+          "url": "https://ossindex.sonatype.org/component/pkg:npm/lodash@4.17.20?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "source": "NPM",
+          "name": "1673",
+          "unscored": "true",
+          "severity": "high",
+          "cwes": [],
+          "description": "`lodash` versions prior to 4.17.21 are vulnerable to Command Injection via the template function.",
+          "notes": "",
+          "references": [
+            {
+              "source": "Advisory 1673: Command Injection",
+              "name": "- [CVE](https://nvd.nist.gov/vuln/detail/CVE-2021-23337)\n- [GitHub Advisory](https://github.com/advisories/GHSA-35jh-r3h4-6jhm)\n- [Snyk Advisory](https://snyk.io/vuln/SNYK-JS-LODASH-1040724)"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:lodash:\\<4.17.21:*:*:*:*:*:*:*"
+              }
+            }
+          ]
+        },
+        {
+          "source": "OSSINDEX",
+          "name": "CWE-77: Improper Neutralization of Special Elements used in a Command ('Command Injection')",
+          "severity": "CRITICAL",
+          "cvssv3": {
+            "baseScore": 9.8,
+            "attackVector": "N",
+            "attackComplexity": "L",
+            "privilegesRequired": "N",
+            "userInteraction": "N",
+            "scope": "U",
+            "confidentialityImpact": "H",
+            "integrityImpact": "H",
+            "availabilityImpact": "H",
+            "baseSeverity": "CRITICAL"
+          },
+          "cwes": [
+            "CWE-77"
+          ],
+          "description": "The software constructs all or part of a command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended command when it is sent to a downstream component.",
+          "notes": "",
+          "references": [
+            {
+              "source": "OSSINDEX",
+              "url": "https://ossindex.sonatype.org/vulnerability/2053350d-b06f-4926-88ea-871760f6e5d8?component-type=npm&component-name=lodash&utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2",
+              "name": "CWE-77: Improper Neutralization of Special Elements used in a Command ('Command Injection')"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:lodash:4.17.20:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "isVirtual": false,
+      "fileName": "org.abego.treelayout.core.jar",
+      "filePath": "runtime/Java/lib/org.abego.treelayout.core.jar",
+      "md5": "661d5aee21cabe5640cc21b7104dde38",
+      "sha1": "e31e79cba7a5414cf18fa69f3f0a2cf9ee997b61",
+      "sha256": "82b9e3631acc708c115216fa78f97780d8a81dbb7f15f8d82291a1dc3a83b1d0",
+      "description": "Efficient and customizable TreeLayout Algorithm in Java.",
+      "license": "BSD 3-Clause \"New\" or \"Revised\" License (BSD-3-Clause): http://treelayout.googlecode.com/files/LICENSE.TXT",
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "file",
+            "name": "name",
+            "value": "org.abego.treelayout.core"
+          },
+          {
+            "type": "vendor",
+            "confidence": "HIGHEST",
+            "source": "jar",
+            "name": "package name",
+            "value": "abego"
+          },
+          {
+            "type": "vendor",
+            "confidence": "HIGHEST",
+            "source": "jar",
+            "name": "package name",
+            "value": "treelayout"
+          },
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "Manifest",
+            "name": "Implementation-Vendor",
+            "value": "abego Software GmbH, Germany"
+          },
+          {
+            "type": "vendor",
+            "confidence": "MEDIUM",
+            "source": "Manifest",
+            "name": "Implementation-Vendor-Id",
+            "value": "org.abego.treelayout"
+          },
+          {
+            "type": "vendor",
+            "confidence": "LOW",
+            "source": "Manifest",
+            "name": "specification-vendor",
+            "value": "abego Software GmbH, Germany"
+          },
+          {
+            "type": "vendor",
+            "confidence": "LOW",
+            "source": "pom",
+            "name": "artifactid",
+            "value": "abego.treelayout.core"
+          },
+          {
+            "type": "vendor",
+            "confidence": "HIGHEST",
+            "source": "pom",
+            "name": "groupid",
+            "value": "abego.treelayout"
+          },
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "pom",
+            "name": "name",
+            "value": "abego TreeLayout Core"
+          },
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "pom",
+            "name": "organization name",
+            "value": "abego Software GmbH, Germany"
+          },
+          {
+            "type": "vendor",
+            "confidence": "MEDIUM",
+            "source": "pom",
+            "name": "organization url",
+            "value": "http://abego-software.de"
+          },
+          {
+            "type": "vendor",
+            "confidence": "HIGHEST",
+            "source": "pom",
+            "name": "url",
+            "value": "http://code.google.com/p/treelayout/"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGH",
+            "source": "file",
+            "name": "name",
+            "value": "org.abego.treelayout.core"
+          },
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "jar",
+            "name": "package name",
+            "value": "abego"
+          },
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "jar",
+            "name": "package name",
+            "value": "treelayout"
+          },
+          {
+            "type": "product",
+            "confidence": "HIGH",
+            "source": "Manifest",
+            "name": "Implementation-Title",
+            "value": "abego TreeLayout Core"
+          },
+          {
+            "type": "product",
+            "confidence": "MEDIUM",
+            "source": "Manifest",
+            "name": "specification-title",
+            "value": "abego TreeLayout Core"
+          },
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "pom",
+            "name": "artifactid",
+            "value": "abego.treelayout.core"
+          },
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "pom",
+            "name": "groupid",
+            "value": "abego.treelayout"
+          },
+          {
+            "type": "product",
+            "confidence": "HIGH",
+            "source": "pom",
+            "name": "name",
+            "value": "abego TreeLayout Core"
+          },
+          {
+            "type": "product",
+            "confidence": "LOW",
+            "source": "pom",
+            "name": "organization name",
+            "value": "abego Software GmbH, Germany"
+          },
+          {
+            "type": "product",
+            "confidence": "LOW",
+            "source": "pom",
+            "name": "organization url",
+            "value": "http://abego-software.de"
+          },
+          {
+            "type": "product",
+            "confidence": "MEDIUM",
+            "source": "pom",
+            "name": "url",
+            "value": "http://code.google.com/p/treelayout/"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGH",
+            "source": "Manifest",
+            "name": "Implementation-Version",
+            "value": "1.0.1"
+          },
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "pom",
+            "name": "version",
+            "value": "1.0.1"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:maven/org.abego.treelayout/org.abego.treelayout.core@1.0.1",
+          "confidence": "HIGH",
+          "url": "https://ossindex.sonatype.org/component/pkg:maven/org.abego.treelayout/org.abego.treelayout.core@1.0.1?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ]
+    },
+    {
+      "isVirtual": true,
+      "fileName": "path-parse:1.0.6",
+      "filePath": "runtime/JavaScript/yarn.lock?path-parse",
+      "projectReferences": [
+        "yarn.lock: transitive"
+      ],
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "package.json",
+            "name": "name",
+            "value": "path-parse"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "name",
+            "value": "path-parse"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "version",
+            "value": "1.0.6"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:npm/path-parse@1.0.6",
+          "confidence": "HIGHEST",
+          "url": "https://ossindex.sonatype.org/component/pkg:npm/path-parse@1.0.6?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "source": "NPM",
+          "name": "1773",
+          "unscored": "true",
+          "severity": "moderate",
+          "cwes": [],
+          "description": "Affected versions of `path-parse` are vulnerable to Regular Expression Denial of Service (ReDoS) via splitDeviceRe, splitTailRe, and splitPathRe regular expressions. ReDoS exhibits polynomial worst-case time complexity.",
+          "notes": "",
+          "references": [
+            {
+              "source": "Advisory 1773: Regular Expression Denial of Service in path-parse",
+              "name": "- [CVE](https://nvd.nist.gov/vuln/detail/CVE-2021-23343)\n- [GitHub Advisory](https://github.com/advisories/GHSA-hj48-42vr-x3v9)\n"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:path-parse:\\<1.0.7:*:*:*:*:*:*:*"
+              }
+            }
+          ]
+        },
+        {
+          "source": "OSSINDEX",
+          "name": "CVE-2021-23343",
+          "severity": "HIGH",
+          "cvssv3": {
+            "baseScore": 7.5,
+            "attackVector": "N",
+            "attackComplexity": "L",
+            "privilegesRequired": "N",
+            "userInteraction": "N",
+            "scope": "U",
+            "confidentialityImpact": "N",
+            "integrityImpact": "N",
+            "availabilityImpact": "H",
+            "baseSeverity": "HIGH"
+          },
+          "cwes": [],
+          "description": "All versions of package path-parse are vulnerable to Regular Expression Denial of Service (ReDoS) via splitDeviceRe, splitTailRe, and splitPathRe regular expressions. ReDoS exhibits polynomial worst-case time complexity.",
+          "notes": "",
+          "references": [
+            {
+              "source": "OSSINDEX",
+              "url": "https://ossindex.sonatype.org/vulnerability/c8574971-0fcc-4713-b46b-b3aebd4394ef?component-type=npm&component-name=path-parse&utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2",
+              "name": "[CVE-2021-23343] All versions of package path-parse are vulnerable to Regular Expression Denial o..."
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:path-parse:1.0.6:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "isVirtual": true,
+      "fileName": "ssri:6.0.1",
+      "filePath": "runtime/JavaScript/yarn.lock?ssri",
+      "projectReferences": [
+        "yarn.lock: transitive"
+      ],
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "package.json",
+            "name": "name",
+            "value": "ssri"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "name",
+            "value": "ssri"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "version",
+            "value": "6.0.1"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:npm/ssri@6.0.1",
+          "confidence": "HIGHEST",
+          "url": "https://ossindex.sonatype.org/component/pkg:npm/ssri@6.0.1?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "source": "NPM",
+          "name": "565",
+          "unscored": "true",
+          "severity": "moderate",
+          "cwes": [],
+          "description": "`ssri` 5.2.2-6.0.1 and 7.0.0-7.1.1, processes SRIs using a regular expression which is vulnerable to a denial of service. Malicious SRIs could take an extremely long time to process, leading to denial of service. This issue only affects consumers using the strict option.",
+          "notes": "",
+          "references": [
+            {
+              "source": "Advisory 565: Regular Expression Denial of Service",
+              "name": "- [GitHub Advisory](https://github.com/advisories/GHSA-vx3p-948g-6vhq)\n- [CVE](https://nvd.nist.gov/vuln/detail/CVE-2021-27290)"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:ssri:\\>\\=5.2.2\\<6.0.2\\|\\|\\>\\=7.0.0\\<7.1.1\\|\\|\\=8.0.0:*:*:*:*:*:*:*"
+              }
+            }
+          ]
+        },
+        {
+          "source": "OSSINDEX",
+          "name": "CVE-2021-27290",
+          "severity": "HIGH",
+          "cvssv3": {
+            "baseScore": 7.5,
+            "attackVector": "N",
+            "attackComplexity": "L",
+            "privilegesRequired": "N",
+            "userInteraction": "N",
+            "scope": "U",
+            "confidentialityImpact": "N",
+            "integrityImpact": "N",
+            "availabilityImpact": "H",
+            "baseSeverity": "HIGH"
+          },
+          "cwes": [],
+          "description": "ssri 5.2.2-8.0.0, fixed in 8.0.1, processes SRIs using a regular expression which is vulnerable to a denial of service. Malicious SRIs could take an extremely long time to process, leading to denial of service. This issue only affects consumers using the strict option.",
+          "notes": "",
+          "references": [
+            {
+              "source": "OSSINDEX",
+              "url": "https://ossindex.sonatype.org/vulnerability/92bbcbaf-097a-43f9-855e-2052e38930db?component-type=npm&component-name=ssri&utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2",
+              "name": "[CVE-2021-27290] ssri 5.2.2-8.0.0, fixed in 8.0.1, processes SRIs using a regular expression whic..."
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:ssri:6.0.1:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "isVirtual": false,
+      "fileName": "webpack.config.js",
+      "filePath": "runtime/JavaScript/webpack.config.js",
+      "md5": "e95c8f6ede48820c665ca719b7ad8da1",
+      "sha1": "551c17a7bcd8e25fffcb32a11998798a81fe3481",
+      "sha256": "bb70b5cc4525e74883ac15826df28f4780d730ef30d532f23c255256f65c27cb",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": false,
+      "fileName": "worker-base.js",
+      "filePath": "doc/resources/worker-base.js",
+      "md5": "e5fa409ff07de2893a6d38cf9174e83d",
+      "sha1": "98d05a9b424f3a81ccf19963934160fdb9b8fb14",
+      "sha256": "89d1f1bc6dbd54178234ac557d9e35000bfe59cc6fb7768746afe962de63d12f",
+      "evidenceCollected": {
+        "vendorEvidence": [],
+        "productEvidence": [],
+        "versionEvidence": []
+      }
+    },
+    {
+      "isVirtual": true,
+      "fileName": "ws:7.4.3",
+      "filePath": "runtime/JavaScript/yarn.lock?ws",
+      "projectReferences": [
+        "yarn.lock: transitive"
+      ],
+      "evidenceCollected": {
+        "vendorEvidence": [
+          {
+            "type": "vendor",
+            "confidence": "HIGH",
+            "source": "package.json",
+            "name": "name",
+            "value": "ws"
+          }
+        ],
+        "productEvidence": [
+          {
+            "type": "product",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "name",
+            "value": "ws"
+          }
+        ],
+        "versionEvidence": [
+          {
+            "type": "version",
+            "confidence": "HIGHEST",
+            "source": "package.json",
+            "name": "version",
+            "value": "7.4.3"
+          }
+        ]
+      },
+      "packages": [
+        {
+          "id": "pkg:npm/ws@7.4.3",
+          "confidence": "HIGHEST",
+          "url": "https://ossindex.sonatype.org/component/pkg:npm/ws@7.4.3?utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2"
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "source": "NPM",
+          "name": "1748",
+          "unscored": "true",
+          "severity": "moderate",
+          "cwes": [],
+          "description": "In `ws` before versions 5.2.3, 6.2.2 and 7.4.6 there is a ReDOS vulnerability.\n\n### Impact\n\nA specially crafted value of the `Sec-Websocket-Protocol` header can be used to significantly slow down a ws server.\n\n### Proof of concept\n\n```js\nfor (const length of [1000, 2000, 4000, 8000, 16000, 32000]) {\n  const value = 'b' + ' '.repeat(length) + 'x';\n  const start = process.hrtime.bigint();\n\n  value.trim().split(/ *, */);\n\n  const end = process.hrtime.bigint();\n\n  console.log('length = %d, time = %f ns', length, end - start);\n}\n```\n\n### Patches\n\nThe vulnerability was fixed in ws@7.4.6 (https://github.com/websockets/ws/commit/00c425ec77993773d823f018f64a5c44e17023ff).\n\n### Workarounds\n\nIn vulnerable versions of ws, the issue can be mitigated by reducing the maximum allowed length of the request headers using the [`--max-http-header-size=size`](https://nodejs.org/api/cli.html#cli_max_http_header_size_size) and/or the [`maxHeaderSize`](https://nodejs.org/api/http.html#http_http_createserver_options_requestlistener) options.\n\n### Credits\n\nThe vulnerability was responsibly disclosed along with a fix in private by [Robert McLaughlin](https://github.com/robmcl4) from University of California, Santa Barbara.\n",
+          "notes": "",
+          "references": [
+            {
+              "source": "Advisory 1748: Regular Expression Denial of Service",
+              "name": "- [CVE](https://nvd.nist.gov/vuln/detail/CVE-2021-32640)\n- [GitHub Advisory](https://github.com/advisories/GHSA-6fc8-4gx4-v693)"
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:ws:\\>\\=5.0.0\\<5.2.3\\|\\|\\>\\=6.0.0\\<6.2.2\\|\\|\\>\\=7.0.0\\<7.4.6:*:*:*:*:*:*:*"
+              }
+            }
+          ]
+        },
+        {
+          "source": "OSSINDEX",
+          "name": "CVE-2021-32640",
+          "severity": "MEDIUM",
+          "cvssv3": {
+            "baseScore": 5.3,
+            "attackVector": "N",
+            "attackComplexity": "L",
+            "privilegesRequired": "N",
+            "userInteraction": "N",
+            "scope": "U",
+            "confidentialityImpact": "N",
+            "integrityImpact": "N",
+            "availabilityImpact": "L",
+            "baseSeverity": "MEDIUM"
+          },
+          "cwes": [],
+          "description": "ws is an open source WebSocket client and server library for Node.js. A specially crafted value of the `Sec-Websocket-Protocol` header can be used to significantly slow down a ws server. The vulnerability has been fixed in ws@7.4.6 (https://github.com/websockets/ws/commit/00c425ec77993773d823f018f64a5c44e17023ff). In vulnerable versions of ws, the issue can be mitigated by reducing the maximum allowed length of the request headers using the [`--max-http-header-size=size`](https://nodejs.org/api/cli.html#cli_max_http_header_size_size) and/or the [`maxHeaderSize`](https://nodejs.org/api/http.html#http_http_createserver_options_requestlistener) options.",
+          "notes": "",
+          "references": [
+            {
+              "source": "OSSINDEX",
+              "url": "https://ossindex.sonatype.org/vulnerability/7b682dd5-ef07-459c-be11-50ec76c9eba2?component-type=npm&component-name=ws&utm_source=dependency-check&utm_medium=integration&utm_content=6.2.2",
+              "name": "[CVE-2021-32640] ws is an open source WebSocket client and server library for Node.js. A speciall..."
+            }
+          ],
+          "vulnerableSoftware": [
+            {
+              "software": {
+                "id": "cpe:2.3:a:*:ws:7.4.3:*:*:*:*:*:*:*",
+                "vulnerabilityIdMatched": "true"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,8 @@ module Opossum.Opossum
   , coordinatesAreNotNull
   , Opossum_ExternalAttribution(..)
   , Opossum_ExternalAttribution_Source(..)
+  , Opossum_ExternalAttribution_Flags(..)
+  , justPreselectedFlags
   , Opossum(..)
   , writeOpossumStats
   ) where
@@ -152,40 +154,90 @@ instance A.FromJSON Opossum_ExternalAttribution_Source where
       A..: "documentConfidence"
 
 data Opossum_Coordinates = Opossum_Coordinates
-  { _packageName      :: Maybe T.Text
-  , _packageNamespace :: Maybe T.Text
-  , _packageType      :: Maybe T.Text
-  , _packageVersion   :: Maybe T.Text
+  { _packageName         :: Maybe T.Text
+  , _packageNamespace    :: Maybe T.Text
+  , _packageType         :: Maybe T.Text
+  , _packageVersion      :: Maybe T.Text
+  , _packagePURLAppendix :: Maybe T.Text
   }
   deriving (Show, Generic, Eq)
 opoossumCoordinatesPreObjectList :: Opossum_Coordinates -> [A.Pair]
-opoossumCoordinatesPreObjectList (Opossum_Coordinates packageType packageNamespace packageName packageVersion)
+opoossumCoordinatesPreObjectList (Opossum_Coordinates packageType packageNamespace packageName packageVersion packagePURLAppendix)
   = [ "packageType" A..= packageType
     , "packageNamespace" A..= packageNamespace
     , "packageName" A..= packageName
     , "packageVersion" A..= packageVersion
+    , "packagePURLAppendix" A..= packagePURLAppendix
     ]
 instance A.ToJSON Opossum_Coordinates where
   toJSON = objectNoNulls . opoossumCoordinatesPreObjectList
 instance A.FromJSON Opossum_Coordinates where
   parseJSON = A.withObject "Opossum_Coordinates" $ \v -> do
-    packageType      <- v A..:? "packageType"
-    packageNamespace <- v A..:? "packageNamespace"
-    packageName      <- v A..:? "packageName"
-    packageVersion   <- v A..:? "packageVersion"
+    packageType         <- v A..:? "packageType"
+    packageNamespace    <- v A..:? "packageNamespace"
+    packageName         <- v A..:? "packageName"
+    packageVersion      <- v A..:? "packageVersion"
+    packagePURLAppendix <- v A..:? "packagePURLAppendix"
     return $ Opossum_Coordinates packageType
                                  packageNamespace
                                  packageName
                                  packageVersion
+                                 packagePURLAppendix
 purlToCoordinates :: PURL -> Opossum_Coordinates
 purlToCoordinates (PURL { _PURL_type = type_, _PURL_namespace = namespace, _PURL_name = name, _PURL_version = version })
   = Opossum_Coordinates (fmap (T.pack . show) type_)
                         (fmap T.pack namespace)
                         (Just $ T.pack name)
                         (fmap T.pack version)
+                        Nothing -- TODO: appendix
 coordinatesAreNotNull :: Opossum_Coordinates -> Bool
-coordinatesAreNotNull (Opossum_Coordinates Nothing Nothing _ Nothing) = False
+coordinatesAreNotNull (Opossum_Coordinates Nothing Nothing _ Nothing _) = False
 coordinatesAreNotNull _ = True
+
+data Opossum_ExternalAttribution_Flags = Opossum_ExternalAttribution_Flags
+  { _isFirstParty        :: Bool
+  , _isPreSelected       :: Bool
+  , _isExcludeFromNotice :: Bool
+  , _isFollowUp          :: Bool
+  }
+  deriving (Show, Generic, Eq)
+
+opoossumExternalAttributionFlagsPreObjectList
+  :: Opossum_ExternalAttribution_Flags -> [A.Pair]
+opoossumExternalAttributionFlagsPreObjectList flags =
+  let flagToJSON
+        :: (Opossum_ExternalAttribution_Flags -> Bool) -> String -> [A.Pair]
+      flagToJSON pred name = if pred flags then ["name" A..= True] else []
+  in  concat
+        [ flagToJSON _isFirstParty        "firstParty"
+        , flagToJSON _isPreSelected       "preSelected"
+        , flagToJSON _isExcludeFromNotice "excludeFromNotice"
+        , flagToJSON _isFollowUp          "followUp"
+        ]
+instance A.FromJSON Opossum_ExternalAttribution_Flags where
+  parseJSON = A.withObject "Opossum_ExternalAttribution_Flags" $ \v ->
+    let readFlag :: String -> A.Parser Bool
+        readFlag name = fmap
+          (\case
+            Just b  -> b
+            Nothing -> False
+          )
+          (v A..:? (T.pack name))
+    in  Opossum_ExternalAttribution_Flags
+          <$> readFlag "firstParty"
+          <*> readFlag "preSelected"
+          <*> readFlag "excludeFromNotice"
+          <*> readFlag "followUp"
+instance Semigroup Opossum_ExternalAttribution_Flags where
+  (Opossum_ExternalAttribution_Flags f1 f2 f3 f4) <> (Opossum_ExternalAttribution_Flags f1' f2' f3' f4')
+    = Opossum_ExternalAttribution_Flags (f1 || f1')
+                                        (f2 || f2')
+                                        (f3 || f3')
+                                        (f4 || f4')
+instance Monoid Opossum_ExternalAttribution_Flags where
+  mempty = Opossum_ExternalAttribution_Flags False False False False
+justPreselectedFlags = mempty { _isPreSelected = True }
+
 
 data Opossum_ExternalAttribution = Opossum_ExternalAttribution
   { _source                :: Opossum_ExternalAttribution_Source
@@ -196,24 +248,25 @@ data Opossum_ExternalAttribution = Opossum_ExternalAttribution
   , _copyright             :: Maybe T.Text
   , _licenseName           :: Maybe T.Text
   , _licenseText           :: Maybe T.Text
-  , _preselected           :: Bool
+  , _url                   :: Maybe T.Text
+  , _flags                 :: Opossum_ExternalAttribution_Flags
   }
   deriving (Show, Generic, Eq)
 instance A.ToJSON Opossum_ExternalAttribution where
-  toJSON (Opossum_ExternalAttribution source attributionConfidence comment originId coordinates copyright licenseName licenseText preselected)
-    = let maybePreselected = if preselected then Just True else Nothing
-      in  objectNoNulls
-            (  [ "source" A..= source
-               , "attributionConfidence" A..= attributionConfidence
-               , "comment" A..= comment
-               , "copyright" A..= copyright
-               , "licenseName" A..= licenseName
-               , "licenseText" A..= licenseText
-               , "originId" A..= originId
-               , "preSelected" A..= maybePreselected
-               ]
-            ++ (opoossumCoordinatesPreObjectList coordinates)
-            )
+  toJSON (Opossum_ExternalAttribution source attributionConfidence comment originId coordinates copyright licenseName licenseText url flags)
+    = objectNoNulls
+      (  [ "source" A..= source
+         , "attributionConfidence" A..= attributionConfidence
+         , "comment" A..= comment
+         , "copyright" A..= copyright
+         , "licenseName" A..= licenseName
+         , "licenseText" A..= licenseText
+         , "originId" A..= originId
+         , "url" A..= url
+         ]
+      ++ (opoossumCoordinatesPreObjectList coordinates)
+      ++ (opoossumExternalAttributionFlagsPreObjectList flags)
+      )
 instance A.FromJSON Opossum_ExternalAttribution where
   parseJSON = A.withObject "Opossum_ExternalAttribution" $ \v -> do
     source                <- v A..: "source"
@@ -242,7 +295,14 @@ instance A.FromJSON Opossum_ExternalAttribution where
         l       -> l
       )
       (v A..:? "licenseText")
-    preselected <- fmap (False `Maybe.fromMaybe`) (v A..:? "preSelected")
+    url <- fmap
+      (\case
+        Just "" -> Nothing
+        l       -> l
+      )
+      (v A..:? "url")
+    flags <-
+      A.parseJSON (A.Object v) :: A.Parser Opossum_ExternalAttribution_Flags
 
     return
       (Opossum_ExternalAttribution source
@@ -253,7 +313,8 @@ instance A.FromJSON Opossum_ExternalAttribution where
                                    copyright
                                    licenseName
                                    licenseText
-                                   preselected
+                                   url
+                                   flags
       )
 
 data Opossum_FrequentLicense = Opossum_FrequentLicense
@@ -283,10 +344,11 @@ data Opossum = Opossum
   , _attributionBreakpoints  :: Set.Set FilePath
   , _filesWithChildren       :: Set.Set FilePath
   , _frequentLicenses        :: [Opossum_FrequentLicense]
+  , _baseUrlsForSources      :: Map.Map FilePath String
   }
   deriving (Show, Generic)
 instance A.ToJSON Opossum where
-  toJSON (Opossum metadata resources externalAttributions resourcesToAttributions attributionBreakpoints filesWithChildren frequentLicenses)
+  toJSON (Opossum metadata resources externalAttributions resourcesToAttributions attributionBreakpoints filesWithChildren frequentLicenses baseUrlsForSources)
     = objectNoNulls
       [ "metadata" A..= metadata
       , "resources" A..= resources
@@ -295,6 +357,7 @@ instance A.ToJSON Opossum where
       , "attributionBreakpoints" A..= attributionBreakpoints
       , "filesWithChildren" A..= filesWithChildren
       , "frequentLicenses" A..= frequentLicenses
+      , "baseUrlsForSources" A..= baseUrlsForSources
       ]
 instance A.FromJSON Opossum where
   parseJSON = A.withObject "Opossum" $ \v -> do
@@ -313,6 +376,8 @@ instance A.FromJSON Opossum where
             Nothing  -> []
           )
           (v A..:? "frequentLicenses")
+        baseUrlsForSourcesParser =
+          fmap (mempty `Maybe.fromMaybe`) $ v A..:? "baseUrlsForSources"
     Opossum
       <$>   v
       A..:? "metadata"
@@ -322,6 +387,7 @@ instance A.FromJSON Opossum where
       <*>   attributionBreakpointsParser
       <*>   filesWithChildrenParser
       <*>   frequentLicensesParser
+      <*>   baseUrlsForSourcesParser
 instance Semigroup Opossum where
   opossum1 <> opossum2 =
     let
@@ -345,6 +411,8 @@ instance Semigroup Opossum where
         (_filesWithChildren opossum1 <> _filesWithChildren opossum2) -- TODO: nub
       mergedFrequentLicenses =
         List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
+      mergedBaseUrlsForSources =
+        Map.union (_baseUrlsForSources opossum1) (_baseUrlsForSources opossum2)
     in
       Opossum mergedMetadata
               mergedResources
@@ -353,8 +421,9 @@ instance Semigroup Opossum where
               mergedAttributionBreakpoints
               mergedFilesWithChildren
               mergedFrequentLicenses
+              mergedBaseUrlsForSources
 instance Monoid Opossum where
-  mempty = Opossum Nothing mempty mempty mempty mempty mempty mempty
+  mempty = Opossum Nothing mempty mempty mempty mempty mempty mempty mempty
 
 writeOpossumStats :: Opossum -> IO ()
 writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributions = eas, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _frequentLicenses = fls })

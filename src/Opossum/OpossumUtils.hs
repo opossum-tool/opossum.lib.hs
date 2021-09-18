@@ -66,7 +66,7 @@ mergifyEA
   :: Opossum_ExternalAttribution
   -> Opossum_ExternalAttribution
   -> Maybe Opossum_ExternalAttribution
-mergifyEA left@(Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _preselected = preselected }) (Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _preselected = preselected' })
+mergifyEA left@(Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _flags = flags }) (Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _flags = flags' })
   = if (and
           [ source == source'
           , coordinatesAreNotNull coordinates
@@ -84,7 +84,7 @@ mergifyEA left@(Opossum_ExternalAttribution { _source = Opossum_ExternalAttribut
         , _licenseText           = case licenseText of
                                      Just lt -> Just lt
                                      _       -> licenseText'
-        , _preselected           = preselected || preselected'
+        , _flags                 = flags <> flags'
         }
       )
     else Nothing

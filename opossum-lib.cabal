@@ -25,6 +25,7 @@ source-repository head
 library
   exposed-modules:
       Opossum.Opossum
+      Opossum.OpossumDependencyCheckUtils
       Opossum.OpossumScancodeUtils
       Opossum.OpossumSPDXUtils
       Opossum.OpossumUtils

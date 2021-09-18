@@ -22,6 +22,7 @@ import qualified System.IO                     as IO
 import           Opossum.Opossum
 import           Opossum.OpossumSPDXUtils
 import           Opossum.OpossumScancodeUtils
+import           Opossum.OpossumDependencyCheckUtils
 import           Opossum.OpossumUtils
 
 help :: IO ()
@@ -33,6 +34,7 @@ help = do
   putStrLn " --spdx     SPDX_JSON      <-- parse .spdx.json"
   putStrLn " --spdx     SPDX_YAML      <-- parse .spdx.yaml"
   putStrLn " --scancode SCANCODE_JSON  <-- parse scancode json"
+  putStrLn " --dependency-check DC_JSON <-- parse OWASP Dependency-Check JSON"
 
 fun :: Opossum -> [String] -> IO Opossum
 fun !pre []                      = return pre
@@ -41,6 +43,9 @@ fun !pre ("--spdx" : (f : args)) = do
   fmap (pre <>) (fun o args)
 fun !pre ("--scancode" : (f : args)) = do
   o <- parseScancodeToOpossum f
+  fmap (pre <>) (fun o args)
+fun !pre ("--dependency-check" : (f : args)) = do
+  o <- parseDependencyCheckToOpossum f
   fmap (pre <>) (fun o args)
 fun !pre (f : args) = do
   fIsDirectory <- doesDirectoryExist f
