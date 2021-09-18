@@ -207,7 +207,7 @@ opoossumExternalAttributionFlagsPreObjectList
 opoossumExternalAttributionFlagsPreObjectList flags =
   let flagToJSON
         :: (Opossum_ExternalAttribution_Flags -> Bool) -> String -> [A.Pair]
-      flagToJSON pred name = if pred flags then ["name" A..= True] else []
+      flagToJSON pred name = if pred flags then [(T.pack name) A..= True] else []
   in  concat
         [ flagToJSON _isFirstParty        "firstParty"
         , flagToJSON _isPreSelected       "preSelected"
