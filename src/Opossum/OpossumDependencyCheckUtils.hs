@@ -55,6 +55,7 @@ import           System.Random                  ( randomIO )
 
 import           Debug.Trace                    ( trace )
 
+type DependencyCheckConfidence = String
 
 {-
             "evidenceCollected": {
@@ -95,6 +96,26 @@ import           Debug.Trace                    ( trace )
             }
  -}
 data DependencyCheckEvidence = DependencyCheckEvidence
+  { _dce_type       :: String
+  , _dce_confidence :: DependencyCheckConfidence
+  , _dce_source     :: String
+  , _dce_name       :: String
+  , _dce_value      :: String
+  }
+  deriving (Eq, Show)
+instance A.FromJSON DependencyCheckEvidence where
+  parseJSON = A.withObject "DependencyCheckEvidence" $ \v -> do
+    DependencyCheckEvidence
+      <$>  v
+      A..: "type"
+      <*>  v
+      A..: "confidence"
+      <*>  v
+      A..: "source"
+      <*>  v
+      A..: "name"
+      <*>  v
+      A..: "value"
 
 {-
             "packages": [
@@ -119,9 +140,9 @@ data DependencyCheckEvidence = DependencyCheckEvidence
   -}
 data DependencyCheckPackage = DependencyCheckPackage
   { _dcp_id          :: Either String PURL
-  , _dcp_url         :: Maybe String
+  , _dcp_url         :: Maybe T.Text
   , _dcp_description :: Maybe String
-  -- , _dcp_confidence :: Maybe _
+  , _dcp_confidence  :: Maybe DependencyCheckConfidence
   -- , _dcp_notes :: Maybe String
   }
   deriving (Eq, Show)
@@ -141,6 +162,8 @@ instance A.FromJSON DependencyCheckPackage where
       A..:? "url"
       <*>   v
       A..:? "description"
+      <*>   v
+      A..:? "confidence"
 
 
 {-
@@ -389,12 +412,12 @@ see also: https://github.com/jeremylong/DependencyCheck/blob/main/core/src/main/
         },
 -}
 data DependencyCheckDependency = DependencyCheckDependency
-  { _dcd_isVirtual       :: Bool
-  , _dcd_fileName        :: FilePath
-  , _dcd_filePath        :: FilePath
-  -- , _dcd_evidenceCollected :: [DependencyCheckEvidence]
-  , _dcd_packages        :: [DependencyCheckPackage]
-  , _dcd_vulnerabilities :: [A.Object]
+  { _dcd_isVirtual         :: Bool
+  , _dcd_fileName          :: FilePath
+  , _dcd_filePath          :: FilePath
+  , _dcd_evidenceCollected :: Map.Map String [DependencyCheckEvidence]
+  , _dcd_packages          :: [DependencyCheckPackage]
+  , _dcd_vulnerabilities   :: [A.Object]
   }
   deriving (Eq, Show)
 instance A.FromJSON DependencyCheckDependency where
@@ -406,6 +429,8 @@ instance A.FromJSON DependencyCheckDependency where
       A..: "fileName"
       <*>  v
       A..: "filePath"
+      <*>  v
+      A..: "evidenceCollected"
       <*>  fmap
              (\case
                Just ps -> ps
@@ -422,9 +447,9 @@ instance A.FromJSON DependencyCheckDependency where
 
 dependencyCheckDependencyToPath
   :: DependencyCheckDependency -> (Maybe FilePath, FilePath)
-dependencyCheckDependencyToPath (DependencyCheckDependency False _ fp _ _) =
+dependencyCheckDependencyToPath (DependencyCheckDependency False _ fp _ _ _) =
   (Nothing, "/" FP.</> fp)
-dependencyCheckDependencyToPath (DependencyCheckDependency True fn fp _ _) =
+dependencyCheckDependencyToPath (DependencyCheckDependency True fn fp _ _ _) =
   let undoAppendix x []       _ = x
       undoAppendix x (y : ys) z = if ys `List.isPrefixOf` z
         then x ++ [y]
@@ -440,42 +465,78 @@ dependencyCheckPackageToCoordinates (DependencyCheckPackage { _dcp_id = id }) =
     Left raw ->
       Opossum_Coordinates (Just (T.pack raw)) Nothing Nothing Nothing Nothing
 
+evidenceToPURLs :: Map.Map String [DependencyCheckEvidence] -> [PURL]
+evidenceToPURLs evidence =
+  let
+    findBestFromEvidences :: [DependencyCheckEvidence] -> Maybe String
+    findBestFromEvidences []      = Nothing
+    findBestFromEvidences (e : _) = Just $ _dce_value e
+    vendor  = "vendorEvidence" `Map.lookup` evidence >>= findBestFromEvidences
+    product = "productEvidence" `Map.lookup` evidence >>= findBestFromEvidences
+    version = "versionEvidence" `Map.lookup` evidence >>= findBestFromEvidences
+  in
+    maybeToList $ fmap
+      (\product' -> PURL Nothing Nothing vendor product' version Nothing Nothing
+      )
+      product
+
+evidenceToPackages
+  :: Map.Map String [DependencyCheckEvidence] -> [DependencyCheckPackage]
+evidenceToPackages =
+  map (\purl -> DependencyCheckPackage (Right purl) Nothing Nothing Nothing)
+    . evidenceToPURLs
+
 dependencyCheckDependencyToOpossum :: DependencyCheckDependency -> IO Opossum
-dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_isVirtual = False, _dcd_packages = [] })
-  = let (_, fp) = dependencyCheckDependencyToPath dcd
-    in  return (mempty { _resources = fpToResources True fp })
-dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_packages = packages, _dcd_vulnerabilities = vulnerabilities })
+dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_isVirtual = isVirtual, _dcd_packages = packages, _dcd_vulnerabilities = vulnerabilities, _dcd_evidenceCollected = evidence })
   = let
       (potentialFWC, fp) = dependencyCheckDependencyToPath dcd
-      dependencyCheckPackageToOpossum package = do
-        uuid <- randomIO
-        let rs  = fpToResources True fp
-            cs  = dependencyCheckPackageToCoordinates package
-            eas = Opossum_ExternalAttribution_Source "Dependency-Check" 50
-            ea  = Opossum_ExternalAttribution
-              { _source                = eas
-              , _attributionConfidence = 50
-              , _comment               = case vulnerabilities of
-                []               -> Nothing
-                vulnerabilities' -> Just
-                  (T.decodeUtf8 (B.toStrict (A.encodePretty vulnerabilities)))
-              , _originId              = Nothing
-              , _coordinates           = cs
-              , _copyright             = Nothing
-              , _licenseName           = Nothing
-              , _licenseText           = Nothing
-              , _url                   = Nothing
-              , _flags                 = mempty
-              }
-            opossum = mempty
-              { _resources               = rs
-              , _externalAttributions    = Map.singleton uuid ea
-              , _resourcesToAttributions = Map.singleton fp [uuid]
-              , _filesWithChildren = (Set.fromList . maybeToList) potentialFWC
-              }
-        return opossum
+      rs                 = fpToResources True fp
+      baseOpossum        = mempty
+        { _resources         = fpToResources True fp
+        , _filesWithChildren = (Set.fromList . maybeToList) potentialFWC
+        }
+      dependencyCheckPackageToOpossum (package@DependencyCheckPackage { _dcp_url = url })
+        = do
+          uuid <- randomIO
+          let cs  = dependencyCheckPackageToCoordinates package
+              eas = Opossum_ExternalAttribution_Source "Dependency-Check" 50
+              ea  = Opossum_ExternalAttribution
+                { _source                = eas
+                , _attributionConfidence = 50
+                , _comment               = case vulnerabilities of
+                  [] -> Nothing
+                  vulnerabilities' ->
+                    Just
+                      (T.decodeUtf8
+                        (B.toStrict (A.encodePretty vulnerabilities))
+                      )
+                , _originId              = Nothing
+                , _coordinates           = cs
+                , _copyright             = Nothing
+                , _licenseName           = Nothing
+                , _licenseText           = Nothing
+                , _url                   = url
+                , _flags = mempty { _isFollowUp = vulnerabilities /= [] }
+                }
+              opossum = baseOpossum
+                { _externalAttributions    = Map.singleton uuid ea
+                , _resourcesToAttributions = Map.singleton fp [uuid]
+                }
+          return opossum
     in
-      fmap mconcat $ mapM dependencyCheckPackageToOpossum packages
+      fmap
+          (\case
+            [] -> if isVirtual
+                  then mempty
+                  else baseOpossum
+            os -> mconcat os
+          )
+        $ mapM
+            dependencyCheckPackageToOpossum
+            (case packages of
+              []        -> evidenceToPackages evidence
+              packages' -> packages'
+            )
 
 {-
 {
@@ -529,9 +590,9 @@ instance A.FromJSON DependencyCheckFile where
 parseDependencyCheckBS :: B.ByteString -> IO Opossum
 parseDependencyCheckBS bs =
   case (A.eitherDecode bs :: Either String DependencyCheckFile) of
-    Right (DependencyCheckFile metadata dependencies) ->
-      fmap (mempty { _metadata = Map.singleton "Dependency-Check" metadata } <>) (mconcat
-        $ map dependencyCheckDependencyToOpossum dependencies)
+    Right (DependencyCheckFile metadata dependencies) -> fmap
+      (mempty { _metadata = Map.singleton "Dependency-Check" metadata } <>)
+      (mconcat $ map dependencyCheckDependencyToOpossum dependencies)
     Left err -> do
       hPutStrLn IO.stderr err
       undefined -- TODO

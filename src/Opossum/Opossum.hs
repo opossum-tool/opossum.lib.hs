@@ -210,11 +210,11 @@ opoossumExternalAttributionFlagsPreObjectList flags =
       flagToJSON pred name =
         if pred flags then [(T.pack name) A..= True] else []
   in  concat
-        [ flagToJSON _isFirstParty        "firstParty"
-        , flagToJSON _isPreSelected       "preSelected"
-        , flagToJSON _isExcludeFromNotice "excludeFromNotice"
-        , flagToJSON _isFollowUp          "followUp"
-        ]
+          [ flagToJSON _isFirstParty        "firstParty"
+          , flagToJSON _isPreSelected       "preSelected"
+          , flagToJSON _isExcludeFromNotice "excludeFromNotice"
+          ]
+        ++ (if _isFollowUp flags then ["followUp" A..= ("FOLLOW_UP" :: String)] else [])
 instance A.FromJSON Opossum_ExternalAttribution_Flags where
   parseJSON = A.withObject "Opossum_ExternalAttribution_Flags" $ \v ->
     let readFlag :: String -> A.Parser Bool
@@ -224,11 +224,19 @@ instance A.FromJSON Opossum_ExternalAttribution_Flags where
             Nothing -> False
           )
           (v A..:? (T.pack name))
+        readStringFlag :: String -> A.Parser Bool
+        readStringFlag name = fmap
+          (\case
+              Just "" -> False
+              Just _  -> True
+              Nothing -> False
+            )
+            (v A..:? (T.pack name) :: A.Parser (Maybe String))
     in  Opossum_ExternalAttribution_Flags
           <$> readFlag "firstParty"
           <*> readFlag "preSelected"
           <*> readFlag "excludeFromNotice"
-          <*> readFlag "followUp"
+          <*> readStringFlag "followUp"
 instance Semigroup Opossum_ExternalAttribution_Flags where
   (Opossum_ExternalAttribution_Flags f1 f2 f3 f4) <> (Opossum_ExternalAttribution_Flags f1' f2' f3' f4')
     = Opossum_ExternalAttribution_Flags (f1 || f1')
