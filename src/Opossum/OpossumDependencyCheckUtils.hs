@@ -35,6 +35,7 @@ import           Data.Maybe                     ( fromMaybe
                                                 )
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
+import qualified Data.Text.Encoding            as T
 import qualified Data.Vector                   as V
 import qualified Distribution.Parsec           as SPDX
 import qualified Distribution.SPDX             as SPDX
@@ -388,11 +389,12 @@ see also: https://github.com/jeremylong/DependencyCheck/blob/main/core/src/main/
         },
 -}
 data DependencyCheckDependency = DependencyCheckDependency
-  { _dcd_isVirtual :: Bool
-  , _dcd_fileName  :: FilePath
-  , _dcd_filePath  :: FilePath
+  { _dcd_isVirtual       :: Bool
+  , _dcd_fileName        :: FilePath
+  , _dcd_filePath        :: FilePath
   -- , _dcd_evidenceCollected :: [DependencyCheckEvidence]
-  , _dcd_packages  :: [DependencyCheckPackage]
+  , _dcd_packages        :: [DependencyCheckPackage]
+  , _dcd_vulnerabilities :: [A.Object]
   }
   deriving (Eq, Show)
 instance A.FromJSON DependencyCheckDependency where
@@ -410,59 +412,70 @@ instance A.FromJSON DependencyCheckDependency where
                Nothing -> []
              )
              (v A..:? "packages")
+      <*>  fmap
+             (\case
+               Just ps -> ps
+               Nothing -> []
+             )
+             (v A..:? "vulnerabilities")
 
 
 dependencyCheckDependencyToPath
   :: DependencyCheckDependency -> (Maybe FilePath, FilePath)
-dependencyCheckDependencyToPath (DependencyCheckDependency False _ fp _) =
+dependencyCheckDependencyToPath (DependencyCheckDependency False _ fp _ _) =
   (Nothing, "/" FP.</> fp)
-dependencyCheckDependencyToPath (DependencyCheckDependency True fn fp _) = let
-    undoAppendix x [] _ = x
-    undoAppendix x (y:ys) z  = if ys `List.isPrefixOf` z
-                               then x ++ [y]
-                               else undoAppendix (x ++ [y]) ys z
-    baseFP = "/" FP.</> (undoAppendix [] fp ('?':fn))
-  in (Just (baseFP ++ "/"), baseFP FP.</> fn)
+dependencyCheckDependencyToPath (DependencyCheckDependency True fn fp _ _) =
+  let undoAppendix x []       _ = x
+      undoAppendix x (y : ys) z = if ys `List.isPrefixOf` z
+        then x ++ [y]
+        else undoAppendix (x ++ [y]) ys z
+      baseFP = "/" FP.</> (undoAppendix [] fp ('?' : fn))
+  in  (Just (baseFP ++ "/"), baseFP FP.</> fn)
 
-dependencyCheckPackageToCoordinates :: DependencyCheckPackage -> Opossum_Coordinates
-dependencyCheckPackageToCoordinates (DependencyCheckPackage{_dcp_id = id}) = case id of
-  Right purl -> purlToCoordinates purl
-  Left raw   -> Opossum_Coordinates (Just (T.pack raw)) Nothing Nothing Nothing Nothing
+dependencyCheckPackageToCoordinates
+  :: DependencyCheckPackage -> Opossum_Coordinates
+dependencyCheckPackageToCoordinates (DependencyCheckPackage { _dcp_id = id }) =
+  case id of
+    Right purl -> purlToCoordinates purl
+    Left raw ->
+      Opossum_Coordinates (Just (T.pack raw)) Nothing Nothing Nothing Nothing
 
 dependencyCheckDependencyToOpossum :: DependencyCheckDependency -> IO Opossum
 dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_isVirtual = False, _dcd_packages = [] })
-  = let 
-    (_, fp) = dependencyCheckDependencyToPath dcd
-    in return (mempty { _resources = fpToResources True fp})
-dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_packages = packages })
+  = let (_, fp) = dependencyCheckDependencyToPath dcd
+    in  return (mempty { _resources = fpToResources True fp })
+dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_packages = packages, _dcd_vulnerabilities = vulnerabilities })
   = let
-    (potentialFWC, fp) = dependencyCheckDependencyToPath dcd
-    dependencyCheckPackageToOpossum package = do
-      uuid <- randomIO
-      let 
-          rs = fpToResources True fp
-          cs = dependencyCheckPackageToCoordinates package
-          eas = Opossum_ExternalAttribution_Source "Dependency-Check" 50
-          ea = Opossum_ExternalAttribution
-            { _source = eas
-            , _attributionConfidence = 50
-            , _comment = Nothing
-            , _originId = Nothing
-            , _coordinates = cs
-            , _copyright = Nothing
-            , _licenseName = Nothing
-            , _licenseText = Nothing
-            , _url = Nothing
-            , _flags = mempty
-            }
-          opossum = mempty
-                    { _resources = rs
-                    , _externalAttributions = Map.singleton uuid ea
-                    , _resourcesToAttributions = Map.singleton fp [uuid]
-                    , _filesWithChildren = (Set.fromList . maybeToList) potentialFWC
-                    }
-      return opossum
-    in fmap mconcat $ mapM dependencyCheckPackageToOpossum packages
+      (potentialFWC, fp) = dependencyCheckDependencyToPath dcd
+      dependencyCheckPackageToOpossum package = do
+        uuid <- randomIO
+        let rs  = fpToResources True fp
+            cs  = dependencyCheckPackageToCoordinates package
+            eas = Opossum_ExternalAttribution_Source "Dependency-Check" 50
+            ea  = Opossum_ExternalAttribution
+              { _source                = eas
+              , _attributionConfidence = 50
+              , _comment               = case vulnerabilities of
+                []               -> Nothing
+                vulnerabilities' -> Just
+                  (T.decodeUtf8 (B.toStrict (A.encodePretty vulnerabilities)))
+              , _originId              = Nothing
+              , _coordinates           = cs
+              , _copyright             = Nothing
+              , _licenseName           = Nothing
+              , _licenseText           = Nothing
+              , _url                   = Nothing
+              , _flags                 = mempty
+              }
+            opossum = mempty
+              { _resources               = rs
+              , _externalAttributions    = Map.singleton uuid ea
+              , _resourcesToAttributions = Map.singleton fp [uuid]
+              , _filesWithChildren = (Set.fromList . maybeToList) potentialFWC
+              }
+        return opossum
+    in
+      fmap mconcat $ mapM dependencyCheckPackageToOpossum packages
 
 {-
 {
@@ -497,18 +510,28 @@ dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_package
     "dependencies": [
  -}
 data DependencyCheckFile = DependencyCheckFile
-  { _dcf_dependencies :: [DependencyCheckDependency]
+  { _dcf_metadata     :: A.Value
+  , _dcf_dependencies :: [DependencyCheckDependency]
   }
   deriving (Eq, Show)
 instance A.FromJSON DependencyCheckFile where
   parseJSON = A.withObject "DependencyCheckFile" $ \v -> do
-    DependencyCheckFile <$> v A..: "dependencies"
+    scanInfo    <- v A..: "scanInfo" :: A.Parser A.Value
+    projectInfo <- v A..: "projectInfo" :: A.Parser A.Value
+
+    DependencyCheckFile
+      <$>  return
+             (A.object ["scanInfo" A..= scanInfo, "projectInfo" A..= projectInfo]
+             )
+      <*>  v
+      A..: "dependencies"
 
 parseDependencyCheckBS :: B.ByteString -> IO Opossum
 parseDependencyCheckBS bs =
   case (A.eitherDecode bs :: Either String DependencyCheckFile) of
-    Right (DependencyCheckFile dependencies) ->
-      mconcat $ map dependencyCheckDependencyToOpossum dependencies
+    Right (DependencyCheckFile metadata dependencies) ->
+      fmap (mempty { _metadata = Map.singleton "Dependency-Check" metadata } <>) (mconcat
+        $ map dependencyCheckDependencyToOpossum dependencies)
     Left err -> do
       hPutStrLn IO.stderr err
       undefined -- TODO
@@ -517,14 +540,11 @@ parseDependencyCheckToOpossum :: FilePath -> IO Opossum
 parseDependencyCheckToOpossum inputPath = do
   hPutStrLn IO.stderr ("parse: " ++ inputPath)
   let baseOpossum = mempty
-        { _metadata = (Just
-                        (A.object
-                          [ "projectId" A..= ("0" :: String)
-                          , "projectTitle" A..= inputPath
-                          , "fileCreationDate" A..= ("" :: String)
-                          ]
-                        )
-                      )
+        { _metadata = Map.fromList
+                        [ ("projectId"       , A.toJSON ("0" :: String))
+                        , ("projectTitle"    , A.toJSON inputPath)
+                        , ("fileCreationDate", A.toJSON ("" :: String))
+                        ]
         }
   opossum <- B.readFile inputPath >>= parseDependencyCheckBS
   return (normaliseOpossum (baseOpossum <> opossum))

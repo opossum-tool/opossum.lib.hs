@@ -218,10 +218,12 @@ instance A.FromJSON ScancodeFileEntry where
     license <-
       v
       A..:? "license_expressions"
-      >>=   (return . (\case
-              Just lics -> parseLicenses (map licenseTransformator lics)
-              Nothing   -> Nothing
-            ))
+      >>=   ( return
+            . (\case
+                Just lics -> parseLicenses (map licenseTransformator lics)
+                Nothing   -> Nothing
+              )
+            )
     copyrights <- do
       listOfCopyrightObjects <-
         (v A..:? "copyrights" :: A.Parser (Maybe A.Array))
@@ -235,12 +237,13 @@ instance A.FromJSON ScancodeFileEntry where
     return (ScancodeFileEntry path is_file license copyrights packages)
 
 data ScancodeFile = ScancodeFile
-  { _scf_files :: [ScancodeFileEntry]
+  { _scf_metadata     :: A.Value
+  , _scf_files :: [ScancodeFileEntry]
   }
   deriving (Eq, Show)
 instance A.FromJSON ScancodeFile where
   parseJSON = A.withObject "ScancodeFile" $ \v -> do
-    ScancodeFile <$> v A..: "files"
+    ScancodeFile <$> v A..: "headers" <*> v A..: "files"
 
 
 opossumFromScancodePackage :: ScancodePackage -> IO Opossum
@@ -328,8 +331,9 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
 
 parseScancodeBS :: B.ByteString -> IO Opossum
 parseScancodeBS bs = case (A.eitherDecode bs :: Either String ScancodeFile) of
-  Right (ScancodeFile scFiles) ->
-    mconcat $ map scancodeFileEntryToOpossum scFiles
+  Right (ScancodeFile metadata scFiles) ->
+    fmap (mempty { _metadata = Map.singleton "ScanCode" metadata } <>) (mconcat
+      $ map scancodeFileEntryToOpossum scFiles)
   Left err -> do
     hPutStrLn IO.stderr err
     undefined -- TODO
@@ -338,14 +342,11 @@ parseScancodeToOpossum :: FilePath -> IO Opossum
 parseScancodeToOpossum inputPath = do
   hPutStrLn IO.stderr ("parse: " ++ inputPath)
   let baseOpossum = mempty
-        { _metadata = (Just
-                        (A.object
-                          [ "projectId" A..= ("0" :: String)
-                          , "projectTitle" A..= inputPath
-                          , "fileCreationDate" A..= ("" :: String)
-                          ]
-                        )
-                      )
+        { _metadata = Map.fromList
+                        [ ("projectId"       , A.toJSON ("0" :: String))
+                        , ("projectTitle"    , A.toJSON inputPath)
+                        , ("fileCreationDate", A.toJSON ("" :: String))
+                        ]
         }
   opossum <- B.readFile inputPath >>= parseScancodeBS
   return (normaliseOpossum (baseOpossum <> opossum))

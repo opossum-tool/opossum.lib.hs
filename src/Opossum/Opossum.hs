@@ -207,7 +207,8 @@ opoossumExternalAttributionFlagsPreObjectList
 opoossumExternalAttributionFlagsPreObjectList flags =
   let flagToJSON
         :: (Opossum_ExternalAttribution_Flags -> Bool) -> String -> [A.Pair]
-      flagToJSON pred name = if pred flags then [(T.pack name) A..= True] else []
+      flagToJSON pred name =
+        if pred flags then [(T.pack name) A..= True] else []
   in  concat
         [ flagToJSON _isFirstParty        "firstParty"
         , flagToJSON _isPreSelected       "preSelected"
@@ -337,7 +338,7 @@ instance A.FromJSON Opossum_FrequentLicense where
       A..: "defaultText"
 
 data Opossum = Opossum
-  { _metadata                :: Maybe A.Value
+  { _metadata                :: Map.Map String A.Value
   , _resources               :: Opossum_Resources
   , _externalAttributions    :: Map.Map UUID Opossum_ExternalAttribution
   , _resourcesToAttributions :: Map.Map FilePath [UUID]
@@ -362,6 +363,7 @@ instance A.ToJSON Opossum where
 instance A.FromJSON Opossum where
   parseJSON = A.withObject "Opossum" $ \v -> do
     let resourcesParser = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "resources"
+        metadataParser  = fmap (mempty `Maybe.fromMaybe`) $ v A..:? "metadata"
         externalAttributionsParser =
           fmap (mempty `Maybe.fromMaybe`) $ v A..:? "externalAttributions"
         resourcesToAttributionsParser =
@@ -379,26 +381,19 @@ instance A.FromJSON Opossum where
         baseUrlsForSourcesParser =
           fmap (mempty `Maybe.fromMaybe`) $ v A..:? "baseUrlsForSources"
     Opossum
-      <$>   v
-      A..:? "metadata"
-      <*>   resourcesParser
-      <*>   externalAttributionsParser
-      <*>   resourcesToAttributionsParser
-      <*>   attributionBreakpointsParser
-      <*>   filesWithChildrenParser
-      <*>   frequentLicensesParser
-      <*>   baseUrlsForSourcesParser
+      <$> metadataParser
+      <*> resourcesParser
+      <*> externalAttributionsParser
+      <*> resourcesToAttributionsParser
+      <*> attributionBreakpointsParser
+      <*> filesWithChildrenParser
+      <*> frequentLicensesParser
+      <*> baseUrlsForSourcesParser
 instance Semigroup Opossum where
   opossum1 <> opossum2 =
     let
-      mergedMetadata =
-        let getMetadataHM :: Maybe A.Value -> HM.HashMap T.Text A.Value
-            getMetadataHM (Just (A.Object hm)) = hm
-            getMetadataHM _                    = HM.empty
-        in  (Just . A.Object)
-              $          (getMetadataHM (_metadata opossum1))
-              `HM.union` (getMetadataHM (_metadata opossum2))
-      mergedResources            = _resources opossum1 <> _resources opossum2
+      mergedMetadata = Map.union (_metadata opossum1) (_metadata opossum2)
+      mergedResources = _resources opossum1 <> _resources opossum2
       mergedExternalAttributions = Map.union (_externalAttributions opossum1)
                                              (_externalAttributions opossum2)
       mergedResourcesToAttributions = Map.unionWith
@@ -423,7 +418,7 @@ instance Semigroup Opossum where
               mergedFrequentLicenses
               mergedBaseUrlsForSources
 instance Monoid Opossum where
-  mempty = Opossum Nothing mempty mempty mempty mempty mempty mempty mempty
+  mempty = Opossum mempty mempty mempty mempty mempty mempty mempty mempty
 
 writeOpossumStats :: Opossum -> IO ()
 writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributions = eas, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _frequentLicenses = fls })

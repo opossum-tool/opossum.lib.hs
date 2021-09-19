@@ -94,8 +94,8 @@ spdxToOpossum =
     \(spdx@SPDXDocument { _SPDX_SPDXID = spdxid, _SPDX_comment = _, _SPDX_creationInfo = _, _SPDX_name = name, _SPDX_files = files, _SPDX_packages = packages, _SPDX_relationships = relationships }) ->
       let
         opossumMetadata = mempty
-          { _metadata = Just
-            (A.object ["projectId" A..= spdxid, "projectTitle" A..= name])
+          { _metadata = Map.fromList
+            [("projectId", A.toJSON spdxid), ("projectTitle", A.toJSON name)]
           }
         (graph, idsToIdxs, indxsToIds) = spdxDocumentToGraph spdx
         trees                          = map

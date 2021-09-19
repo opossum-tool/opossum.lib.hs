@@ -307,7 +307,7 @@ opossumSpec = do
   describe "Opossum Utils ScanCode Converter" $ do
     it "should parse json file" $ do
       let decoded = (A.eitherDecode scancodeJsonBS :: Either String ScancodeFile)
-          files = (_scf_files . (fromRight (ScancodeFile []))) decoded
+          files = (_scf_files . (fromRight (ScancodeFile (Y.Null) []))) decoded
           pomFile = head $ filter (\f -> _scfe_file f == "pom.xml") files
       (isRight decoded) `shouldBe` True
       _scfe_file pomFile `shouldBe` "pom.xml"
