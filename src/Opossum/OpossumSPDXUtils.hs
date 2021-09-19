@@ -14,6 +14,7 @@ module Opossum.OpossumSPDXUtils
   ) where
 
 import           Opossum.Opossum
+import           Opossum.OpossumUtils
 
 import           SPDX.Document
 
@@ -59,7 +60,8 @@ spdxToOpossum =
                                                        Nothing
                                                        Nothing
         , _copyright             = Just $ T.pack copyright
-        , _licenseName           = Just $ T.pack $ show license -- TODO
+        , _licenseName           = fmap (T.pack . renderSpdxLicense)
+                                        (spdxMaybeToMaybe license)
         , _licenseText           = Nothing -- TODO
         , _url                   = Nothing
         , _flags                 = mempty
@@ -80,7 +82,8 @@ spdxToOpossum =
         , _copyright             = case copyright of
                                      SPDXJust copyright' -> (Just . T.pack) copyright'
                                      _ -> Nothing
-        , _licenseName           = Just $ T.pack $ show license -- TODO
+        , _licenseName           = fmap (T.pack . renderSpdxLicense)
+                                        (spdxMaybeToMaybe license)
         , _licenseText           = Nothing -- TODO
         , _url                   = Nothing
         , _flags                 = justPreselectedFlags
@@ -172,4 +175,4 @@ parseSpdxToOpossum inputPath = do
   hPutStrLn IO.stderr ("parse: " ++ inputPath)
   spdx    <- parseSPDXDocument inputPath
   opossum <- spdxToOpossum spdx
-  return opossum
+  return (normaliseOpossum opossum)

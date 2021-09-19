@@ -66,14 +66,16 @@ mergifyEA
   :: Opossum_ExternalAttribution
   -> Opossum_ExternalAttribution
   -> Maybe Opossum_ExternalAttribution
-mergifyEA left@(Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _flags = flags }) (Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _flags = flags' })
-  = if (and
-          [ source == source'
-          , coordinatesAreNotNull coordinates
-          , coordinates == coordinates'
-          , (cleanupLicense licenseName) == (cleanupLicense licenseName')
-          ]
-       )
+mergifyEA left@(Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _flags = flags }) (right@Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _flags = flags' })
+  = if left
+       == right
+       || (and
+            [ source == source'
+            , coordinatesAreNotNull coordinates
+            , coordinates == coordinates'
+            , (cleanupLicense licenseName) == (cleanupLicense licenseName')
+            ]
+          )
     then Just
       (left
         { _attributionConfidence = (     attributionConfidence
