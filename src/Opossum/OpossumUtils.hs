@@ -195,14 +195,14 @@ unshiftPathToResources prefix resources =
         prefix
 
 unshiftPathToOpossum :: FilePath -> Opossum -> Opossum
-unshiftPathToOpossum prefix (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs })
+unshiftPathToOpossum prefix (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _baseUrlsForSources = bufss })
   = let rsWithPrefix   = unshiftPathToResources prefix rs
         unshiftToID    = FP.normalise . (("/" </> prefix ++ "/") ++)
-        rtasWithPrefix = Map.mapKeys unshiftToID rtas
     in  unDot $ opossum { _resources               = rsWithPrefix
-                        , _resourcesToAttributions = rtasWithPrefix
+                        , _resourcesToAttributions = Map.mapKeys unshiftToID rtas
                         , _attributionBreakpoints  = Set.map unshiftToID abs
                         , _filesWithChildren       = Set.map unshiftToID fwcs
+                        , _baseUrlsForSources      = Map.mapKeys unshiftToID bufss
                         }
 
 parseOpossum :: FP.FilePath -> IO Opossum

@@ -20,44 +20,57 @@ import           System.IO                      ( Handle
 import qualified System.IO                     as IO
 
 import           Opossum.Opossum
+import           Opossum.OpossumDependencyCheckUtils
 import           Opossum.OpossumSPDXUtils
 import           Opossum.OpossumScancodeUtils
-import           Opossum.OpossumDependencyCheckUtils
 import           Opossum.OpossumUtils
 
 help :: IO ()
 help = do
   putStrLn " ARG [ARG [ARG ...]]]"
-  putStrLn "where ARG one of "
-  putStrLn "            FILE           <-- parse opossum file"
-  putStrLn "            DIR            <-- generate opossum from file tree"
-  putStrLn " --spdx     SPDX_JSON      <-- parse .spdx.json"
-  putStrLn " --spdx     SPDX_YAML      <-- parse .spdx.yaml"
-  putStrLn " --scancode SCANCODE_JSON  <-- parse scancode json"
-  putStrLn " --dependency-check DC_JSON <-- parse OWASP Dependency-Check JSON"
+  putStrLn "    where ARG one of "
+  putStrLn "                FILE           <-- parse opossum file"
+  putStrLn "                DIR            <-- generate opossum from file tree"
+  putStrLn "     --spdx     SPDX_JSON      <-- parse .spdx.json"
+  putStrLn "     --spdx     SPDX_YAML      <-- parse .spdx.yaml"
+  putStrLn "     --scancode SCANCODE_JSON  <-- parse scancode json"
+  putStrLn
+    "     --dependency-check DC_JSON <-- parse OWASP Dependency-Check JSON"
+  putStrLn "or"
+  putStrLn " --merge-relative OPOSSUM [OPOSSUM [OPOSSUM [...]]]"
 
-fun :: Opossum -> [String] -> IO Opossum
-fun !pre []                      = return pre
-fun !pre ("--spdx" : (f : args)) = do
-  o <- parseSpdxToOpossum f
-  fmap (pre <>) (fun o args)
-fun !pre ("--scancode" : (f : args)) = do
-  o <- parseScancodeToOpossum f
-  fmap (pre <>) (fun o args)
-fun !pre ("--dependency-check" : (f : args)) = do
-  o <- parseDependencyCheckToOpossum f
-  fmap (pre <>) (fun o args)
-fun !pre (f : args) = do
-  fIsDirectory <- doesDirectoryExist f
-  o            <- if fIsDirectory then opossumFromFileTree f else parseOpossum f
-  fmap (pre <>) (fun o args)
 
 
 main :: IO ()
 main = getArgs >>= \case
   ["--help"] -> help
   args       -> do
-    o <- fun mempty args
+    o <- case args of
+      ("--merge-relative" : fs) ->
+        let fun :: String -> IO Opossum
+            fun f = do
+              o <- parseOpossum f
+              return (unshiftPathToOpossum (FP.takeDirectory f) o)
+        in  fmap mconcat (mapM fun fs)
+      _ ->
+        let fun :: Opossum -> [String] -> IO Opossum
+            fun !pre []                      = return pre
+            fun !pre ("--spdx" : (f : args)) = do
+              o <- parseSpdxToOpossum f
+              fmap (pre <>) (fun o args)
+            fun !pre ("--scancode" : (f : args)) = do
+              o <- parseScancodeToOpossum f
+              fmap (pre <>) (fun o args)
+            fun !pre ("--dependency-check" : (f : args)) = do
+              o <- parseDependencyCheckToOpossum f
+              fmap (pre <>) (fun o args)
+            fun !pre (f : args) = do
+              fIsDirectory <- doesDirectoryExist f
+              o            <- if fIsDirectory
+                then opossumFromFileTree f
+                else parseOpossum f
+              fmap (pre <>) (fun o args)
+        in  fun mempty args
 
     hPutStrLn IO.stderr "normalize ..."
     let !normalizedO = normaliseOpossum o
