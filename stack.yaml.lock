@@ -10,11 +10,11 @@ packages:
     git: https://github.com/maxhbr/spdx-tools-hs
     pantry-tree:
       size: 6314
-      sha256: cd3d26424502853394c1eb06937516feeb95dfa16d6c76534d5ba131f3eef487
-    commit: 8c5fc618538f88fd1b447a1b9a3b35739835aa3f
+      sha256: 91488ed9cdc4ad020b70305390753e811cb22e003d3eb399c02c265f53a305c6
+    commit: a0cfb19eeba10f59be2d5d7e3e6d36b0988d2d57
   original:
     git: https://github.com/maxhbr/spdx-tools-hs
-    commit: 8c5fc618538f88fd1b447a1b9a3b35739835aa3f
+    commit: a0cfb19eeba10f59be2d5d7e3e6d36b0988d2d57
 - completed:
     name: packageurl
     version: 0.1.0.0
