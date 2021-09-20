@@ -137,7 +137,7 @@ clusterifyOpossum (opossum@Opossum { _externalAttributions = eas, _resourcesToAt
               }
 
 unDot :: Opossum -> Opossum
-unDot (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas }) =
+unDot (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas, _filesWithChildren = fwcs, _baseUrlsForSources = bufss  }) =
   let
     undotResources :: Opossum_Resources -> Opossum_Resources
     undotResources (rs@Opossum_Resources { _dirs = dirs }) =
@@ -147,16 +147,19 @@ unDot (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas }) =
           recurse (rs@Opossum_Resources { _dirs = dirs }) =
             rs { _dirs = Map.map undotResources dirs }
       in  recurse $ rs { _dirs = dirsWithoutDot } <> contentOfDot
+    undotFun path = FP.normalise (subRegex (mkRegex "/(\\.?/)+") path "/")
     undotRTAS = Map.mapKeys
       (\path -> FP.normalise (subRegex (mkRegex "/(\\.?/)+") path "/"))
   in
     opossum { _resources               = undotResources rs
-            , _resourcesToAttributions = undotRTAS rtas
+            , _resourcesToAttributions = Map.mapKeys undotFun rtas
+            , _filesWithChildren       = Set.map undotFun fwcs
+            , _baseUrlsForSources      = Map.mapKeys undotFun bufss
             }
 
 normaliseOpossum :: Opossum -> Opossum
 normaliseOpossum opossum = case unDot opossum of
-  opossum'@Opossum { _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs }
+  opossum'@Opossum { _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _baseUrlsForSources = bufss }
     -> let normaliseId :: FilePath -> FilePath
            normaliseId fp = FP.normalise
              $ if isPathAFileInResources fp rs then fp else fp ++ "/"
@@ -164,6 +167,7 @@ normaliseOpossum opossum = case unDot opossum of
              { _resourcesToAttributions = Map.mapKeysWith (++) normaliseId rtas
              , _attributionBreakpoints  = Set.map normaliseId abs
              , _filesWithChildren       = Set.map normaliseId fwcs
+             , _baseUrlsForSources      = Map.mapKeys normaliseId bufss
              }
 
 dropDir :: FilePath -> Opossum -> Opossum
