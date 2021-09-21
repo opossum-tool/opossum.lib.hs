@@ -237,8 +237,8 @@ instance A.FromJSON ScancodeFileEntry where
     return (ScancodeFileEntry path is_file license copyrights packages)
 
 data ScancodeFile = ScancodeFile
-  { _scf_metadata     :: A.Value
-  , _scf_files :: [ScancodeFileEntry]
+  { _scf_metadata :: A.Value
+  , _scf_files    :: [ScancodeFileEntry]
   }
   deriving (Eq, Show)
 instance A.FromJSON ScancodeFile where
@@ -281,7 +281,7 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
         let
           o = mempty
             { _resources               = resources
-            , _externalAttributions    = (Map.singleton uuid ea)
+            , _externalAttributions    = Map.singleton uuid ea
             , _resourcesToAttributions =
               (Map.singleton ("/" FP.</> pathFromPurl) [uuid])
             , _attributionBreakpoints  = Set.singleton
@@ -317,7 +317,7 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
                   mempty
             return $ mempty
               { _resources               = resources
-              , _externalAttributions    = (Map.singleton uuid ea)
+              , _externalAttributions    = Map.singleton uuid ea
               , _resourcesToAttributions = (Map.singleton ("/" FP.</> path)
                                                           [uuid]
                                            )
@@ -331,9 +331,9 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
 
 parseScancodeBS :: B.ByteString -> IO Opossum
 parseScancodeBS bs = case (A.eitherDecode bs :: Either String ScancodeFile) of
-  Right (ScancodeFile metadata scFiles) ->
-    fmap (mempty { _metadata = Map.singleton "ScanCode" metadata } <>) (mconcat
-      $ map scancodeFileEntryToOpossum scFiles)
+  Right (ScancodeFile metadata scFiles) -> fmap
+    (mempty { _metadata = Map.singleton "ScanCode" metadata } <>)
+    (mconcat $ map scancodeFileEntryToOpossum scFiles)
   Left err -> do
     hPutStrLn IO.stderr err
     undefined -- TODO
