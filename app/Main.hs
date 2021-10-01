@@ -23,6 +23,7 @@ import           Opossum.Opossum
 import           Opossum.OpossumDependencyCheckUtils
 import           Opossum.OpossumSPDXUtils
 import           Opossum.OpossumScancodeUtils
+import           Opossum.OpossumScanossUtils
 import           Opossum.OpossumUtils
 
 help :: IO ()
@@ -36,6 +37,7 @@ help = do
   putStrLn "     --scancode SCANCODE_JSON  <-- parse scancode json"
   putStrLn
     "     --dependency-check DC_JSON <-- parse OWASP Dependency-Check JSON"
+  putStrLn "     --scanoss SCANOSS_JSON  <-- parse scanoss json"
   putStrLn "or"
   putStrLn " --merge-relative OPOSSUM [OPOSSUM [OPOSSUM [...]]]"
 
@@ -63,6 +65,9 @@ main = getArgs >>= \case
               fmap (pre <>) (fun o args)
             fun !pre ("--dependency-check" : (f : args)) = do
               o <- parseDependencyCheckToOpossum f
+              fmap (pre <>) (fun o args)
+            fun !pre ("--scanoss" : (f : args)) = do
+              o <- parseScanossToOpossum f
               fmap (pre <>) (fun o args)
             fun !pre (f : args) = do
               fIsDirectory <- doesDirectoryExist f
