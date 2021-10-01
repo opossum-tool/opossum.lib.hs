@@ -48,8 +48,8 @@ scancodeJsonBS = B.fromStrict $(embedFile "test/data/tools-java.scancode.json")
 dependencyCheckJsonBS :: B.ByteString
 dependencyCheckJsonBS = B.fromStrict $(embedFile "test/data/dependency-check-report.json")
 
-scanossCheckJsonBS :: B.ByteString
-scanossCheckJsonBS = B.fromStrict $(embedFile "test/data/zlib_sca.json")
+scanossJsonBS :: B.ByteString
+scanossJsonBS = B.fromStrict $(embedFile "test/data/zlib_sca.json")
 
 opossumSpec = do
   describe "Opossum Model"
@@ -338,8 +338,12 @@ opossumSpec = do
   
   describe "Opossum Utils Scanoss Parser" $ do
     it "should parse json file" $ do
-      let decoded = (A.eitherDecode scanossCheckJsonBS :: Either String (Map.Map String ScanossFindings))
+      let decoded = (A.eitherDecode scanossJsonBS :: Either String (Map.Map String ScanossFindings))
       (isRight decoded) `shouldBe` True
+
+    opossumFromSCA <- runIO $ parseScanossBS scanossJsonBS
+    it "should parse json to opossum" $ do
+      countFiles (_resources opossumFromSCA) `shouldBe` 183
 
 main :: IO ()
 main = hspec $ opossumSpec

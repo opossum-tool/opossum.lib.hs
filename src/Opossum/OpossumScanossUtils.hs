@@ -11,7 +11,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Opossum.OpossumScanossUtils
-  ( parseScanossToOpossum
+  ( parseScanossToOpossum, parseScanossBS
   , ScanossFindings(..)
   , ScanossFinding(..)
   , ScanossFindingLicense(..)
