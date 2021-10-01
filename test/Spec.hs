@@ -32,6 +32,7 @@ import           Opossum.OpossumSPDXUtils
 import           Opossum.OpossumUtils
 import           Opossum.OpossumDependencyCheckUtils
 import           Opossum.OpossumScancodeUtils
+import Opossum.OpossumScanossUtils
 
 
 opossumFileBS :: B.ByteString
@@ -46,6 +47,9 @@ scancodeJsonBS = B.fromStrict $(embedFile "test/data/tools-java.scancode.json")
 
 dependencyCheckJsonBS :: B.ByteString
 dependencyCheckJsonBS = B.fromStrict $(embedFile "test/data/dependency-check-report.json")
+
+scanossCheckJsonBS :: B.ByteString
+scanossCheckJsonBS = B.fromStrict $(embedFile "test/data/zlib_sca.json")
 
 opossumSpec = do
   describe "Opossum Model"
@@ -331,6 +335,11 @@ opossumSpec = do
     opossumFromDC <- runIO $ parseDependencyCheckBS dependencyCheckJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromDC) `shouldBe` 62
+  
+  describe "Opossum Utils Scanoss Parser" $ do
+    it "should parse json file" $ do
+      let decoded = (A.eitherDecode scanossCheckJsonBS :: Either String (Map.Map String ScanossFindings))
+      (isRight decoded) `shouldBe` True
 
 main :: IO ()
 main = hspec $ opossumSpec
