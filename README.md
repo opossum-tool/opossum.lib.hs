@@ -19,12 +19,16 @@ This project contains the helper script `./opossum-lib-exe.sh`, that can be exec
 ``` shell
 $ ./opossum-lib-exe.sh --help
  ARG [ARG [ARG ...]]]
-where ARG one of
-            FILE           <-- parse opossum file
-            DIR            <-- generate opossum from file tree
- --spdx     SPDX_JSON      <-- parse .spdx.json
- --spdx     SPDX_YAML      <-- parse .spdx.yaml
- --scancode SCANCODE_JSON  <-- parse scancode json
+    where ARG one of
+                FILE           <-- parse opossum file
+                DIR            <-- generate opossum from file tree
+     --spdx     SPDX_JSON      <-- parse .spdx.json
+     --spdx     SPDX_YAML      <-- parse .spdx.yaml
+     --scancode SCANCODE_JSON  <-- parse scancode json
+     --dependency-check DC_JSON <-- parse OWASP Dependency-Check JSON
+     --scanoss SCANOSS_JSON  <-- parse scanoss json
+or
+ --merge-relative OPOSSUM [OPOSSUM [OPOSSUM [...]]]
 ```
 
 You can run the following command, to generate an input file from several input files, a scancode file and a spdx file.
