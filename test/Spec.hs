@@ -312,6 +312,11 @@ opossumSpec = do
     it "num of frequentLicenses should from spdx match" $ do
       length (_frequentLicenses opossum_from_ort) `shouldBe` 0
 
+    let (ExternalAttributionSources eas) = _externalAttributionSources opossum_from_ort
+    it "externalAttributionSources sohuld be witten" $ do
+      (Map.keys eas) `shouldBe` ["SPDXPackage"]
+
+
   describe "Opossum Utils ScanCode Converter" $ do
     it "should parse json file" $ do
       let decoded =
@@ -326,6 +331,10 @@ opossumSpec = do
     opossumFromSC <- runIO $ parseScancodeBS scancodeJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromSC) `shouldBe` 105
+
+    let (ExternalAttributionSources eas) = _externalAttributionSources opossumFromSC
+    it "externalAttributionSources sohuld be witten" $ do
+      (List.sort $ Map.keys eas) `shouldBe` ["Scancode", "Scancode-Package"]
 
   describe "Opossum Utils Dependency-Check Converter" $ do
 

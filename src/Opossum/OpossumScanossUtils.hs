@@ -296,6 +296,7 @@ scanossFindingsToOpossum (fn, ScanossFindings fs) =
               Nothing
               (_ScanossFinding_url f)
               mempty
+        let eas = mkExternalAttributionSources source Nothing 5
         -- TODO: dependencies
         return $ mempty
           { _resources               = resources

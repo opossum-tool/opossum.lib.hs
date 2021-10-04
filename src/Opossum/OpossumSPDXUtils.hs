@@ -164,6 +164,7 @@ spdxToOpossum =
                                                rsFull
                 , _externalAttributions    = Map.singleton uuid ea
                 , _resourcesToAttributions = Map.singleton rsFull [uuid]
+                , _externalAttributionSources = mkExternalAttributionSources (_source ea) Nothing 500
                 }
       in
         do

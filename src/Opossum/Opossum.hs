@@ -375,9 +375,9 @@ instance Semigroup ExternalAttributionSources where
 instance Monoid ExternalAttributionSources where
   mempty = ExternalAttributionSources mempty
 mkExternalAttributionSources
-  :: String -> String -> Integer -> ExternalAttributionSources
-mkExternalAttributionSources key name priority = ExternalAttributionSources
-  (Map.singleton key (ExternalAttributionSourcesEntry name priority))
+  :: ExternalAttribution_Source -> Maybe String -> Integer -> ExternalAttributionSources
+mkExternalAttributionSources (ExternalAttribution_Source key _) name priority = ExternalAttributionSources
+  (Map.singleton key (ExternalAttributionSourcesEntry (key `Maybe.fromMaybe` name) priority))
 
 data Opossum = Opossum
   { _metadata                   :: Map.Map String A.Value

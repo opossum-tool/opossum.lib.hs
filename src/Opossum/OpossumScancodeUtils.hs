@@ -277,7 +277,7 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
               Nothing
               Nothing
               justPreselectedFlags
-
+        let eas = mkExternalAttributionSources source Nothing 30
         let
           o = mempty
             { _resources               = resources
@@ -286,6 +286,7 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
               (Map.singleton ("/" FP.</> pathFromPurl) [uuid])
             , _attributionBreakpoints  = Set.singleton
                                            ("/" ++ typeFromPurl ++ "/")
+            , _externalAttributionSources = eas
             }
         os <- mapM opossumFromScancodePackage dependencies
         return $ mconcat (o : (map (unshiftPathToOpossum pathFromPurl) os))
@@ -315,6 +316,7 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
                   Nothing
                   Nothing
                   mempty
+            let eas = mkExternalAttributionSources source Nothing 30
             return $ mempty
               { _resources               = resources
               , _externalAttributions    = Map.singleton uuid ea
@@ -322,6 +324,7 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
                                                           [uuid]
                                            )
               , _filesWithChildren       = filesWithChildren
+              , _externalAttributionSources = eas
               }
     in
       do
