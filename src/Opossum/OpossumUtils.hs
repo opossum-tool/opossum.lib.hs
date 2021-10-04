@@ -63,10 +63,10 @@ cleanupLicense (Just t ) = case T.stripPrefix ", " t of
   t'      -> t'
 
 mergifyEA
-  :: Opossum_ExternalAttribution
-  -> Opossum_ExternalAttribution
-  -> Maybe Opossum_ExternalAttribution
-mergifyEA left@(Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _flags = flags }) (right@Opossum_ExternalAttribution { _source = Opossum_ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _flags = flags' })
+  :: ExternalAttribution
+  -> ExternalAttribution
+  -> Maybe ExternalAttribution
+mergifyEA left@(ExternalAttribution { _source = ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _flags = flags }) (right@ExternalAttribution { _source = ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _flags = flags' })
   = if left
        == right
        || (and
@@ -92,19 +92,19 @@ mergifyEA left@(Opossum_ExternalAttribution { _source = Opossum_ExternalAttribut
     else Nothing
 
 clusterifyEAMap
-  :: Map.Map UUID Opossum_ExternalAttribution
-  -> [(UUID, Opossum_ExternalAttribution, [UUID])]
+  :: Map.Map UUID ExternalAttribution
+  -> [(UUID, ExternalAttribution, [UUID])]
 clusterifyEAMap =
   let clusterifyEAMap'
-        :: [(UUID, Opossum_ExternalAttribution)]
-        -> [(UUID, Opossum_ExternalAttribution, [UUID])]
-        -> [(UUID, Opossum_ExternalAttribution, [UUID])]
+        :: [(UUID, ExternalAttribution)]
+        -> [(UUID, ExternalAttribution, [UUID])]
+        -> [(UUID, ExternalAttribution, [UUID])]
       clusterifyEAMap' [] out = out
       clusterifyEAMap' (i : ins) out =
         let clusterifyEAMap''
-              :: (UUID, Opossum_ExternalAttribution)
-              -> [(UUID, Opossum_ExternalAttribution, [UUID])]
-              -> [(UUID, Opossum_ExternalAttribution, [UUID])]
+              :: (UUID, ExternalAttribution)
+              -> [(UUID, ExternalAttribution, [UUID])]
+              -> [(UUID, ExternalAttribution, [UUID])]
             clusterifyEAMap'' (uuid, ea) [] = [(uuid, ea, [])]
             clusterifyEAMap'' (uuid, ea) (ins@(in'@(uuid', ea', uuids) : ins'))
               | uuid == uuid' = ins
@@ -139,12 +139,12 @@ clusterifyOpossum (opossum@Opossum { _externalAttributions = eas, _resourcesToAt
 unDot :: Opossum -> Opossum
 unDot (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas, _filesWithChildren = fwcs, _baseUrlsForSources = bufss  }) =
   let
-    undotResources :: Opossum_Resources -> Opossum_Resources
-    undotResources (rs@Opossum_Resources { _dirs = dirs }) =
+    undotResources :: Resources -> Resources
+    undotResources (rs@Resources { _dirs = dirs }) =
       let contentOfDot   = Map.findWithDefault mempty "." dirs
           dirsWithoutDot = Map.delete "." dirs
-          recurse :: Opossum_Resources -> Opossum_Resources
-          recurse (rs@Opossum_Resources { _dirs = dirs }) =
+          recurse :: Resources -> Resources
+          recurse (rs@Resources { _dirs = dirs }) =
             rs { _dirs = Map.map undotResources dirs }
       in  recurse $ rs { _dirs = dirsWithoutDot } <> contentOfDot
     undotFun path = FP.normalise (subRegex (mkRegex "/(\\.?/)+") path "/")
@@ -172,7 +172,7 @@ normaliseOpossum opossum = case unDot opossum of
 
 dropDir :: FilePath -> Opossum -> Opossum
 dropDir directoryName (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas })
-  = let filterResources (rs@Opossum_Resources { _dirs = dirs }) =
+  = let filterResources (rs@Resources { _dirs = dirs }) =
           let filteredDirs = Map.filterWithKey
                 (\key -> const (not (directoryName == key)))
                 dirs
@@ -184,12 +184,12 @@ dropDir directoryName (opossum@Opossum { _resources = rs, _resourcesToAttributio
                 , _resourcesToAttributions = filterRTAS rtas
                 }
 
-unshiftPathToResources :: FilePath -> Opossum_Resources -> Opossum_Resources
+unshiftPathToResources :: FilePath -> Resources -> Resources
 unshiftPathToResources prefix resources =
   let unshiftPathToResources'
-        :: [FilePath] -> Opossum_Resources -> Opossum_Resources
+        :: [FilePath] -> Resources -> Resources
       unshiftPathToResources' []       = id
-      unshiftPathToResources' (p : ps) = \rs -> Opossum_Resources
+      unshiftPathToResources' (p : ps) = \rs -> Resources
         (Map.singleton p (unshiftPathToResources' ps rs))
         Set.empty
   in  ( (`unshiftPathToResources'` resources)

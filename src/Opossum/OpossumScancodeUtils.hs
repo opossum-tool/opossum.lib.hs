@@ -260,13 +260,13 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
         _ -> "UNKNOWN"
       coordinatesFromPurl = case purl of
         Just purl -> purlToCoordinates purl
-        _         -> Opossum_Coordinates Nothing Nothing Nothing Nothing Nothing
+        _         -> Coordinates Nothing Nothing Nothing Nothing Nothing
     in
       do
         uuid <- randomIO
-        let source    = Opossum_ExternalAttribution_Source "Scancode-Package" 50
+        let source    = ExternalAttribution_Source "Scancode-Package" 50
         let resources = fpToResources True pathFromPurl
-        let ea = Opossum_ExternalAttribution
+        let ea = ExternalAttribution
               source
               50
               Nothing
@@ -303,13 +303,13 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
                                , _filesWithChildren = filesWithChildren
                                }
           else do
-            let source = Opossum_ExternalAttribution_Source "Scancode" 50
-            let ea = Opossum_ExternalAttribution
+            let source = ExternalAttribution_Source "Scancode" 50
+            let ea = ExternalAttribution
                   source
                   50
                   Nothing
                   Nothing
-                  (Opossum_Coordinates Nothing Nothing Nothing Nothing Nothing)
+                  (Coordinates Nothing Nothing Nothing Nothing Nothing)
                   ((Just . T.pack . unlines) copyrights)
                   (fmap (T.pack . renderSpdxLicense) licenses)
                   Nothing

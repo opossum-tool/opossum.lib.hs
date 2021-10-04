@@ -258,18 +258,18 @@ instance A.FromJSON ScanossFindings where
       a
     return $ ScanossFindings fs
 
-scanossFindingToOpossumCoordinates :: ScanossFinding -> Opossum_Coordinates
+scanossFindingToOpossumCoordinates :: ScanossFinding -> Coordinates
 scanossFindingToOpossumCoordinates (ScanossFinding { _ScanossFinding_vendor = vendor, _ScanossFinding_component = component, _ScanossFinding_version = version, _ScanossFinding_purl = purl })
   = case purl of
     (p : _) -> purlToCoordinates p
-    _       -> Opossum_Coordinates component vendor Nothing version Nothing
+    _       -> Coordinates component vendor Nothing version Nothing
 
 scanossFindingsToOpossum :: (String, ScanossFindings) -> IO Opossum
 scanossFindingsToOpossum (fn, ScanossFindings fs) =
   let scanossFindingToOpossum :: ScanossFinding -> IO Opossum
       scanossFindingToOpossum f = do
         uuid <- randomIO
-        let source = Opossum_ExternalAttribution_Source
+        let source = ExternalAttribution_Source
               ("SCANOSS-" ++ _ScanossFinding_id f)
               10
         let resources = fpToResources True fn
@@ -285,7 +285,7 @@ scanossFindingsToOpossum (fn, ScanossFindings fs) =
                )
                 (_ScanossFinding_licenses f)
               )
-        let ea = Opossum_ExternalAttribution
+        let ea = ExternalAttribution
               source
               10
               (_ScanossFinding_comment f)

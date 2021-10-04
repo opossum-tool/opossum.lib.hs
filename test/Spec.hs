@@ -60,13 +60,13 @@ opossumSpec = do
           , "root" </> "subfolder" </> "file2"
           , "root" </> "file3"
           ]
-        parsedResources = Opossum_Resources
+        parsedResources = Resources
           (Map.singleton
             "root"
-            (Opossum_Resources
+            (Resources
               (Map.singleton
                 "subfolder"
-                (Opossum_Resources Map.empty (Set.fromList ["file1", "file2"]))
+                (Resources Map.empty (Set.fromList ["file1", "file2"]))
               )
               (Set.singleton "file3")
             )
@@ -83,13 +83,13 @@ opossumSpec = do
           , "}"
           , "}"
           ]
-        otherResources = Opossum_Resources
+        otherResources = Resources
           (Map.singleton
             "root"
-            (Opossum_Resources
+            (Resources
               (Map.singleton
                 "other"
-                (Opossum_Resources Map.empty (Set.singleton "file4"))
+                (Resources Map.empty (Set.singleton "file4"))
               )
               Set.empty
             )
@@ -102,17 +102,17 @@ opossumSpec = do
           it "testFolderAndFileMerging" $ do
             (fpToResources True "path/to/file")
               <>         (fpToResources False "path/other/dir")
-              `shouldBe` Opossum_Resources
+              `shouldBe` Resources
                            (Map.singleton
                              "path"
-                             (Opossum_Resources
+                             (Resources
                                (Map.fromList
                                  [ ( "to"
-                                   , Opossum_Resources Map.empty
+                                   , Resources Map.empty
                                                        (Set.singleton "file")
                                    )
                                  , ( "other"
-                                   , Opossum_Resources
+                                   , Resources
                                      (Map.singleton "dir" mempty)
                                      Set.empty
                                    )
@@ -165,13 +165,13 @@ opossumSpec = do
                 , "    }"
                 , "}"
                 ]
-              expected_source = Opossum_ExternalAttribution_Source "tern" 100
-              expected_coordinates = Opossum_Coordinates Nothing
+              expected_source = ExternalAttribution_Source "tern" 100
+              expected_coordinates = Coordinates Nothing
                                                          Nothing
                                                          (Just "adduser")
                                                          (Just "3.118")
                                                          Nothing
-              expected_ea = Opossum_ExternalAttribution
+              expected_ea = ExternalAttribution
                 expected_source
                 100
                 Nothing
@@ -186,7 +186,7 @@ opossumSpec = do
               case
                 (A.eitherDecode ea_str :: Either
                     String
-                    Opossum_ExternalAttribution
+                    ExternalAttribution
                 )
               of
                 Right ea' -> return ea'
@@ -209,13 +209,13 @@ opossumSpec = do
                 , "    \"preSelected\": true"
                 , "}"
                 ]
-              expected_source = Opossum_ExternalAttribution_Source "tern" 100
-              expected_coordinates = Opossum_Coordinates Nothing
+              expected_source = ExternalAttribution_Source "tern" 100
+              expected_coordinates = Coordinates Nothing
                                                          Nothing
                                                          (Just "adduser")
                                                          (Just "3.118")
                                                          Nothing
-              expected_ea = Opossum_ExternalAttribution
+              expected_ea = ExternalAttribution
                 expected_source
                 100
                 Nothing
@@ -230,7 +230,7 @@ opossumSpec = do
               case
                 (A.eitherDecode ea_str :: Either
                     String
-                    Opossum_ExternalAttribution
+                    ExternalAttribution
                 )
               of
                 Right ea' -> return ea'
@@ -249,13 +249,13 @@ opossumSpec = do
             length (_frequentLicenses opossum) `shouldBe` 427
 
   describe "Opossum Utils"
-    $ let source = Opossum_ExternalAttribution_Source "test" 100
-          expected_coordinates version = Opossum_Coordinates Nothing
+    $ let source = ExternalAttribution_Source "test" 100
+          expected_coordinates version = Coordinates Nothing
                                                              Nothing
                                                              (Just "name")
                                                              (Just version)
                                                              Nothing
-          ea1 = Opossum_ExternalAttribution source
+          ea1 = ExternalAttribution source
                                             100
                                             Nothing
                                             Nothing
@@ -265,7 +265,7 @@ opossumSpec = do
                                             Nothing
                                             Nothing
                                             mempty
-          ea2 = Opossum_ExternalAttribution source
+          ea2 = ExternalAttribution source
                                             100
                                             Nothing
                                             Nothing
@@ -275,7 +275,7 @@ opossumSpec = do
                                             Nothing
                                             Nothing
                                             mempty
-          ea3 = Opossum_ExternalAttribution source
+          ea3 = ExternalAttribution source
                                             100
                                             Nothing
                                             Nothing
