@@ -22,6 +22,9 @@ module Opossum.Opossum
   , Opossum_ExternalAttribution(..)
   , Opossum_ExternalAttribution_Source(..)
   , Opossum_ExternalAttribution_Flags(..)
+  , Opossum_ExternalAttributionSources(..)
+  , Opossum_ExternalAttributionSourcesEntry(..)
+  , mkExternalAttributionSources
   , justPreselectedFlags
   , Opossum(..)
   , writeOpossumStats
@@ -214,7 +217,12 @@ opoossumExternalAttributionFlagsPreObjectList flags =
           , flagToJSON _isPreSelected       "preSelected"
           , flagToJSON _isExcludeFromNotice "excludeFromNotice"
           ]
-        ++ (if _isFollowUp flags then ["followUp" A..= ("FOLLOW_UP" :: String)] else [])
+        ++ (if _isFollowUp flags
+            then
+              ["followUp" A..= ("FOLLOW_UP" :: String)]
+            else
+              []
+           )
 instance A.FromJSON Opossum_ExternalAttribution_Flags where
   parseJSON = A.withObject "Opossum_ExternalAttribution_Flags" $ \v ->
     let readFlag :: String -> A.Parser Bool
@@ -227,11 +235,11 @@ instance A.FromJSON Opossum_ExternalAttribution_Flags where
         readStringFlag :: String -> A.Parser Bool
         readStringFlag name = fmap
           (\case
-              Just "" -> False
-              Just _  -> True
-              Nothing -> False
-            )
-            (v A..:? (T.pack name) :: A.Parser (Maybe String))
+            Just "" -> False
+            Just _  -> True
+            Nothing -> False
+          )
+          (v A..:? (T.pack name) :: A.Parser (Maybe String))
     in  Opossum_ExternalAttribution_Flags
           <$> readFlag "firstParty"
           <*> readFlag "preSelected"
@@ -345,19 +353,46 @@ instance A.FromJSON Opossum_FrequentLicense where
       <*>  v
       A..: "defaultText"
 
+data Opossum_ExternalAttributionSourcesEntry = Opossum_ExternalAttributionSourcesEntry String
+                                                                       Integer
+  deriving (Eq, Show, Generic)
+instance A.FromJSON Opossum_ExternalAttributionSourcesEntry where
+  parseJSON = A.withObject "ExternalAttributionSourcesEntry" $ \v -> do
+    Opossum_ExternalAttributionSourcesEntry <$> v A..: "name" <*> v A..: "priority"
+instance A.ToJSON Opossum_ExternalAttributionSourcesEntry where
+  toJSON (Opossum_ExternalAttributionSourcesEntry name priority) =
+    A.object ["name" A..= name, "priority" A..= priority]
+newtype Opossum_ExternalAttributionSources
+   = Opossum_ExternalAttributionSources (Map.Map String Opossum_ExternalAttributionSourcesEntry)
+  deriving (Eq, Show, Generic)
+instance A.FromJSON Opossum_ExternalAttributionSources where
+  parseJSON = fmap Opossum_ExternalAttributionSources . A.parseJSON
+instance A.ToJSON Opossum_ExternalAttributionSources where
+  toJSON (Opossum_ExternalAttributionSources eas) = A.toJSON eas
+instance Semigroup Opossum_ExternalAttributionSources where
+  (Opossum_ExternalAttributionSources eas1) <> (Opossum_ExternalAttributionSources eas2) =
+    Opossum_ExternalAttributionSources (eas1 <> eas2)
+instance Monoid Opossum_ExternalAttributionSources where
+  mempty = Opossum_ExternalAttributionSources mempty
+mkExternalAttributionSources
+  :: String -> String -> Integer -> Opossum_ExternalAttributionSources
+mkExternalAttributionSources key name priority = Opossum_ExternalAttributionSources
+  (Map.singleton key (Opossum_ExternalAttributionSourcesEntry name priority))
+
 data Opossum = Opossum
-  { _metadata                :: Map.Map String A.Value
-  , _resources               :: Opossum_Resources
-  , _externalAttributions    :: Map.Map UUID Opossum_ExternalAttribution
-  , _resourcesToAttributions :: Map.Map FilePath [UUID]
-  , _attributionBreakpoints  :: Set.Set FilePath
-  , _filesWithChildren       :: Set.Set FilePath
-  , _frequentLicenses        :: [Opossum_FrequentLicense]
-  , _baseUrlsForSources      :: Map.Map FilePath String
+  { _metadata                   :: Map.Map String A.Value
+  , _resources                  :: Opossum_Resources
+  , _externalAttributions       :: Map.Map UUID Opossum_ExternalAttribution
+  , _resourcesToAttributions    :: Map.Map FilePath [UUID]
+  , _attributionBreakpoints     :: Set.Set FilePath
+  , _filesWithChildren          :: Set.Set FilePath
+  , _frequentLicenses           :: [Opossum_FrequentLicense]
+  , _baseUrlsForSources         :: Map.Map FilePath String
+  , _externalAttributionSources :: Opossum_ExternalAttributionSources
   }
   deriving (Show, Generic)
 instance A.ToJSON Opossum where
-  toJSON (Opossum metadata resources externalAttributions resourcesToAttributions attributionBreakpoints filesWithChildren frequentLicenses baseUrlsForSources)
+  toJSON (Opossum metadata resources externalAttributions resourcesToAttributions attributionBreakpoints filesWithChildren frequentLicenses baseUrlsForSources externalAttributionSources)
     = objectNoNulls
       [ "metadata" A..= metadata
       , "resources" A..= resources
@@ -367,6 +402,7 @@ instance A.ToJSON Opossum where
       , "filesWithChildren" A..= filesWithChildren
       , "frequentLicenses" A..= frequentLicenses
       , "baseUrlsForSources" A..= baseUrlsForSources
+      , "externalAttributionSources" A..= externalAttributionSources
       ]
 instance A.FromJSON Opossum where
   parseJSON = A.withObject "Opossum" $ \v -> do
@@ -388,6 +424,8 @@ instance A.FromJSON Opossum where
           (v A..:? "frequentLicenses")
         baseUrlsForSourcesParser =
           fmap (mempty `Maybe.fromMaybe`) $ v A..:? "baseUrlsForSources"
+        externalAttributionSourcesParser =
+          fmap (mempty `Maybe.fromMaybe`) $ v A..:? "externalAttributionSources"
     Opossum
       <$> metadataParser
       <*> resourcesParser
@@ -397,6 +435,7 @@ instance A.FromJSON Opossum where
       <*> filesWithChildrenParser
       <*> frequentLicensesParser
       <*> baseUrlsForSourcesParser
+      <*> externalAttributionSourcesParser
 instance Semigroup Opossum where
   opossum1 <> opossum2 =
     let
@@ -416,6 +455,9 @@ instance Semigroup Opossum where
         List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
       mergedBaseUrlsForSources =
         Map.union (_baseUrlsForSources opossum1) (_baseUrlsForSources opossum2)
+      mergedExternalAttributionsSources =
+        (_externalAttributionSources opossum1)
+          <> (_externalAttributionSources opossum2)
     in
       Opossum mergedMetadata
               mergedResources
@@ -425,8 +467,10 @@ instance Semigroup Opossum where
               mergedFilesWithChildren
               mergedFrequentLicenses
               mergedBaseUrlsForSources
+              mergedExternalAttributionsSources
 instance Monoid Opossum where
-  mempty = Opossum mempty mempty mempty mempty mempty mempty mempty mempty
+  mempty =
+    Opossum mempty mempty mempty mempty mempty mempty mempty mempty mempty
 
 writeOpossumStats :: Opossum -> IO ()
 writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributions = eas, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _frequentLicenses = fls })
