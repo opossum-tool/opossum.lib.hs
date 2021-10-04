@@ -521,6 +521,7 @@ dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_isVirtu
               opossum = baseOpossum
                 { _externalAttributions    = Map.singleton uuid ea
                 , _resourcesToAttributions = Map.singleton fp [uuid]
+                , _externalAttributionSources = mkExternalAttributionSources eas Nothing 40
                 }
           return opossum
     in
