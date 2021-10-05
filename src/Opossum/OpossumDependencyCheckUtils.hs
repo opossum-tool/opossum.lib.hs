@@ -458,12 +458,12 @@ dependencyCheckDependencyToPath (DependencyCheckDependency True fn fp _ _ _) =
   in  (Just (baseFP ++ "/"), baseFP FP.</> fn)
 
 dependencyCheckPackageToCoordinates
-  :: DependencyCheckPackage -> Opossum_Coordinates
+  :: DependencyCheckPackage -> Coordinates
 dependencyCheckPackageToCoordinates (DependencyCheckPackage { _dcp_id = id }) =
   case id of
     Right purl -> purlToCoordinates purl
     Left raw ->
-      Opossum_Coordinates (Just (T.pack raw)) Nothing Nothing Nothing Nothing
+      Coordinates (Just (T.pack raw)) Nothing Nothing Nothing Nothing
 
 evidenceToPURLs :: Map.Map String [DependencyCheckEvidence] -> [PURL]
 evidenceToPURLs evidence =
@@ -499,8 +499,8 @@ dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_isVirtu
         = do
           uuid <- randomIO
           let cs  = dependencyCheckPackageToCoordinates package
-              eas = Opossum_ExternalAttribution_Source "Dependency-Check" 50
-              ea  = Opossum_ExternalAttribution
+              eas = ExternalAttribution_Source "Dependency-Check" 50
+              ea  = ExternalAttribution
                 { _source                = eas
                 , _attributionConfidence = 50
                 , _comment               = case vulnerabilities of
@@ -521,6 +521,7 @@ dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_isVirtu
               opossum = baseOpossum
                 { _externalAttributions    = Map.singleton uuid ea
                 , _resourcesToAttributions = Map.singleton fp [uuid]
+                , _externalAttributionSources = mkExternalAttributionSources eas Nothing 40
                 }
           return opossum
     in

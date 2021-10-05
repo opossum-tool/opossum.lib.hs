@@ -47,14 +47,14 @@ import           System.Random                  ( randomIO )
 spdxToOpossum :: SPDXDocument -> IO Opossum
 spdxToOpossum =
   let
-    spdxFileToEA :: SPDXFile -> Opossum_ExternalAttribution
+    spdxFileToEA :: SPDXFile -> ExternalAttribution
     spdxFileToEA (SPDXFile { _SPDXFile_SPDXID = spdxid, _SPDXFile_raw = raw, _SPDXFile_fileName = filename, _SPDXFile_fileTypes = _, _SPDXFile_checksums = _, _SPDXFile_LicenseConcluded = license, _SPDXFile_licenseInfoInFiles = _, _SPDXFile_licenseInfoFromFiles = _, _SPDXFile_licenseComments = _, _SPDXFile_copyrightText = copyright, _SPDXFile_comment = _, _SPDXFile_noticeText = notice, _SPDXFile_fileContributors = _, _SPDXFile_attributionTexts = attribution, _SPDXFile_fileDependencies = dependencies, _SPDXFile_name = name })
-      = Opossum_ExternalAttribution
-        { _source = Opossum_ExternalAttribution_Source "SPDXFile" 100
+      = ExternalAttribution
+        { _source = ExternalAttribution_Source "SPDXFile" 100
         , _attributionConfidence = 100
         , _comment = (Just . T.pack . C8.unpack . A.encodePretty) raw
         , _originId              = Nothing
-        , _coordinates           = Opossum_Coordinates Nothing
+        , _coordinates           = Coordinates Nothing
                                                        Nothing
                                                        Nothing
                                                        Nothing
@@ -67,14 +67,14 @@ spdxToOpossum =
         , _flags                 = mempty
         }
 
-    spdxPackageToEA :: SPDXPackage -> Opossum_ExternalAttribution
+    spdxPackageToEA :: SPDXPackage -> ExternalAttribution
     spdxPackageToEA (SPDXPackage { _SPDXPackage_SPDXID = spdxid, _SPDXPackage_raw = raw, _SPDXPackage_name = name, _SPDXPackage_versionInfo = version, _SPDXPackage_packageFileName = _, _SPDXPackage_supplier = _, _SPDXPackage_originator = _, _SPDXPackage_downloadLocation = _, _SPDXPackage_filesAnalyzed = _, _SPDXPackage_packageVerificationCode = _, _SPDXPackage_checksums = _, _SPDXPackage_homepage = _, _SPDXPackage_sourceInfo = _, _SPDXPackage_licenseConcluded = _, _SPDXPackage_licenseInfoFromFiles = _, _SPDXPackage_licenseDeclared = license, _SPDXPackage_licenseComments = _, _SPDXPackage_copyrightText = copyright, _SPDXPackage_summary = _, _SPDXPackage_description = _, _SPDXPackage_comment = _, _SPDXPackage_attributionTexts = _, _SPDXPackage_hasFiles = _ })
-      = Opossum_ExternalAttribution
-        { _source = Opossum_ExternalAttribution_Source "SPDXPackage" 100
+      = ExternalAttribution
+        { _source = ExternalAttribution_Source "SPDXPackage" 100
         , _attributionConfidence = 100
         , _comment = (Just . T.pack . C8.unpack . A.encodePretty) raw
         , _originId              = Nothing
-        , _coordinates           = Opossum_Coordinates Nothing
+        , _coordinates           = Coordinates Nothing
                                                        Nothing
                                                        ((Just . T.pack) name)
                                                        (fmap T.pack version)
@@ -90,7 +90,7 @@ spdxToOpossum =
         }
 
     spdxFileOrPackageToEA
-      :: Either SPDXFile SPDXPackage -> Opossum_ExternalAttribution
+      :: Either SPDXFile SPDXPackage -> ExternalAttribution
     spdxFileOrPackageToEA (Left  f) = spdxFileToEA f
     spdxFileOrPackageToEA (Right p) = spdxPackageToEA p
   in
@@ -164,6 +164,7 @@ spdxToOpossum =
                                                rsFull
                 , _externalAttributions    = Map.singleton uuid ea
                 , _resourcesToAttributions = Map.singleton rsFull [uuid]
+                , _externalAttributionSources = mkExternalAttributionSources (_source ea) Nothing 500
                 }
       in
         do

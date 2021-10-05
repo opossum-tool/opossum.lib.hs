@@ -10,18 +10,21 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StrictData #-}
 module Opossum.Opossum
-  ( Opossum_Resources(..)
+  ( Resources(..)
   , countFiles
   , fpToResources
   , fpsToResources
   , isPathAFileInResources
-  , Opossum_FrequentLicense(..)
-  , Opossum_Coordinates(..)
+  , FrequentLicense(..)
+  , Coordinates(..)
   , purlToCoordinates
   , coordinatesAreNotNull
-  , Opossum_ExternalAttribution(..)
-  , Opossum_ExternalAttribution_Source(..)
-  , Opossum_ExternalAttribution_Flags(..)
+  , ExternalAttribution(..)
+  , ExternalAttribution_Source(..)
+  , ExternalAttribution_Flags(..)
+  , ExternalAttributionSources(..)
+  , ExternalAttributionSourcesEntry(..)
+  , mkExternalAttributionSources
   , justPreselectedFlags
   , Opossum(..)
   , writeOpossumStats
@@ -58,13 +61,13 @@ objectNoNulls =
       dropNulls (p           : ps) = p : (dropNulls ps)
   in  A.object . dropNulls
 
-data Opossum_Resources = Opossum_Resources
-  { _dirs  :: Map.Map FilePath Opossum_Resources
+data Resources = Resources
+  { _dirs  :: Map.Map FilePath Resources
   , _files :: Set.Set FilePath
   }
   deriving (Show, Generic, Eq)
-instance A.ToJSON Opossum_Resources where
-  toJSON (Opossum_Resources dirs files) =
+instance A.ToJSON Resources where
+  toJSON (Resources dirs files) =
     let pairsFromDirs = map
           (\(fragment, resources) ->
             ((T.pack fragment) A..= (A.toJSON resources))
@@ -73,8 +76,8 @@ instance A.ToJSON Opossum_Resources where
         pairsFromFiles = map (\fragment -> (T.pack fragment) A..= (1 :: Int))
           $ Set.toList files
     in  A.object (pairsFromFiles ++ pairsFromDirs)
-instance A.FromJSON Opossum_Resources where
-  parseJSON = A.withObject "Opossum_Resources" $ \v ->
+instance A.FromJSON Resources where
+  parseJSON = A.withObject "Resources" $ \v ->
     let
       isObject :: A.Value -> Bool
       isObject (A.Object _) = True
@@ -86,11 +89,11 @@ instance A.FromJSON Opossum_Resources where
           . (filter (\(_, v') -> not (isObject v')))
       getDirs
         :: [(FilePath, A.Value)]
-        -> A.Parser (Map.Map FilePath Opossum_Resources)
+        -> A.Parser (Map.Map FilePath Resources)
       getDirs list = do
         parsedList <- mapM
           (\(fp, o) -> do
-            rs <- A.parseJSON o :: A.Parser Opossum_Resources
+            rs <- A.parseJSON o :: A.Parser Resources
             return (fp, rs)
           )
           (filter (\(_, v') -> isObject v') list)
@@ -99,61 +102,61 @@ instance A.FromJSON Opossum_Resources where
       do
         let vList = map (\(t, v') -> (T.unpack t, v')) $ HM.toList v
         dirs <- getDirs vList
-        return (Opossum_Resources dirs (getFiles vList))
-instance Semigroup Opossum_Resources where
-  (Opossum_Resources dirs1 files1) <> (Opossum_Resources dirs2 files2) =
+        return (Resources dirs (getFiles vList))
+instance Semigroup Resources where
+  (Resources dirs1 files1) <> (Resources dirs2 files2) =
     let dirs     = (Map.unionWith (<>) dirs1 dirs2)
         dirNames = Map.keys dirs
         files    = Set.filter (\f -> not $ f `elem` dirNames) $ files1 <> files2
-    in  Opossum_Resources dirs files
-instance Monoid Opossum_Resources where
-  mempty = Opossum_Resources Map.empty Set.empty
-fpToResources :: Bool -> FilePath -> Opossum_Resources
+    in  Resources dirs files
+instance Monoid Resources where
+  mempty = Resources Map.empty Set.empty
+fpToResources :: Bool -> FilePath -> Resources
 fpToResources isFile =
-  let fpToResources' :: [FilePath] -> Opossum_Resources
+  let fpToResources' :: [FilePath] -> Resources
       fpToResources' (f : []) = if isFile
-        then Opossum_Resources (Map.empty) (Set.singleton f)
-        else Opossum_Resources (Map.singleton f mempty) Set.empty
+        then Resources (Map.empty) (Set.singleton f)
+        else Resources (Map.singleton f mempty) Set.empty
       fpToResources' ("/" : fs) = fpToResources' fs
       fpToResources' (f : fs) =
-        Opossum_Resources (Map.singleton f (fpToResources' fs)) Set.empty
+        Resources (Map.singleton f (fpToResources' fs)) Set.empty
   in  fpToResources' . (map FP.dropTrailingPathSeparator) . FP.splitPath
-fpsToResources :: [FilePath] -> Opossum_Resources
+fpsToResources :: [FilePath] -> Resources
 fpsToResources = mconcat . map (fpToResources True)
-countFiles :: Opossum_Resources -> Int
-countFiles (Opossum_Resources dirs files) =
+countFiles :: Resources -> Int
+countFiles (Resources dirs files) =
   length files + ((sum . map countFiles . Map.elems) dirs)
 
-isPathAFileInResources :: FilePath -> Opossum_Resources -> Bool
+isPathAFileInResources :: FilePath -> Resources -> Bool
 isPathAFileInResources =
-  let isPathAFileInResources' :: [FilePath] -> Opossum_Resources -> Bool
-      isPathAFileInResources' [f] (Opossum_Resources { _files = fs }) =
+  let isPathAFileInResources' :: [FilePath] -> Resources -> Bool
+      isPathAFileInResources' [f] (Resources { _files = fs }) =
         f `Set.member` fs
-      isPathAFileInResources' (f : fp) (Opossum_Resources { _dirs = ds }) =
+      isPathAFileInResources' (f : fp) (Resources { _dirs = ds }) =
         case Map.lookup f ds of
           Just resources -> isPathAFileInResources' fp resources
           Nothing        -> True
   in  \fp -> isPathAFileInResources' (FP.splitPath fp)
 
-data Opossum_ExternalAttribution_Source = Opossum_ExternalAttribution_Source
+data ExternalAttribution_Source = ExternalAttribution_Source
                                             String
                                             Double
   deriving (Show, Generic, Eq)
-instance A.ToJSON Opossum_ExternalAttribution_Source where
-  toJSON (Opossum_ExternalAttribution_Source source documentConfidence) =
+instance A.ToJSON ExternalAttribution_Source where
+  toJSON (ExternalAttribution_Source source documentConfidence) =
     A.object
       [ "name" A..= (T.pack source)
       , "documentConfidence" A..= documentConfidence
       ]
-instance A.FromJSON Opossum_ExternalAttribution_Source where
-  parseJSON = A.withObject "Opossum_ExternalAttribution_Source" $ \v -> do
-    Opossum_ExternalAttribution_Source
+instance A.FromJSON ExternalAttribution_Source where
+  parseJSON = A.withObject "ExternalAttribution_Source" $ \v -> do
+    ExternalAttribution_Source
       <$>  v
       A..: "name"
       <*>  v
       A..: "documentConfidence"
 
-data Opossum_Coordinates = Opossum_Coordinates
+data Coordinates = Coordinates
   { _packageName         :: Maybe T.Text
   , _packageNamespace    :: Maybe T.Text
   , _packageType         :: Maybe T.Text
@@ -161,40 +164,40 @@ data Opossum_Coordinates = Opossum_Coordinates
   , _packagePURLAppendix :: Maybe T.Text
   }
   deriving (Show, Generic, Eq)
-opoossumCoordinatesPreObjectList :: Opossum_Coordinates -> [A.Pair]
-opoossumCoordinatesPreObjectList (Opossum_Coordinates packageType packageNamespace packageName packageVersion packagePURLAppendix)
+opoossumCoordinatesPreObjectList :: Coordinates -> [A.Pair]
+opoossumCoordinatesPreObjectList (Coordinates packageType packageNamespace packageName packageVersion packagePURLAppendix)
   = [ "packageType" A..= packageType
     , "packageNamespace" A..= packageNamespace
     , "packageName" A..= packageName
     , "packageVersion" A..= packageVersion
     , "packagePURLAppendix" A..= packagePURLAppendix
     ]
-instance A.ToJSON Opossum_Coordinates where
+instance A.ToJSON Coordinates where
   toJSON = objectNoNulls . opoossumCoordinatesPreObjectList
-instance A.FromJSON Opossum_Coordinates where
-  parseJSON = A.withObject "Opossum_Coordinates" $ \v -> do
+instance A.FromJSON Coordinates where
+  parseJSON = A.withObject "Coordinates" $ \v -> do
     packageType         <- v A..:? "packageType"
     packageNamespace    <- v A..:? "packageNamespace"
     packageName         <- v A..:? "packageName"
     packageVersion      <- v A..:? "packageVersion"
     packagePURLAppendix <- v A..:? "packagePURLAppendix"
-    return $ Opossum_Coordinates packageType
+    return $ Coordinates packageType
                                  packageNamespace
                                  packageName
                                  packageVersion
                                  packagePURLAppendix
-purlToCoordinates :: PURL -> Opossum_Coordinates
+purlToCoordinates :: PURL -> Coordinates
 purlToCoordinates (PURL { _PURL_type = type_, _PURL_namespace = namespace, _PURL_name = name, _PURL_version = version })
-  = Opossum_Coordinates (fmap (T.pack . show) type_)
+  = Coordinates (fmap (T.pack . show) type_)
                         (fmap T.pack namespace)
                         (Just $ T.pack name)
                         (fmap T.pack version)
                         Nothing -- TODO: appendix
-coordinatesAreNotNull :: Opossum_Coordinates -> Bool
-coordinatesAreNotNull (Opossum_Coordinates Nothing Nothing _ Nothing _) = False
+coordinatesAreNotNull :: Coordinates -> Bool
+coordinatesAreNotNull (Coordinates Nothing Nothing _ Nothing _) = False
 coordinatesAreNotNull _ = True
 
-data Opossum_ExternalAttribution_Flags = Opossum_ExternalAttribution_Flags
+data ExternalAttribution_Flags = ExternalAttribution_Flags
   { _isFirstParty        :: Bool
   , _isPreSelected       :: Bool
   , _isExcludeFromNotice :: Bool
@@ -203,10 +206,10 @@ data Opossum_ExternalAttribution_Flags = Opossum_ExternalAttribution_Flags
   deriving (Show, Generic, Eq)
 
 opoossumExternalAttributionFlagsPreObjectList
-  :: Opossum_ExternalAttribution_Flags -> [A.Pair]
+  :: ExternalAttribution_Flags -> [A.Pair]
 opoossumExternalAttributionFlagsPreObjectList flags =
   let flagToJSON
-        :: (Opossum_ExternalAttribution_Flags -> Bool) -> String -> [A.Pair]
+        :: (ExternalAttribution_Flags -> Bool) -> String -> [A.Pair]
       flagToJSON pred name =
         if pred flags then [(T.pack name) A..= True] else []
   in  concat
@@ -214,9 +217,14 @@ opoossumExternalAttributionFlagsPreObjectList flags =
           , flagToJSON _isPreSelected       "preSelected"
           , flagToJSON _isExcludeFromNotice "excludeFromNotice"
           ]
-        ++ (if _isFollowUp flags then ["followUp" A..= ("FOLLOW_UP" :: String)] else [])
-instance A.FromJSON Opossum_ExternalAttribution_Flags where
-  parseJSON = A.withObject "Opossum_ExternalAttribution_Flags" $ \v ->
+        ++ (if _isFollowUp flags
+            then
+              ["followUp" A..= ("FOLLOW_UP" :: String)]
+            else
+              []
+           )
+instance A.FromJSON ExternalAttribution_Flags where
+  parseJSON = A.withObject "ExternalAttribution_Flags" $ \v ->
     let readFlag :: String -> A.Parser Bool
         readFlag name = fmap
           (\case
@@ -227,42 +235,42 @@ instance A.FromJSON Opossum_ExternalAttribution_Flags where
         readStringFlag :: String -> A.Parser Bool
         readStringFlag name = fmap
           (\case
-              Just "" -> False
-              Just _  -> True
-              Nothing -> False
-            )
-            (v A..:? (T.pack name) :: A.Parser (Maybe String))
-    in  Opossum_ExternalAttribution_Flags
+            Just "" -> False
+            Just _  -> True
+            Nothing -> False
+          )
+          (v A..:? (T.pack name) :: A.Parser (Maybe String))
+    in  ExternalAttribution_Flags
           <$> readFlag "firstParty"
           <*> readFlag "preSelected"
           <*> readFlag "excludeFromNotice"
           <*> readStringFlag "followUp"
-instance Semigroup Opossum_ExternalAttribution_Flags where
-  (Opossum_ExternalAttribution_Flags f1 f2 f3 f4) <> (Opossum_ExternalAttribution_Flags f1' f2' f3' f4')
-    = Opossum_ExternalAttribution_Flags (f1 || f1')
+instance Semigroup ExternalAttribution_Flags where
+  (ExternalAttribution_Flags f1 f2 f3 f4) <> (ExternalAttribution_Flags f1' f2' f3' f4')
+    = ExternalAttribution_Flags (f1 || f1')
                                         (f2 || f2')
                                         (f3 || f3')
                                         (f4 || f4')
-instance Monoid Opossum_ExternalAttribution_Flags where
-  mempty = Opossum_ExternalAttribution_Flags False False False False
+instance Monoid ExternalAttribution_Flags where
+  mempty = ExternalAttribution_Flags False False False False
 justPreselectedFlags = mempty { _isPreSelected = True }
 
 
-data Opossum_ExternalAttribution = Opossum_ExternalAttribution
-  { _source                :: Opossum_ExternalAttribution_Source
+data ExternalAttribution = ExternalAttribution
+  { _source                :: ExternalAttribution_Source
   , _attributionConfidence :: Double
   , _comment               :: Maybe T.Text
   , _originId              :: Maybe UUID
-  , _coordinates           :: Opossum_Coordinates
+  , _coordinates           :: Coordinates
   , _copyright             :: Maybe T.Text
   , _licenseName           :: Maybe T.Text
   , _licenseText           :: Maybe T.Text
   , _url                   :: Maybe T.Text
-  , _flags                 :: Opossum_ExternalAttribution_Flags
+  , _flags                 :: ExternalAttribution_Flags
   }
   deriving (Show, Generic, Eq)
-instance A.ToJSON Opossum_ExternalAttribution where
-  toJSON (Opossum_ExternalAttribution source attributionConfidence comment originId coordinates copyright licenseName licenseText url flags)
+instance A.ToJSON ExternalAttribution where
+  toJSON (ExternalAttribution source attributionConfidence comment originId coordinates copyright licenseName licenseText url flags)
     = objectNoNulls
       (  [ "source" A..= source
          , "attributionConfidence" A..= attributionConfidence
@@ -276,8 +284,8 @@ instance A.ToJSON Opossum_ExternalAttribution where
       ++ (opoossumCoordinatesPreObjectList coordinates)
       ++ (opoossumExternalAttributionFlagsPreObjectList flags)
       )
-instance A.FromJSON Opossum_ExternalAttribution where
-  parseJSON = A.withObject "Opossum_ExternalAttribution" $ \v -> do
+instance A.FromJSON ExternalAttribution where
+  parseJSON = A.withObject "ExternalAttribution" $ \v -> do
     source                <- v A..: "source"
     attributionConfidence <- fmap (100 `Maybe.fromMaybe`)
                                   (v A..:? "attributionConfidence")
@@ -290,7 +298,7 @@ instance A.FromJSON Opossum_ExternalAttribution where
         )
       )
       (v A..:? "originId" :: A.Parser (Maybe String))
-    coordinates <- A.parseJSON (A.Object v) :: A.Parser Opossum_Coordinates
+    coordinates <- A.parseJSON (A.Object v) :: A.Parser Coordinates
     copyright   <- v A..:? "copyright"
     licenseName <- fmap
       (\case
@@ -311,10 +319,10 @@ instance A.FromJSON Opossum_ExternalAttribution where
       )
       (v A..:? "url")
     flags <-
-      A.parseJSON (A.Object v) :: A.Parser Opossum_ExternalAttribution_Flags
+      A.parseJSON (A.Object v) :: A.Parser ExternalAttribution_Flags
 
     return
-      (Opossum_ExternalAttribution source
+      (ExternalAttribution source
                                    attributionConfidence
                                    comment
                                    originId
@@ -326,18 +334,18 @@ instance A.FromJSON Opossum_ExternalAttribution where
                                    flags
       )
 
-data Opossum_FrequentLicense = Opossum_FrequentLicense
+data FrequentLicense = FrequentLicense
   { shortName   :: T.Text
   , fullName    :: T.Text
   , defaultText :: T.Text
   }
   deriving (Eq, Show, Generic)
-instance A.ToJSON Opossum_FrequentLicense where
-  toJSON (Opossum_FrequentLicense sn fn dt) =
+instance A.ToJSON FrequentLicense where
+  toJSON (FrequentLicense sn fn dt) =
     A.object ["shortName" A..= sn, "fullName" A..= fn, "defaultText" A..= dt]
-instance A.FromJSON Opossum_FrequentLicense where
-  parseJSON = A.withObject "Opossum_FrequentLicense" $ \v -> do
-    Opossum_FrequentLicense
+instance A.FromJSON FrequentLicense where
+  parseJSON = A.withObject "FrequentLicense" $ \v -> do
+    FrequentLicense
       <$>  v
       A..: "shortName"
       <*>  v
@@ -345,19 +353,46 @@ instance A.FromJSON Opossum_FrequentLicense where
       <*>  v
       A..: "defaultText"
 
+data ExternalAttributionSourcesEntry = ExternalAttributionSourcesEntry String
+                                                                       Integer
+  deriving (Eq, Show, Generic)
+instance A.FromJSON ExternalAttributionSourcesEntry where
+  parseJSON = A.withObject "ExternalAttributionSourcesEntry" $ \v -> do
+    ExternalAttributionSourcesEntry <$> v A..: "name" <*> v A..: "priority"
+instance A.ToJSON ExternalAttributionSourcesEntry where
+  toJSON (ExternalAttributionSourcesEntry name priority) =
+    A.object ["name" A..= name, "priority" A..= priority]
+newtype ExternalAttributionSources
+   = ExternalAttributionSources (Map.Map String ExternalAttributionSourcesEntry)
+  deriving (Eq, Show, Generic)
+instance A.FromJSON ExternalAttributionSources where
+  parseJSON = fmap ExternalAttributionSources . A.parseJSON
+instance A.ToJSON ExternalAttributionSources where
+  toJSON (ExternalAttributionSources eas) = A.toJSON eas
+instance Semigroup ExternalAttributionSources where
+  (ExternalAttributionSources eas1) <> (ExternalAttributionSources eas2) =
+    ExternalAttributionSources (eas1 <> eas2)
+instance Monoid ExternalAttributionSources where
+  mempty = ExternalAttributionSources mempty
+mkExternalAttributionSources
+  :: ExternalAttribution_Source -> Maybe String -> Integer -> ExternalAttributionSources
+mkExternalAttributionSources (ExternalAttribution_Source key _) name priority = ExternalAttributionSources
+  (Map.singleton key (ExternalAttributionSourcesEntry (key `Maybe.fromMaybe` name) priority))
+
 data Opossum = Opossum
-  { _metadata                :: Map.Map String A.Value
-  , _resources               :: Opossum_Resources
-  , _externalAttributions    :: Map.Map UUID Opossum_ExternalAttribution
-  , _resourcesToAttributions :: Map.Map FilePath [UUID]
-  , _attributionBreakpoints  :: Set.Set FilePath
-  , _filesWithChildren       :: Set.Set FilePath
-  , _frequentLicenses        :: [Opossum_FrequentLicense]
-  , _baseUrlsForSources      :: Map.Map FilePath String
+  { _metadata                   :: Map.Map String A.Value
+  , _resources                  :: Resources
+  , _externalAttributions       :: Map.Map UUID ExternalAttribution
+  , _resourcesToAttributions    :: Map.Map FilePath [UUID]
+  , _attributionBreakpoints     :: Set.Set FilePath
+  , _filesWithChildren          :: Set.Set FilePath
+  , _frequentLicenses           :: [FrequentLicense]
+  , _baseUrlsForSources         :: Map.Map FilePath String
+  , _externalAttributionSources :: ExternalAttributionSources
   }
   deriving (Show, Generic)
 instance A.ToJSON Opossum where
-  toJSON (Opossum metadata resources externalAttributions resourcesToAttributions attributionBreakpoints filesWithChildren frequentLicenses baseUrlsForSources)
+  toJSON (Opossum metadata resources externalAttributions resourcesToAttributions attributionBreakpoints filesWithChildren frequentLicenses baseUrlsForSources externalAttributionSources)
     = objectNoNulls
       [ "metadata" A..= metadata
       , "resources" A..= resources
@@ -367,6 +402,7 @@ instance A.ToJSON Opossum where
       , "filesWithChildren" A..= filesWithChildren
       , "frequentLicenses" A..= frequentLicenses
       , "baseUrlsForSources" A..= baseUrlsForSources
+      , "externalAttributionSources" A..= externalAttributionSources
       ]
 instance A.FromJSON Opossum where
   parseJSON = A.withObject "Opossum" $ \v -> do
@@ -388,6 +424,8 @@ instance A.FromJSON Opossum where
           (v A..:? "frequentLicenses")
         baseUrlsForSourcesParser =
           fmap (mempty `Maybe.fromMaybe`) $ v A..:? "baseUrlsForSources"
+        externalAttributionSourcesParser =
+          fmap (mempty `Maybe.fromMaybe`) $ v A..:? "externalAttributionSources"
     Opossum
       <$> metadataParser
       <*> resourcesParser
@@ -397,6 +435,7 @@ instance A.FromJSON Opossum where
       <*> filesWithChildrenParser
       <*> frequentLicensesParser
       <*> baseUrlsForSourcesParser
+      <*> externalAttributionSourcesParser
 instance Semigroup Opossum where
   opossum1 <> opossum2 =
     let
@@ -416,6 +455,9 @@ instance Semigroup Opossum where
         List.nub (_frequentLicenses opossum1 ++ _frequentLicenses opossum2)
       mergedBaseUrlsForSources =
         Map.union (_baseUrlsForSources opossum1) (_baseUrlsForSources opossum2)
+      mergedExternalAttributionsSources =
+        (_externalAttributionSources opossum1)
+          <> (_externalAttributionSources opossum2)
     in
       Opossum mergedMetadata
               mergedResources
@@ -425,8 +467,10 @@ instance Semigroup Opossum where
               mergedFilesWithChildren
               mergedFrequentLicenses
               mergedBaseUrlsForSources
+              mergedExternalAttributionsSources
 instance Monoid Opossum where
-  mempty = Opossum mempty mempty mempty mempty mempty mempty mempty mempty
+  mempty =
+    Opossum mempty mempty mempty mempty mempty mempty mempty mempty mempty
 
 writeOpossumStats :: Opossum -> IO ()
 writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributions = eas, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _frequentLicenses = fls })
@@ -444,7 +488,7 @@ writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributio
       (List.groupBy
         (==)
         (List.sort $ map
-          ((\(Opossum_ExternalAttribution_Source s _) -> s) . _source)
+          ((\(ExternalAttribution_Source s _) -> s) . _source)
           (Map.elems eas)
         )
       )

@@ -28,11 +28,11 @@ import           Test.QuickCheck
 import           SPDX.Document
 
 import           Opossum.Opossum
-import           Opossum.OpossumSPDXUtils
-import           Opossum.OpossumUtils
 import           Opossum.OpossumDependencyCheckUtils
+import           Opossum.OpossumSPDXUtils
 import           Opossum.OpossumScancodeUtils
-import Opossum.OpossumScanossUtils
+import           Opossum.OpossumScanossUtils
+import           Opossum.OpossumUtils
 
 
 opossumFileBS :: B.ByteString
@@ -46,7 +46,8 @@ scancodeJsonBS :: B.ByteString
 scancodeJsonBS = B.fromStrict $(embedFile "test/data/tools-java.scancode.json")
 
 dependencyCheckJsonBS :: B.ByteString
-dependencyCheckJsonBS = B.fromStrict $(embedFile "test/data/dependency-check-report.json")
+dependencyCheckJsonBS =
+  B.fromStrict $(embedFile "test/data/dependency-check-report.json")
 
 scanossJsonBS :: B.ByteString
 scanossJsonBS = B.fromStrict $(embedFile "test/data/zlib_sca.json")
@@ -59,13 +60,13 @@ opossumSpec = do
           , "root" </> "subfolder" </> "file2"
           , "root" </> "file3"
           ]
-        parsedResources = Opossum_Resources
+        parsedResources = Resources
           (Map.singleton
             "root"
-            (Opossum_Resources
+            (Resources
               (Map.singleton
                 "subfolder"
-                (Opossum_Resources Map.empty (Set.fromList ["file1", "file2"]))
+                (Resources Map.empty (Set.fromList ["file1", "file2"]))
               )
               (Set.singleton "file3")
             )
@@ -82,13 +83,13 @@ opossumSpec = do
           , "}"
           , "}"
           ]
-        otherResources = Opossum_Resources
+        otherResources = Resources
           (Map.singleton
             "root"
-            (Opossum_Resources
+            (Resources
               (Map.singleton
                 "other"
-                (Opossum_Resources Map.empty (Set.singleton "file4"))
+                (Resources Map.empty (Set.singleton "file4"))
               )
               Set.empty
             )
@@ -101,17 +102,17 @@ opossumSpec = do
           it "testFolderAndFileMerging" $ do
             (fpToResources True "path/to/file")
               <>         (fpToResources False "path/other/dir")
-              `shouldBe` Opossum_Resources
+              `shouldBe` Resources
                            (Map.singleton
                              "path"
-                             (Opossum_Resources
+                             (Resources
                                (Map.fromList
                                  [ ( "to"
-                                   , Opossum_Resources Map.empty
+                                   , Resources Map.empty
                                                        (Set.singleton "file")
                                    )
                                  , ( "other"
-                                   , Opossum_Resources
+                                   , Resources
                                      (Map.singleton "dir" mempty)
                                      Set.empty
                                    )
@@ -164,13 +165,13 @@ opossumSpec = do
                 , "    }"
                 , "}"
                 ]
-              expected_source = Opossum_ExternalAttribution_Source "tern" 100
-              expected_coordinates = Opossum_Coordinates Nothing
+              expected_source = ExternalAttribution_Source "tern" 100
+              expected_coordinates = Coordinates Nothing
                                                          Nothing
                                                          (Just "adduser")
                                                          (Just "3.118")
                                                          Nothing
-              expected_ea = Opossum_ExternalAttribution
+              expected_ea = ExternalAttribution
                 expected_source
                 100
                 Nothing
@@ -185,7 +186,7 @@ opossumSpec = do
               case
                 (A.eitherDecode ea_str :: Either
                     String
-                    Opossum_ExternalAttribution
+                    ExternalAttribution
                 )
               of
                 Right ea' -> return ea'
@@ -208,13 +209,13 @@ opossumSpec = do
                 , "    \"preSelected\": true"
                 , "}"
                 ]
-              expected_source = Opossum_ExternalAttribution_Source "tern" 100
-              expected_coordinates = Opossum_Coordinates Nothing
+              expected_source = ExternalAttribution_Source "tern" 100
+              expected_coordinates = Coordinates Nothing
                                                          Nothing
                                                          (Just "adduser")
                                                          (Just "3.118")
                                                          Nothing
-              expected_ea = Opossum_ExternalAttribution
+              expected_ea = ExternalAttribution
                 expected_source
                 100
                 Nothing
@@ -229,7 +230,7 @@ opossumSpec = do
               case
                 (A.eitherDecode ea_str :: Either
                     String
-                    Opossum_ExternalAttribution
+                    ExternalAttribution
                 )
               of
                 Right ea' -> return ea'
@@ -248,10 +249,13 @@ opossumSpec = do
             length (_frequentLicenses opossum) `shouldBe` 427
 
   describe "Opossum Utils"
-    $ let source = Opossum_ExternalAttribution_Source "test" 100
-          expected_coordinates version =
-            Opossum_Coordinates Nothing Nothing (Just "name") (Just version) Nothing
-          ea1 = Opossum_ExternalAttribution source
+    $ let source = ExternalAttribution_Source "test" 100
+          expected_coordinates version = Coordinates Nothing
+                                                             Nothing
+                                                             (Just "name")
+                                                             (Just version)
+                                                             Nothing
+          ea1 = ExternalAttribution source
                                             100
                                             Nothing
                                             Nothing
@@ -261,7 +265,7 @@ opossumSpec = do
                                             Nothing
                                             Nothing
                                             mempty
-          ea2 = Opossum_ExternalAttribution source
+          ea2 = ExternalAttribution source
                                             100
                                             Nothing
                                             Nothing
@@ -271,7 +275,7 @@ opossumSpec = do
                                             Nothing
                                             Nothing
                                             mempty
-          ea3 = Opossum_ExternalAttribution source
+          ea3 = ExternalAttribution source
                                             100
                                             Nothing
                                             Nothing
@@ -308,37 +312,57 @@ opossumSpec = do
     it "num of frequentLicenses should from spdx match" $ do
       length (_frequentLicenses opossum_from_ort) `shouldBe` 0
 
+    let (ExternalAttributionSources eas) = _externalAttributionSources opossum_from_ort
+    it "externalAttributionSources sohuld be witten" $ do
+      (Map.keys eas) `shouldBe` ["SPDXPackage"]
+
+
   describe "Opossum Utils ScanCode Converter" $ do
     it "should parse json file" $ do
-      let decoded = (A.eitherDecode scancodeJsonBS :: Either String ScancodeFile)
+      let decoded =
+            (A.eitherDecode scancodeJsonBS :: Either String ScancodeFile)
           files = (_scf_files . (fromRight (ScancodeFile (Y.Null) []))) decoded
           pomFile = head $ filter (\f -> _scfe_file f == "pom.xml") files
       (isRight decoded) `shouldBe` True
       _scfe_file pomFile `shouldBe` "pom.xml"
-      _scfe_copyrights pomFile `shouldBe` [ "Copyright (c) 2020 Source Auditor Inc. Gary O'Neall" ]
+      _scfe_copyrights pomFile
+        `shouldBe` ["Copyright (c) 2020 Source Auditor Inc. Gary O'Neall"]
 
     opossumFromSC <- runIO $ parseScancodeBS scancodeJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromSC) `shouldBe` 105
 
+    let (ExternalAttributionSources eas) = _externalAttributionSources opossumFromSC
+    it "externalAttributionSources sohuld be witten" $ do
+      (List.sort $ Map.keys eas) `shouldBe` ["Scancode", "Scancode-Package"]
+
   describe "Opossum Utils Dependency-Check Converter" $ do
 
     it "should parse json to Package" $ do
       let jsonStr = "{ \"id\": \"pkg:nuget\\/Antlr4BuildTasks@8.13\" }"
-      let decoded = (A.eitherDecode jsonStr :: Either String DependencyCheckPackage)
+      let decoded =
+            (A.eitherDecode jsonStr :: Either String DependencyCheckPackage)
       (isRight decoded) `shouldBe` True
 
     it "should parse json file" $ do
-      let decoded = (A.eitherDecode dependencyCheckJsonBS :: Either String DependencyCheckFile)
+      let decoded =
+            (A.eitherDecode dependencyCheckJsonBS :: Either
+                String
+                DependencyCheckFile
+            )
       (isRight decoded) `shouldBe` True
 
     opossumFromDC <- runIO $ parseDependencyCheckBS dependencyCheckJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromDC) `shouldBe` 62
-  
+
   describe "Opossum Utils Scanoss Parser" $ do
     it "should parse json file" $ do
-      let decoded = (A.eitherDecode scanossJsonBS :: Either String (Map.Map String ScanossFindings))
+      let decoded =
+            (A.eitherDecode scanossJsonBS :: Either
+                String
+                (Map.Map String ScanossFindings)
+            )
       (isRight decoded) `shouldBe` True
 
     opossumFromSCA <- runIO $ parseScanossBS scanossJsonBS
