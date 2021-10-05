@@ -50,15 +50,11 @@ spdxToOpossum =
     spdxFileToEA :: SPDXFile -> ExternalAttribution
     spdxFileToEA (SPDXFile { _SPDXFile_SPDXID = spdxid, _SPDXFile_raw = raw, _SPDXFile_fileName = filename, _SPDXFile_fileTypes = _, _SPDXFile_checksums = _, _SPDXFile_LicenseConcluded = license, _SPDXFile_licenseInfoInFiles = _, _SPDXFile_licenseInfoFromFiles = _, _SPDXFile_licenseComments = _, _SPDXFile_copyrightText = copyright, _SPDXFile_comment = _, _SPDXFile_noticeText = notice, _SPDXFile_fileContributors = _, _SPDXFile_attributionTexts = attribution, _SPDXFile_fileDependencies = dependencies, _SPDXFile_name = name })
       = ExternalAttribution
-        { _source = ExternalAttribution_Source "SPDXFile" 100
+        { _source                = ExternalAttribution_Source "SPDXFile" 100
         , _attributionConfidence = 100
         , _comment = (Just . T.pack . C8.unpack . A.encodePretty) raw
         , _originId              = Nothing
-        , _coordinates           = Coordinates Nothing
-                                                       Nothing
-                                                       Nothing
-                                                       Nothing
-                                                       Nothing
+        , _coordinates = Coordinates Nothing Nothing Nothing Nothing Nothing
         , _copyright             = Just $ T.pack copyright
         , _licenseName           = fmap (T.pack . renderSpdxLicense)
                                         (spdxMaybeToMaybe license)
@@ -70,15 +66,15 @@ spdxToOpossum =
     spdxPackageToEA :: SPDXPackage -> ExternalAttribution
     spdxPackageToEA (SPDXPackage { _SPDXPackage_SPDXID = spdxid, _SPDXPackage_raw = raw, _SPDXPackage_name = name, _SPDXPackage_versionInfo = version, _SPDXPackage_packageFileName = _, _SPDXPackage_supplier = _, _SPDXPackage_originator = _, _SPDXPackage_downloadLocation = _, _SPDXPackage_filesAnalyzed = _, _SPDXPackage_packageVerificationCode = _, _SPDXPackage_checksums = _, _SPDXPackage_homepage = _, _SPDXPackage_sourceInfo = _, _SPDXPackage_licenseConcluded = _, _SPDXPackage_licenseInfoFromFiles = _, _SPDXPackage_licenseDeclared = license, _SPDXPackage_licenseComments = _, _SPDXPackage_copyrightText = copyright, _SPDXPackage_summary = _, _SPDXPackage_description = _, _SPDXPackage_comment = _, _SPDXPackage_attributionTexts = _, _SPDXPackage_hasFiles = _ })
       = ExternalAttribution
-        { _source = ExternalAttribution_Source "SPDXPackage" 100
+        { _source                = ExternalAttribution_Source "SPDXPackage" 100
         , _attributionConfidence = 100
         , _comment = (Just . T.pack . C8.unpack . A.encodePretty) raw
         , _originId              = Nothing
         , _coordinates           = Coordinates Nothing
-                                                       Nothing
-                                                       ((Just . T.pack) name)
-                                                       (fmap T.pack version)
-                                                       Nothing
+                                               Nothing
+                                               ((Just . T.pack) name)
+                                               (fmap T.pack version)
+                                               Nothing
         , _copyright             = case copyright of
                                      SPDXJust copyright' -> (Just . T.pack) copyright'
                                      _ -> Nothing
@@ -89,8 +85,7 @@ spdxToOpossum =
         , _flags                 = justPreselectedFlags
         }
 
-    spdxFileOrPackageToEA
-      :: Either SPDXFile SPDXPackage -> ExternalAttribution
+    spdxFileOrPackageToEA :: Either SPDXFile SPDXPackage -> ExternalAttribution
     spdxFileOrPackageToEA (Left  f) = spdxFileToEA f
     spdxFileOrPackageToEA (Right p) = spdxPackageToEA p
   in
@@ -121,11 +116,8 @@ spdxToOpossum =
                       Just s -> Just (path, s)
                       _      -> Nothing
           in  concatMap
-                ( Maybe.catMaybes
-                . map addS
-                . List.nub
-                . concatMap List.inits
-                . map (reverse . G.unLPath)
+                (Maybe.mapMaybe addS . List.nub . concatMap List.inits . map
+                  (reverse . G.unLPath)
                 )
                 trees
         initToOpossum
@@ -134,37 +126,54 @@ spdxToOpossum =
         initToOpossum (p, s) =
           let
             ea = spdxFileOrPackageToEA s
-            rs = ('/' :) . joinPath $ map
-              ( (\k -> case G.lab graph k of
-                  Just (Left (SPDXFile { _SPDXFile_SPDXID = spdxid, _SPDXFile_name = name }))
-                    -> case name of
-                      Just name' -> name'
-                      _          -> spdxid
+            spdxFileOrPackageToResource :: Maybe (Either SPDXFile SPDXPackage) -> FilePath
+            spdxFileOrPackageToResource = \case
+                  Just (Left (SPDXFile { _SPDXFile_fileName = fileName })) ->
+                    fileName
                   Just (Right (SPDXPackage { _SPDXPackage_SPDXID = spdxid, _SPDXPackage_name = name }))
                     -> case name of
-                      "" -> spdxid
-                      _  -> name
+                      "" -> spdxid ++ "/"
+                      _  -> name ++ "/"
                   Nothing -> "??"
-                )
-              . fst
-              )
-              p
-            rsFull = case s of
-              Left (SPDXFile { _SPDXFile_fileName = fn }) -> rs </> fn
-              _ -> rs ++ "/"
+            nodeToResource k = case G.lab graph k of
+                  Just (Left (SPDXFile { _SPDXFile_fileName = fileName })) ->
+                    fileName
+                  Just (Right (SPDXPackage { _SPDXPackage_SPDXID = spdxid, _SPDXPackage_name = name }))
+                    -> case name of
+                      "" -> spdxid ++ "/"
+                      _  -> name ++ "/"
+                  Nothing -> "??"
+            rs = case p of 
+              [] -> spdxFileOrPackageToResource $ Just s 
+              _  -> joinPath $ map ( nodeToResource . fst) p
           in
             do
+              hasFilesO <- case s of
+                Right (SPDXPackage { _SPDXPackage_hasFiles = Just hasFiles })
+                  -> do
+                    let filesInPackage = Maybe.mapMaybe
+                          (\spdxid -> List.find (`matchesSPDXID` spdxid) files)
+                          hasFiles
+                    pieces <- mapM (initToOpossum . (\f -> ([], Left f)))
+                                   filesInPackage
+                    return . (unshiftPathToOpossum rs) $ mconcat pieces
+                _ -> return mempty
+
+
               uuid <- randomIO
-              return $ mempty
-                { _resources               = fpToResources
-                                               (case s of
-                                                 Left _ -> True
-                                                 _      -> False
-                                               )
-                                               rsFull
-                , _externalAttributions    = Map.singleton uuid ea
-                , _resourcesToAttributions = Map.singleton rsFull [uuid]
-                , _externalAttributionSources = mkExternalAttributionSources (_source ea) Nothing 500
+              return . (<> hasFilesO) $ mempty
+                { _resources                  = fpToResources
+                                                  (case s of
+                                                    Left _ -> True
+                                                    _      -> False
+                                                  )
+                                                  rs
+                , _externalAttributions       = Map.singleton uuid ea
+                , _resourcesToAttributions    = Map.singleton ('/' : rs) [uuid]
+                , _externalAttributionSources = mkExternalAttributionSources
+                                                  (_source ea)
+                                                  Nothing
+                                                  500
                 }
       in
         do

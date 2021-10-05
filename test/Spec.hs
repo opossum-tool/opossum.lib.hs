@@ -42,6 +42,9 @@ opossumFileBS =
 spdxYamlFileBS :: B.ByteString
 spdxYamlFileBS = B.fromStrict $(embedFile "test/data/document.spdx.yml")
 
+spdxJsonFileBS :: B.ByteString
+spdxJsonFileBS = B.fromStrict $(embedFile "test/data/SPDXJSONExample-v2.2.spdx.json")
+
 scancodeJsonBS :: B.ByteString
 scancodeJsonBS = B.fromStrict $(embedFile "test/data/tools-java.scancode.json")
 
@@ -128,8 +131,13 @@ opossumSpec = do
                 )
               `shouldBe` 1
 
+          it "test resourcesToPaths" $ do
+            resourcesToPaths (Resources mempty mempty) `shouldBe` Set.fromList ["/"]
+            resourcesToPaths (Resources mempty (Set.singleton "file.c")) `shouldBe` Set.fromList ["/", "file.c"]
+            resourcesToPaths (Resources (Map.singleton "dir" (Resources mempty (Set.singleton "something.h"))) (Set.singleton "file.c")) `shouldBe` Set.fromList ["/", "file.c", "dir/", "dir/something.h"]
           it "testFileListParsing" $ do
             fpsToResources exmpResourses `shouldBe` parsedResources
+            (Set.fromList exmpResourses) `Set.isSubsetOf` (resourcesToPaths parsedResources)  `shouldBe` True
           it "testFileListSerialization" $ do
             A.encode parsedResources `shouldBe` serializedResources
           it "testFileListDeSerialization" $ do
@@ -291,8 +299,8 @@ opossumSpec = do
               (ea1 `mergifyEA` ea2) `shouldBe` Nothing
               (ea1 `mergifyEA` ea3) `shouldBe` (Just ea3)
 
-  describe "Opossum Utils SPDX Converter" $ do
-    opossum_from_ort <-
+  describe "Opossum Utils SPDX Converter with yml" $ do
+    oposum_from_spdx_yml <-
       runIO
         $ case
             (Y.decodeEither' (B.toStrict spdxYamlFileBS) :: Either
@@ -304,18 +312,27 @@ opossumSpec = do
             Left  err      -> fail (show err)
 
     it "num of resources from spdx should match" $ do
-      countFiles (_resources opossum_from_ort) `shouldBe` 0
+      countFiles (_resources oposum_from_spdx_yml) `shouldBe` 0
     it "num of externalAttributions from spdx should match" $ do
-      length (_externalAttributions opossum_from_ort) `shouldBe` 352
+      length (_externalAttributions oposum_from_spdx_yml) `shouldBe` 352
     it "num of resourcesToAttributions from spdx should match" $ do
-      length (_resourcesToAttributions opossum_from_ort) `shouldBe` 298
+      length (_resourcesToAttributions oposum_from_spdx_yml) `shouldBe` 298
     it "num of frequentLicenses should from spdx match" $ do
-      length (_frequentLicenses opossum_from_ort) `shouldBe` 0
+      length (_frequentLicenses oposum_from_spdx_yml) `shouldBe` 0
 
-    let (ExternalAttributionSources eas) = _externalAttributionSources opossum_from_ort
+    let (ExternalAttributionSources eas) = _externalAttributionSources oposum_from_spdx_yml
     it "externalAttributionSources sohuld be witten" $ do
       (Map.keys eas) `shouldBe` ["SPDXPackage"]
 
+  describe "Opossum Utils SPDX Converter with JSON" $ do
+    oposum_from_spdx_json <-
+      runIO
+        $ case (A.eitherDecode spdxJsonFileBS :: Either String SPDXDocument)
+          of
+            Right spdxFile -> spdxToOpossum spdxFile
+            Left  err      -> fail (show err)
+    it "num of resources from spdx should match" $ do
+      countFiles (_resources oposum_from_spdx_json) `shouldBe` 4
 
   describe "Opossum Utils ScanCode Converter" $ do
     it "should parse json file" $ do

@@ -14,6 +14,7 @@ module Opossum.Opossum
   , countFiles
   , fpToResources
   , fpsToResources
+  , resourcesToPaths
   , isPathAFileInResources
   , FrequentLicense(..)
   , Coordinates(..)
@@ -114,18 +115,27 @@ instance Monoid Resources where
 fpToResources :: Bool -> FilePath -> Resources
 fpToResources isFile =
   let fpToResources' :: [FilePath] -> Resources
+      fpToResources' [] = Resources mempty mempty
       fpToResources' (f : []) = if isFile
         then Resources (Map.empty) (Set.singleton f)
         else Resources (Map.singleton f mempty) Set.empty
       fpToResources' ("/" : fs) = fpToResources' fs
       fpToResources' (f : fs) =
         Resources (Map.singleton f (fpToResources' fs)) Set.empty
-  in  fpToResources' . (map FP.dropTrailingPathSeparator) . FP.splitPath
+  in  fpToResources' . (map FP.dropTrailingPathSeparator) . FP.splitPath . FP.normalise
 fpsToResources :: [FilePath] -> Resources
 fpsToResources = mconcat . map (fpToResources True)
 countFiles :: Resources -> Int
 countFiles (Resources dirs files) =
   length files + ((sum . map countFiles . Map.elems) dirs)
+resourcesToPaths :: Resources -> Set.Set FilePath
+resourcesToPaths = let
+    resourcesToPaths' :: Resources -> Set.Set [FilePath]
+    resourcesToPaths' (Resources{_dirs = dirs,_files = files}) = let
+      rsFromDirs = mconcat . map (\(k, rs) -> Set.insert [k ++ "/"] . Set.map (k :) $ resourcesToPaths' rs) $ Map.assocs dirs
+      rsFromFiles = Set.map (:[]) files
+      in rsFromDirs <> rsFromFiles
+  in Set.insert "/" . Set.map FP.joinPath . resourcesToPaths' 
 
 isPathAFileInResources :: FilePath -> Resources -> Bool
 isPathAFileInResources =
