@@ -330,11 +330,11 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
     in
       do
         o  <- opossumFromLicenseAndCopyright
-        os <- case packages of
+        oFromPackages <- case packages of
           []  -> mempty
           [p] -> opossumFromScancodePackage p (Just path)
-          _   -> mapM (`opossumFromScancodePackage` Nothing) packages
-        return $ mconcat (o : os)
+          _   -> mconcat <$> mapM (`opossumFromScancodePackage` Nothing) packages
+        return $ o <> oFromPackages
 
 parseScancodeBS :: B.ByteString -> IO Opossum
 parseScancodeBS bs = case (A.eitherDecode bs :: Either String ScancodeFile) of
