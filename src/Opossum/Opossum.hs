@@ -167,9 +167,9 @@ instance A.FromJSON ExternalAttribution_Source where
       A..: "documentConfidence"
 
 data Coordinates = Coordinates
-  { _packageName         :: Maybe T.Text
+  { _packageType         :: Maybe T.Text
   , _packageNamespace    :: Maybe T.Text
-  , _packageType         :: Maybe T.Text
+  , _packageName         :: Maybe T.Text
   , _packageVersion      :: Maybe T.Text
   , _packagePURLAppendix :: Maybe T.Text
   }

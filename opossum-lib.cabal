@@ -26,6 +26,7 @@ library
   exposed-modules:
       Opossum.Opossum
       Opossum.OpossumDependencyCheckUtils
+      Opossum.OpossumExiftoolUtils
       Opossum.OpossumScancodeUtils
       Opossum.OpossumScanossUtils
       Opossum.OpossumSPDXUtils

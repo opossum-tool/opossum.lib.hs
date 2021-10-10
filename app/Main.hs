@@ -21,6 +21,7 @@ import qualified System.IO                     as IO
 
 import           Opossum.Opossum
 import           Opossum.OpossumDependencyCheckUtils
+import           Opossum.OpossumExiftoolUtils
 import           Opossum.OpossumSPDXUtils
 import           Opossum.OpossumScancodeUtils
 import           Opossum.OpossumScanossUtils
@@ -30,14 +31,15 @@ help :: IO ()
 help = do
   putStrLn " ARG [ARG [ARG ...]]]"
   putStrLn "    where ARG one of "
-  putStrLn "                FILE           <-- parse opossum file"
-  putStrLn "                DIR            <-- generate opossum from file tree"
-  putStrLn "     --spdx     SPDX_JSON      <-- parse .spdx.json"
-  putStrLn "     --spdx     SPDX_YAML      <-- parse .spdx.yaml"
-  putStrLn "     --scancode SCANCODE_JSON  <-- parse scancode json"
+  putStrLn "     FILE                       <-- parse opossum file"
+  putStrLn "     DIR                        <-- generate opossum from file tree"
+  putStrLn "     --spdx SPDX_JSON           <-- parse .spdx.json"
+  putStrLn "     --spdx SPDX_YAML           <-- parse .spdx.yaml"
+  putStrLn "     --scancode SCANCODE_JSON   <-- parse scancode json"
   putStrLn
     "     --dependency-check DC_JSON <-- parse OWASP Dependency-Check JSON"
-  putStrLn "     --scanoss SCANOSS_JSON  <-- parse scanoss json"
+  putStrLn "     --scanoss SCANOSS_JSON     <-- parse scanoss json"
+  putStrLn "     --exiftool EXIFTOOL_SJON   <-- parse exiftool json"
   putStrLn "or"
   putStrLn " --merge-relative OPOSSUM [OPOSSUM [OPOSSUM [...]]]"
 
@@ -68,6 +70,9 @@ main = getArgs >>= \case
               fmap (pre <>) (fun o args)
             fun !pre ("--scanoss" : (f : args)) = do
               o <- parseScanossToOpossum f
+              fmap (pre <>) (fun o args)
+            fun !pre ("--exiftool" : (f : args)) = do
+              o <- parseExiftoolToOpossum f
               fmap (pre <>) (fun o args)
             fun !pre (f : args) = do
               fIsDirectory <- doesDirectoryExist f
