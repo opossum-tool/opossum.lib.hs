@@ -63,9 +63,7 @@ cleanupLicense (Just t ) = case T.stripPrefix ", " t of
   t'      -> t'
 
 mergifyEA
-  :: ExternalAttribution
-  -> ExternalAttribution
-  -> Maybe ExternalAttribution
+  :: ExternalAttribution -> ExternalAttribution -> Maybe ExternalAttribution
 mergifyEA left@(ExternalAttribution { _source = ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _flags = flags }) (right@ExternalAttribution { _source = ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _flags = flags' })
   = if left
        == right
@@ -92,8 +90,7 @@ mergifyEA left@(ExternalAttribution { _source = ExternalAttribution_Source sourc
     else Nothing
 
 clusterifyEAMap
-  :: Map.Map UUID ExternalAttribution
-  -> [(UUID, ExternalAttribution, [UUID])]
+  :: Map.Map UUID ExternalAttribution -> [(UUID, ExternalAttribution, [UUID])]
 clusterifyEAMap =
   let clusterifyEAMap'
         :: [(UUID, ExternalAttribution)]
@@ -112,7 +109,9 @@ clusterifyEAMap =
                 Just mergedEA -> (uuid', mergedEA, uuid : uuids) : ins'
                 Nothing       -> in' : (clusterifyEAMap'' (uuid, ea) ins')
         in  clusterifyEAMap' ins (clusterifyEAMap'' i out)
-  in  (`clusterifyEAMap'` []) . Map.assocs
+  in  filter (\(_, ea, _) -> eaIsSignificant ea)
+        . (`clusterifyEAMap'` [])
+        . Map.assocs
 
 clusterifyOpossum :: Opossum -> Opossum
 clusterifyOpossum (opossum@Opossum { _externalAttributions = eas, _resourcesToAttributions = rtas })
@@ -137,25 +136,25 @@ clusterifyOpossum (opossum@Opossum { _externalAttributions = eas, _resourcesToAt
               }
 
 unDot :: Opossum -> Opossum
-unDot (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas, _filesWithChildren = fwcs, _baseUrlsForSources = bufss  }) =
-  let
-    undotResources :: Resources -> Resources
-    undotResources (rs@Resources { _dirs = dirs }) =
-      let contentOfDot   = Map.findWithDefault mempty "." dirs
-          dirsWithoutDot = Map.delete "." dirs
-          recurse :: Resources -> Resources
-          recurse (rs@Resources { _dirs = dirs }) =
-            rs { _dirs = Map.map undotResources dirs }
-      in  recurse $ rs { _dirs = dirsWithoutDot } <> contentOfDot
-    undotFun path = FP.normalise (subRegex (mkRegex "/(\\.?/)+") path "/")
-    undotRTAS = Map.mapKeys
-      (\path -> FP.normalise (subRegex (mkRegex "/(\\.?/)+") path "/"))
-  in
-    opossum { _resources               = undotResources rs
-            , _resourcesToAttributions = Map.mapKeys undotFun rtas
-            , _filesWithChildren       = Set.map undotFun fwcs
-            , _baseUrlsForSources      = Map.mapKeys undotFun bufss
-            }
+unDot (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas, _filesWithChildren = fwcs, _baseUrlsForSources = bufss })
+  = let
+      undotResources :: Resources -> Resources
+      undotResources (rs@Resources { _dirs = dirs }) =
+        let contentOfDot   = Map.findWithDefault mempty "." dirs
+            dirsWithoutDot = Map.delete "." dirs
+            recurse :: Resources -> Resources
+            recurse (rs@Resources { _dirs = dirs }) =
+              rs { _dirs = Map.map undotResources dirs }
+        in  recurse $ rs { _dirs = dirsWithoutDot } <> contentOfDot
+      undotFun path = FP.normalise (subRegex (mkRegex "/(\\.?/)+") path "/")
+      undotRTAS = Map.mapKeys
+        (\path -> FP.normalise (subRegex (mkRegex "/(\\.?/)+") path "/"))
+    in
+      opossum { _resources               = undotResources rs
+              , _resourcesToAttributions = Map.mapKeys undotFun rtas
+              , _filesWithChildren       = Set.map undotFun fwcs
+              , _baseUrlsForSources      = Map.mapKeys undotFun bufss
+              }
 
 normaliseOpossum :: Opossum -> Opossum
 normaliseOpossum opossum = case unDot opossum of
@@ -186,28 +185,29 @@ dropDir directoryName (opossum@Opossum { _resources = rs, _resourcesToAttributio
 
 unshiftPathToResources :: FilePath -> Resources -> Resources
 unshiftPathToResources prefix resources =
-  let unshiftPathToResources'
-        :: [FilePath] -> Resources -> Resources
-      unshiftPathToResources' []       = id
-      unshiftPathToResources' (p : ps) = \rs -> Resources
-        (Map.singleton p (unshiftPathToResources' ps rs))
-        Set.empty
-  in  ( (`unshiftPathToResources'` resources)
+  let
+    unshiftPathToResources' :: [FilePath] -> Resources -> Resources
+    unshiftPathToResources' []       = id
+    unshiftPathToResources' (p : ps) = \rs ->
+      Resources (Map.singleton p (unshiftPathToResources' ps rs)) Set.empty
+  in
+    ( (`unshiftPathToResources'` resources)
       . (map FP.dropTrailingPathSeparator)
       . FP.splitPath
       )
-        prefix
+      prefix
 
 unshiftPathToOpossum :: FilePath -> Opossum -> Opossum
 unshiftPathToOpossum prefix (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _baseUrlsForSources = bufss })
-  = let rsWithPrefix   = unshiftPathToResources prefix rs
-        unshiftToID    = FP.normalise . (("/" </> prefix ++ "/") ++)
-    in  unDot $ opossum { _resources               = rsWithPrefix
-                        , _resourcesToAttributions = Map.mapKeys unshiftToID rtas
-                        , _attributionBreakpoints  = Set.map unshiftToID abs
-                        , _filesWithChildren       = Set.map unshiftToID fwcs
-                        , _baseUrlsForSources      = Map.mapKeys unshiftToID bufss
-                        }
+  = let rsWithPrefix = unshiftPathToResources prefix rs
+        unshiftToID  = FP.normalise . (("/" </> prefix ++ "/") ++)
+    in  unDot $ opossum
+          { _resources               = rsWithPrefix
+          , _resourcesToAttributions = Map.mapKeys unshiftToID rtas
+          , _attributionBreakpoints  = Set.map unshiftToID abs
+          , _filesWithChildren       = Set.map unshiftToID fwcs
+          , _baseUrlsForSources      = Map.mapKeys unshiftToID bufss
+          }
 
 parseOpossum :: FP.FilePath -> IO Opossum
 parseOpossum fp = do

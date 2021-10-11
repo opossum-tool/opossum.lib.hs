@@ -318,17 +318,15 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
                   Nothing
                   mempty
             let eas = mkExternalAttributionSources source Nothing 30
-            return $ if eaIsSignificant ea
-              then mempty
-                { _resources                  = resources
-                , _externalAttributions       = Map.singleton uuid ea
-                , _resourcesToAttributions    = (Map.singleton ("/" FP.</> path)
-                                                               [uuid]
-                                                )
-                , _filesWithChildren          = filesWithChildren
-                , _externalAttributionSources = eas
-                }
-              else mempty
+            return $ mempty
+              { _resources                  = resources
+              , _externalAttributions       = Map.singleton uuid ea
+              , _resourcesToAttributions    = (Map.singleton ("/" FP.</> path)
+                                                             [uuid]
+                                              )
+              , _filesWithChildren          = filesWithChildren
+              , _externalAttributionSources = eas
+              }
     in
       do
         o             <- opossumFromLicenseAndCopyright
