@@ -21,6 +21,7 @@ module Opossum.Opossum
   , purlToCoordinates
   , coordinatesAreNotNull
   , ExternalAttribution(..)
+  , eaIsSignificant
   , ExternalAttribution_Source(..)
   , ExternalAttribution_Flags(..)
   , ExternalAttributionSources(..)
@@ -39,6 +40,7 @@ import qualified Data.HashMap.Strict           as HM
 import qualified Data.List                     as List
 import qualified Data.Map                      as Map
 import qualified Data.Maybe                    as Maybe
+import           Data.Maybe                    (isJust)
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
 import           Data.UUID                      ( UUID )
@@ -88,9 +90,7 @@ instance A.FromJSON Resources where
         Set.fromList
           . map (\(fp, _) -> fp)
           . (filter (\(_, v') -> not (isObject v')))
-      getDirs
-        :: [(FilePath, A.Value)]
-        -> A.Parser (Map.Map FilePath Resources)
+      getDirs :: [(FilePath, A.Value)] -> A.Parser (Map.Map FilePath Resources)
       getDirs list = do
         parsedList <- mapM
           (\(fp, o) -> do
@@ -115,27 +115,40 @@ instance Monoid Resources where
 fpToResources :: Bool -> FilePath -> Resources
 fpToResources isFile =
   let fpToResources' :: [FilePath] -> Resources
-      fpToResources' [] = Resources mempty mempty
+      fpToResources' []       = Resources mempty mempty
       fpToResources' (f : []) = if isFile
         then Resources (Map.empty) (Set.singleton f)
         else Resources (Map.singleton f mempty) Set.empty
       fpToResources' ("/" : fs) = fpToResources' fs
       fpToResources' (f : fs) =
         Resources (Map.singleton f (fpToResources' fs)) Set.empty
-  in  fpToResources' . (map FP.dropTrailingPathSeparator) . FP.splitPath . FP.normalise
+  in  fpToResources'
+        . (map FP.dropTrailingPathSeparator)
+        . FP.splitPath
+        . FP.normalise
 fpsToResources :: [FilePath] -> Resources
 fpsToResources = mconcat . map (fpToResources True)
 countFiles :: Resources -> Int
 countFiles (Resources dirs files) =
   length files + ((sum . map countFiles . Map.elems) dirs)
 resourcesToPaths :: Resources -> Set.Set FilePath
-resourcesToPaths = let
+resourcesToPaths =
+  let
     resourcesToPaths' :: Resources -> Set.Set [FilePath]
-    resourcesToPaths' (Resources{_dirs = dirs,_files = files}) = let
-      rsFromDirs = mconcat . map (\(k, rs) -> Set.insert [k ++ "/"] . Set.map (k :) $ resourcesToPaths' rs) $ Map.assocs dirs
-      rsFromFiles = Set.map (:[]) files
-      in rsFromDirs <> rsFromFiles
-  in Set.insert "/" . Set.map FP.joinPath . resourcesToPaths' 
+    resourcesToPaths' (Resources { _dirs = dirs, _files = files }) =
+      let
+        rsFromDirs =
+          mconcat
+            . map
+                (\(k, rs) ->
+                  Set.insert [k ++ "/"] . Set.map (k :) $ resourcesToPaths' rs
+                )
+            $ Map.assocs dirs
+        rsFromFiles = Set.map (: []) files
+      in
+        rsFromDirs <> rsFromFiles
+  in
+    Set.insert "/" . Set.map FP.joinPath . resourcesToPaths'
 
 isPathAFileInResources :: FilePath -> Resources -> Bool
 isPathAFileInResources =
@@ -148,23 +161,14 @@ isPathAFileInResources =
           Nothing        -> True
   in  \fp -> isPathAFileInResources' (FP.splitPath fp)
 
-data ExternalAttribution_Source = ExternalAttribution_Source
-                                            String
-                                            Double
+data ExternalAttribution_Source = ExternalAttribution_Source String Double
   deriving (Show, Generic, Eq)
 instance A.ToJSON ExternalAttribution_Source where
-  toJSON (ExternalAttribution_Source source documentConfidence) =
-    A.object
-      [ "name" A..= (T.pack source)
-      , "documentConfidence" A..= documentConfidence
-      ]
+  toJSON (ExternalAttribution_Source source documentConfidence) = A.object
+    ["name" A..= (T.pack source), "documentConfidence" A..= documentConfidence]
 instance A.FromJSON ExternalAttribution_Source where
   parseJSON = A.withObject "ExternalAttribution_Source" $ \v -> do
-    ExternalAttribution_Source
-      <$>  v
-      A..: "name"
-      <*>  v
-      A..: "documentConfidence"
+    ExternalAttribution_Source <$> v A..: "name" <*> v A..: "documentConfidence"
 
 data Coordinates = Coordinates
   { _packageType         :: Maybe T.Text
@@ -192,17 +196,17 @@ instance A.FromJSON Coordinates where
     packageVersion      <- v A..:? "packageVersion"
     packagePURLAppendix <- v A..:? "packagePURLAppendix"
     return $ Coordinates packageType
-                                 packageNamespace
-                                 packageName
-                                 packageVersion
-                                 packagePURLAppendix
+                         packageNamespace
+                         packageName
+                         packageVersion
+                         packagePURLAppendix
 purlToCoordinates :: PURL -> Coordinates
 purlToCoordinates (PURL { _PURL_type = type_, _PURL_namespace = namespace, _PURL_name = name, _PURL_version = version })
   = Coordinates (fmap (T.pack . show) type_)
-                        (fmap T.pack namespace)
-                        (Just $ T.pack name)
-                        (fmap T.pack version)
-                        Nothing -- TODO: appendix
+                (fmap T.pack namespace)
+                (Just $ T.pack name)
+                (fmap T.pack version)
+                Nothing -- TODO: appendix
 coordinatesAreNotNull :: Coordinates -> Bool
 coordinatesAreNotNull (Coordinates Nothing Nothing _ Nothing _) = False
 coordinatesAreNotNull _ = True
@@ -218,8 +222,7 @@ data ExternalAttribution_Flags = ExternalAttribution_Flags
 opoossumExternalAttributionFlagsPreObjectList
   :: ExternalAttribution_Flags -> [A.Pair]
 opoossumExternalAttributionFlagsPreObjectList flags =
-  let flagToJSON
-        :: (ExternalAttribution_Flags -> Bool) -> String -> [A.Pair]
+  let flagToJSON :: (ExternalAttribution_Flags -> Bool) -> String -> [A.Pair]
       flagToJSON pred name =
         if pred flags then [(T.pack name) A..= True] else []
   in  concat
@@ -257,10 +260,7 @@ instance A.FromJSON ExternalAttribution_Flags where
           <*> readStringFlag "followUp"
 instance Semigroup ExternalAttribution_Flags where
   (ExternalAttribution_Flags f1 f2 f3 f4) <> (ExternalAttribution_Flags f1' f2' f3' f4')
-    = ExternalAttribution_Flags (f1 || f1')
-                                        (f2 || f2')
-                                        (f3 || f3')
-                                        (f4 || f4')
+    = ExternalAttribution_Flags (f1 || f1') (f2 || f2') (f3 || f3') (f4 || f4')
 instance Monoid ExternalAttribution_Flags where
   mempty = ExternalAttribution_Flags False False False False
 justPreselectedFlags = mempty { _isPreSelected = True }
@@ -328,21 +328,30 @@ instance A.FromJSON ExternalAttribution where
         l       -> l
       )
       (v A..:? "url")
-    flags <-
-      A.parseJSON (A.Object v) :: A.Parser ExternalAttribution_Flags
+    flags <- A.parseJSON (A.Object v) :: A.Parser ExternalAttribution_Flags
 
     return
       (ExternalAttribution source
-                                   attributionConfidence
-                                   comment
-                                   originId
-                                   coordinates
-                                   copyright
-                                   licenseName
-                                   licenseText
-                                   url
-                                   flags
+                           attributionConfidence
+                           comment
+                           originId
+                           coordinates
+                           copyright
+                           licenseName
+                           licenseText
+                           url
+                           flags
       )
+eaIsSignificant :: ExternalAttribution -> Bool
+eaIsSignificant ExternalAttribution { _comment = comment, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _url = url, _flags = flags }
+  = or
+    [ isJust comment
+    , coordinatesAreNotNull coordinates
+    , isJust copyright
+    , isJust licenseText
+    , isJust url
+    , flags /= mempty
+    ]
 
 data FrequentLicense = FrequentLicense
   { shortName   :: T.Text
@@ -385,9 +394,16 @@ instance Semigroup ExternalAttributionSources where
 instance Monoid ExternalAttributionSources where
   mempty = ExternalAttributionSources mempty
 mkExternalAttributionSources
-  :: ExternalAttribution_Source -> Maybe String -> Integer -> ExternalAttributionSources
-mkExternalAttributionSources (ExternalAttribution_Source key _) name priority = ExternalAttributionSources
-  (Map.singleton key (ExternalAttributionSourcesEntry (key `Maybe.fromMaybe` name) priority))
+  :: ExternalAttribution_Source
+  -> Maybe String
+  -> Integer
+  -> ExternalAttributionSources
+mkExternalAttributionSources (ExternalAttribution_Source key _) name priority =
+  ExternalAttributionSources
+    (Map.singleton
+      key
+      (ExternalAttributionSourcesEntry (key `Maybe.fromMaybe` name) priority)
+    )
 
 data Opossum = Opossum
   { _metadata                   :: Map.Map String A.Value
@@ -497,9 +513,8 @@ writeOpossumStats (Opossum { _metadata = m, _resources = rs, _externalAttributio
       )
       (List.groupBy
         (==)
-        (List.sort $ map
-          ((\(ExternalAttribution_Source s _) -> s) . _source)
-          (Map.elems eas)
+        (List.sort $ map ((\(ExternalAttribution_Source s _) -> s) . _source)
+                         (Map.elems eas)
         )
       )
     hPutStrLn IO.stderr ("resourcesToAttributions: #=" ++ show (length rtas))

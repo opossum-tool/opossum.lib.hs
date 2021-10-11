@@ -318,22 +318,24 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
                   Nothing
                   mempty
             let eas = mkExternalAttributionSources source Nothing 30
-            return $ mempty
-              { _resources                  = resources
-              , _externalAttributions       = Map.singleton uuid ea
-              , _resourcesToAttributions    = (Map.singleton ("/" FP.</> path)
-                                                             [uuid]
-                                              )
-              , _filesWithChildren          = filesWithChildren
-              , _externalAttributionSources = eas
-              }
+            return $ if eaIsSignificant ea
+              then mempty
+                { _resources                  = resources
+                , _externalAttributions       = Map.singleton uuid ea
+                , _resourcesToAttributions    = (Map.singleton ("/" FP.</> path)
+                                                               [uuid]
+                                                )
+                , _filesWithChildren          = filesWithChildren
+                , _externalAttributionSources = eas
+                }
+              else mempty
     in
       do
-        o  <- opossumFromLicenseAndCopyright
+        o             <- opossumFromLicenseAndCopyright
         oFromPackages <- case packages of
-          []  -> mempty
+          [] -> mempty
           [p] -> opossumFromScancodePackage p (Just path)
-          _   -> mconcat <$> mapM (`opossumFromScancodePackage` Nothing) packages
+          _ -> mconcat <$> mapM (`opossumFromScancodePackage` Nothing) packages
         return $ o <> oFromPackages
 
 parseScancodeBS :: B.ByteString -> IO Opossum
