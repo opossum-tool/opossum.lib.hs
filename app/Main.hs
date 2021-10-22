@@ -65,6 +65,9 @@ main = getArgs >>= \case
             fun !pre ("--scancode" : (f : args)) = do
               o <- parseScancodeToOpossum f
               fmap (pre <>) (fun o args)
+            fun !pre ("--scanpipe" : (f : args)) = do
+              o <- parseScanpipeToOpossum f
+              fmap (pre <>) (fun o args)
             fun !pre ("--dependency-check" : (f : args)) = do
               o <- parseDependencyCheckToOpossum f
               fmap (pre <>) (fun o args)

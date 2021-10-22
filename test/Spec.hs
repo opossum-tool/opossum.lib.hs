@@ -48,6 +48,9 @@ spdxJsonFileBS = B.fromStrict $(embedFile "test/data/SPDXJSONExample-v2.2.spdx.j
 scancodeJsonBS :: B.ByteString
 scancodeJsonBS = B.fromStrict $(embedFile "test/data/tools-java.scancode.json")
 
+scanpipeJsonBS :: B.ByteString
+scanpipeJsonBS = B.fromStrict $(embedFile "test/data/docker __osadl_debian-docker-base-image buster-amd64-211011.json")
+
 dependencyCheckJsonBS :: B.ByteString
 dependencyCheckJsonBS =
   B.fromStrict $(embedFile "test/data/dependency-check-report.json")
@@ -56,6 +59,10 @@ scanossJsonBS :: B.ByteString
 scanossJsonBS = B.fromStrict $(embedFile "test/data/zlib_sca.json")
 
 opossumSpec = do
+  describe "Utils" $ do
+    it "test uuidFromString" $ do
+      uuidFromString "bla" `shouldBe` uuidFromString "bla"
+      uuidFromString "bla" `shouldNotBe` uuidFromString "blubb"
   describe "Opossum Model"
     $ let
         exmpResourses =
@@ -352,6 +359,20 @@ opossumSpec = do
     let (ExternalAttributionSources eas) = _externalAttributionSources opossumFromSC
     it "externalAttributionSources sohuld be witten" $ do
       (List.sort $ Map.keys eas) `shouldBe` ["Scancode", "Scancode-Package"]
+
+  describe "Opossum Utils Scanpipe Converter" $ do
+    it "should parse json file" $ do
+      let decoded =
+            (A.eitherDecode scanpipeJsonBS :: Either String ScanpipeFile)
+          files = (_spf_files . (fromRight (ScanpipeFile (Y.Null) mempty mempty))) decoded
+          err = case decoded of
+            Left err' -> err'
+            Right _   -> ""
+      err `shouldBe` ""
+      (isRight decoded) `shouldBe` True
+    opossumFromSC <- runIO $ parseScanpipeBS scanpipeJsonBS
+    it "should parse json to opossum" $ do
+      countFiles (_resources opossumFromSC) `shouldBe` 5050
 
   describe "Opossum Utils Dependency-Check Converter" $ do
 

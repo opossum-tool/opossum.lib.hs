@@ -16,6 +16,9 @@ module Opossum.OpossumScancodeUtils
   , ScancodeFile(..)
   , ScancodeFileEntry(..)
   , ScancodePackage(..)
+  , parseScanpipeToOpossum
+  , parseScanpipeBS
+  , ScanpipeFile(..)
   ) where
 
 import           Opossum.Opossum
@@ -32,11 +35,13 @@ import qualified Data.List                     as List
 import qualified Data.Map                      as Map
 import           Data.Maybe                     ( fromMaybe
                                                 , isJust
+                                                , mapMaybe
                                                 , maybeToList
                                                 )
 import           Data.Monoid
 import qualified Data.Set                      as Set
 import qualified Data.Text                     as T
+import qualified Data.UUID.V5                  as UUID
 import qualified Data.Vector                   as V
 import qualified Distribution.Parsec           as SPDX
 import qualified Distribution.SPDX             as SPDX
@@ -233,7 +238,13 @@ instance A.FromJSON ScancodeFileEntry where
                 $ \v' -> v' A..: "value" :: A.Parser String
           in  mapM getValueFromCopyrightObject (V.toList cos)
         Nothing -> return []
-    packages <- v A..: "packages"
+    packages <-
+      (\case
+        Just ps -> ps
+        Nothing -> []
+      )
+      <$>   v
+      A..:? "packages"
     return (ScancodeFileEntry path is_file license copyrights packages)
 
 data ScancodeFile = ScancodeFile
@@ -246,8 +257,26 @@ instance A.FromJSON ScancodeFile where
     ScancodeFile <$> v A..: "headers" <*> v A..: "files"
 
 
+scancodePackageToEA :: ScancodePackage -> Maybe ExternalAttribution
+scancodePackageToEA scp@(ScancodePackage { _scp_purl = purl, _scp_licenses = licenses, _scp_copyright = copyright, _scp_dependencies = dependencies })
+  = let source              = ExternalAttribution_Source "Scancode-Package" 50
+        coordinatesFromPurl = case purl of
+          Just purl -> purlToCoordinates purl
+          _         -> Coordinates Nothing Nothing Nothing Nothing Nothing
+    in  Just $ ExternalAttribution
+          source
+          50
+          Nothing
+          Nothing
+          coordinatesFromPurl
+          (fmap T.pack copyright)
+          (fmap (T.pack . renderSpdxLicense) licenses)
+          Nothing
+          Nothing
+          justPreselectedFlags
+
 opossumFromScancodePackage :: ScancodePackage -> Maybe FilePath -> IO Opossum
-opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = licenses, _scp_copyright = copyright, _scp_dependencies = dependencies }) providedPath
+opossumFromScancodePackage scp@(ScancodePackage { _scp_purl = purl, _scp_dependencies = dependencies }) providedPath
   = let
       typeFromPurl = case purl of
         Just (PURL { _PURL_type = t }) -> "generic" `fromMaybe` (fmap show t)
@@ -258,66 +287,59 @@ opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = 
             $  (maybeToList ns)
             ++ [(intercalate "@" $ [n] ++ (maybeToList v))]
         _ -> "UNKNOWN"
-      path                = fromMaybe pathFromPurl providedPath
-      coordinatesFromPurl = case purl of
-        Just purl -> purlToCoordinates purl
-        _         -> Coordinates Nothing Nothing Nothing Nothing Nothing
+      path = fromMaybe pathFromPurl providedPath
     in
       do
         uuid <- randomIO
-        let source    = ExternalAttribution_Source "Scancode-Package" 50
-        let resources = fpToResources True path
-        let ea = ExternalAttribution
-              source
-              50
-              Nothing
-              Nothing
-              coordinatesFromPurl
-              (fmap T.pack copyright)
-              (fmap (T.pack . renderSpdxLicense) licenses)
-              Nothing
-              Nothing
-              justPreselectedFlags
-        let eas = mkExternalAttributionSources source Nothing 30
         let
-          o = mempty
-            { _resources                  = resources
-            , _externalAttributions       = Map.singleton uuid ea
-            , _resourcesToAttributions = Map.singleton ("/" FP.</> path) [uuid]
-            , _attributionBreakpoints     = case providedPath of
-              Just _  -> mempty
-              Nothing -> Set.singleton ("/" ++ typeFromPurl ++ "/")
-            , _externalAttributionSources = eas
-            }
+          o =
+            (case scancodePackageToEA scp of
+              Just ea -> mempty
+                { _resources                  = fpToResources True path
+                , _externalAttributions       = Map.singleton uuid ea
+                , _resourcesToAttributions    = Map.singleton ("/" FP.</> path)
+                                                              [uuid]
+                , _attributionBreakpoints     = case providedPath of
+                  Just _  -> mempty
+                  Nothing -> Set.singleton ("/" ++ typeFromPurl ++ "/")
+                , _externalAttributionSources = mkExternalAttributionSources
+                                                  (_source ea)
+                                                  Nothing
+                                                  30
+                }
+              Nothing -> mempty
+            )
         os <- mapM (`opossumFromScancodePackage` Nothing) dependencies
         return $ mconcat (o : (map (unshiftPathToOpossum path) os))
 
+scancodeFileEntryToEA :: ScancodeFileEntry -> Maybe ExternalAttribution
+scancodeFileEntryToEA (ScancodeFileEntry { _scfe_license = licenses, _scfe_copyrights = copyrights })
+  = let source = ExternalAttribution_Source "Scancode" 50
+    in  if not (null licenses) && not (null copyrights || licenses == Nothing)
+          then Just $ ExternalAttribution
+            source
+            50
+            Nothing
+            Nothing
+            (Coordinates Nothing Nothing Nothing Nothing Nothing)
+            ((Just . T.pack . unlines) copyrights)
+            (fmap (T.pack . renderSpdxLicense) licenses)
+            Nothing
+            Nothing
+            mempty
+          else Nothing
+
 scancodeFileEntryToOpossum :: ScancodeFileEntry -> IO Opossum
-scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file = is_file, _scfe_license = licenses, _scfe_copyrights = copyrights, _scfe_packages = packages })
+scancodeFileEntryToOpossum scfe@(ScancodeFileEntry { _scfe_file = path, _scfe_is_file = is_file, _scfe_license = licenses, _scfe_copyrights = copyrights, _scfe_packages = packages })
   = let
       filesWithChildren =
         if is_file then Set.singleton ("/" FP.</> path ++ "/") else mempty
       opossumFromLicenseAndCopyright = do
         uuid <- randomIO
         let resources = fpToResources True path
-        if null copyrights && licenses == Nothing
-          then return $ mempty { _resources         = resources
-                               , _filesWithChildren = filesWithChildren
-                               }
-          else do
-            let source = ExternalAttribution_Source "Scancode" 50
-            let ea = ExternalAttribution
-                  source
-                  50
-                  Nothing
-                  Nothing
-                  (Coordinates Nothing Nothing Nothing Nothing Nothing)
-                  ((Just . T.pack . unlines) copyrights)
-                  (fmap (T.pack . renderSpdxLicense) licenses)
-                  Nothing
-                  Nothing
-                  mempty
-            let eas = mkExternalAttributionSources source Nothing 30
+        case scancodeFileEntryToEA scfe of
+          Just ea -> do
+            let eas = mkExternalAttributionSources (_source ea) Nothing 30
             return $ mempty
               { _resources                  = resources
               , _externalAttributions       = Map.singleton uuid ea
@@ -327,6 +349,9 @@ scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file
               , _filesWithChildren          = filesWithChildren
               , _externalAttributionSources = eas
               }
+          Nothing -> return $ mempty { _resources         = resources
+                                     , _filesWithChildren = filesWithChildren
+                                     }
     in
       do
         o             <- opossumFromLicenseAndCopyright
@@ -356,4 +381,83 @@ parseScancodeToOpossum inputPath = do
                         ]
         }
   opossum <- B.readFile inputPath >>= parseScancodeBS
+  return (normaliseOpossum (baseOpossum <> opossum))
+
+data ScanpipeFileEntry = ScanpipeFileEntry
+  { _spfe             :: ScancodeFileEntry
+  , _spfe_forPackages :: [String]
+  , _spfe_status      :: String
+  }
+  deriving (Eq, Show)
+instance A.FromJSON ScanpipeFileEntry where
+  parseJSON = A.withObject "ScanpipeFileEntry" $ \v -> 
+    ScanpipeFileEntry
+      <$>  (A.parseJSON (A.Object v))
+      <*>  v A..: "for_packages"
+      <*>  v
+      A..: "status"
+
+data ScanpipePackage = ScanpipePackage
+  { _spp     :: ScancodePackage
+  , _spp_key :: String
+  }
+  deriving (Eq, Show)
+instance A.FromJSON ScanpipePackage where
+  parseJSON = A.withObject "ScanpipePackage" $ \v -> do
+    ScanpipePackage <$> (A.parseJSON (A.Object v)) <*> v A..: "purl"
+
+data ScanpipeFile = ScanpipeFile
+  { _spf_metadata :: A.Value
+  , _spf_packages :: [ScanpipePackage]
+  , _spf_files    :: [ScanpipeFileEntry]
+  }
+  deriving (Eq, Show)
+instance A.FromJSON ScanpipeFile where
+  parseJSON = A.withObject "ScanpipeFile" $ \v -> do
+    ScanpipeFile <$> v A..: "headers" <*> v A..: "packages" <*> v A..: "files"
+
+
+convertSPFToOpossum :: ScanpipeFile -> Opossum
+convertSPFToOpossum spf@(ScanpipeFile _ spPackages spFiles) =
+  let resources = fpsToResources $ map (_scfe_file . _spfe) spFiles
+      eas1 =
+        (Map.fromList . mapMaybe
+            (\(ScanpipePackage scp key) -> case scancodePackageToEA scp of
+              Just ea -> Just (uuidFromString key, ea)
+              Nothing -> Nothing
+            )
+          )
+          spPackages
+      eas2 = (Map.fromList . mapMaybe
+        (\(ScanpipeFileEntry scfe _ _) -> case scancodeFileEntryToEA scfe of
+          Just ea -> Just (uuidFromString (_scfe_file scfe ++ "scanpipefile"), ea)
+          Nothing -> Nothing
+        )) spFiles
+      rtas = Map.fromList $ map (\(ScanpipeFileEntry (ScancodeFileEntry{_scfe_file = file}) ps _) -> (file, (uuidFromString (file ++ "scanpipefile")):(map uuidFromString ps))) spFiles
+  in  mempty { _resources                  = resources
+             , _externalAttributions       = eas1 <> eas2
+             , _resourcesToAttributions    = rtas
+            --  , _externalAttributionSources = undefined
+             }
+parseScanpipeBS :: B.ByteString -> IO Opossum
+parseScanpipeBS bs = case (A.eitherDecode bs :: Either String ScanpipeFile) of
+  Right spf@(ScanpipeFile metadata sppackages spFiles) -> return
+    ((mempty { _metadata = Map.singleton "Scanpipe" metadata } <>)
+      (convertSPFToOpossum spf)
+    )
+  Left err -> do
+    hPutStrLn IO.stderr err
+    undefined -- TODO
+
+parseScanpipeToOpossum :: FilePath -> IO Opossum
+parseScanpipeToOpossum inputPath = do
+  hPutStrLn IO.stderr ("parse: " ++ inputPath)
+  let baseOpossum = mempty
+        { _metadata = Map.fromList
+                        [ ("projectId"       , A.toJSON ("0" :: String))
+                        , ("projectTitle"    , A.toJSON inputPath)
+                        , ("fileCreationDate", A.toJSON ("" :: String))
+                        ]
+        }
+  opossum <- B.readFile inputPath >>= parseScanpipeBS
   return (normaliseOpossum (baseOpossum <> opossum))

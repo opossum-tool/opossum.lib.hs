@@ -57,6 +57,7 @@ library
     , spdx-tools
     , text
     , unordered-containers
+    , utf8-string
     , uuid
     , vector
     , yaml
@@ -93,6 +94,7 @@ executable opossum-lib-exe
     , spdx-tools
     , text
     , unordered-containers
+    , utf8-string
     , uuid
     , vector
     , yaml
@@ -132,6 +134,7 @@ test-suite opossum-lib-test
     , spdx-tools
     , text
     , unordered-containers
+    , utf8-string
     , uuid
     , vector
     , yaml
