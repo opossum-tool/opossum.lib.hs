@@ -19,6 +19,7 @@ module Opossum.OpossumUtils
   , unshiftPathToResources
   , unshiftPathToOpossum
   , uuidFromString
+  , uuidFromString'
   ) where
 
 import           Opossum.Opossum
@@ -55,6 +56,9 @@ import           Text.Regex                     ( mkRegex
 
 uuidFromString :: String -> UUID.UUID
 uuidFromString = UUID.generateNamed UUID.nil . UTF8.encode
+
+uuidFromString' :: Show a => a -> UUID.UUID
+uuidFromString' = uuidFromString . show
 
 mergifyCopyright :: Maybe Text -> Maybe Text -> Maybe Text
 mergifyCopyright left    Nothing = left
