@@ -328,6 +328,7 @@ opossumSpec = do
             Right spdxFile -> spdxToOpossum spdxFile
             Left err -> undefined
     it "num of resources from spdx should match" $ do
+      writeOpossumStats oposum_from_spdx_json
       length (_externalAttributions oposum_from_spdx_json) `shouldBe` 4
       countFiles (_resources oposum_from_spdx_json) `shouldBe` 4
   describe "Opossum Utils ScanCode Converter" $ do

@@ -124,6 +124,16 @@ spdxFileOrPackageToEA :: Either SPDXFile SPDXPackage -> ExternalAttribution
 spdxFileOrPackageToEA (Left f) = spdxFileToEA f
 spdxFileOrPackageToEA (Right p) = spdxPackageToEA p
 
+spdxFileOrPackageToResource :: Either SPDXFile SPDXPackage -> FilePath
+spdxFileOrPackageToResource =
+  \case
+    Left (SPDXFile {_SPDXFile_fileName = fileName}) -> fileName
+    Right (SPDXPackage {_SPDXPackage_packageFileName = Just pfn}) -> pfn
+    Right (SPDXPackage {_SPDXPackage_SPDXID = spdxid, _SPDXPackage_name = name}) ->
+      case name of
+        "" -> spdxid ++ "/"
+        _ -> name ++ "/"
+
 initToOpossum ::
      UG.Gr (Either SPDXFile SPDXPackage) SPDXRelationship
   -> [SPDXFile]
@@ -132,55 +142,50 @@ initToOpossum ::
 initToOpossum graph files (p, s) =
   let ea = spdxFileOrPackageToEA s
       uuid = uuidFromString' ea
-      spdxFileOrPackageToResource ::
-           Maybe (Either SPDXFile SPDXPackage) -> FilePath
-      spdxFileOrPackageToResource =
-        \case
-          Just (Left (SPDXFile {_SPDXFile_fileName = fileName})) -> fileName
-          Just (Right (SPDXPackage { _SPDXPackage_SPDXID = spdxid
-                                   , _SPDXPackage_name = name
-                                   })) ->
-            case name of
-              "" -> spdxid ++ "/"
-              _ -> name ++ "/"
-          Nothing -> "??"
-      nodeToResource k =
+      nodeToResource (k, _) =
         case G.lab graph k of
-          Just (Left (SPDXFile {_SPDXFile_fileName = fileName})) -> fileName
-          Just (Right (SPDXPackage { _SPDXPackage_SPDXID = spdxid
-                                   , _SPDXPackage_name = name
-                                   })) ->
-            case name of
-              "" -> spdxid ++ "/"
-              _ -> name ++ "/"
+          Just spdxFileOrPackage ->
+            spdxFileOrPackageToResource spdxFileOrPackage
           Nothing -> "??"
-      rs =
+      resource =
         case p of
-          [] -> spdxFileOrPackageToResource $ Just s
-          _ -> joinPath $ map (nodeToResource . fst) p
-   in let hasFilesO =
-            case s of
-              Right (SPDXPackage {_SPDXPackage_hasFiles = Just hasFiles}) ->
-                (unshiftPathToOpossum rs .
-                 mconcat .
-                 map ((initToOpossum graph files) . (\f -> ([], Left f))) .
-                 Maybe.mapMaybe
-                   (\spdxid -> List.find (`matchesSPDXID` spdxid) files))
-                  hasFiles
-              _ -> mempty
-       in (<> hasFilesO) $
-          mempty
-            { _resources =
-                fpToResources
-                  (case s of
-                     Left _ -> True
-                     _ -> False)
-                  rs
-            , _externalAttributions = Map.singleton uuid ea
-            , _resourcesToAttributions = Map.singleton ('/' : rs) [uuid]
-            , _externalAttributionSources =
-                mkExternalAttributionSources (_source ea) Nothing 500
-            }
+          [] -> spdxFileOrPackageToResource s
+          _ -> (joinPath . map nodeToResource) p
+      hasFilesO =
+        case s of
+          Right (SPDXPackage {_SPDXPackage_hasFiles = Just hasFiles}) ->
+            (unshiftPathToOpossum resource .
+             mconcat .
+             map (initToOpossum graph files . (\f -> ([], Left f))) .
+             Maybe.mapMaybe
+               (\spdxid -> List.find (`matchesSPDXID` spdxid) files))
+              hasFiles
+          _ -> mempty
+   in hasFilesO <>
+      (mempty
+         { _resources =
+             fpToResources
+               (case s of
+                  Left _ -> True
+                  _ -> False)
+               resource
+         , _externalAttributions = Map.singleton uuid ea
+         , _resourcesToAttributions = Map.singleton ('/' : resource) [uuid]
+         , _externalAttributionSources =
+             mkExternalAttributionSources (_source ea) Nothing 500
+         })
+
+showR (SPDXRelationship _ rtype right left) =
+  unwords [left, "-" ++ show rtype ++ "->", right]
+
+ppSPDX :: SPDXDocument -> String
+ppSPDX spdx =
+  let (graph, idsToIdxs, _) = spdxDocumentToGraph spdx
+   in G.prettify $
+      G.nemap
+        spdxFileOrPackageToResource
+        _SPDXRelationship_relationshipType
+        graph
 
 spdxToOpossum :: SPDXDocument -> Opossum
 spdxToOpossum (spdx@SPDXDocument { _SPDX_SPDXID = spdxid
@@ -191,21 +196,7 @@ spdxToOpossum (spdx@SPDXDocument { _SPDX_SPDXID = spdxid
                                  , _SPDX_packages = packages
                                  , _SPDX_relationships = relationships
                                  }) =
-  let opossumMetadata =
-        mempty
-          { _metadata =
-              Map.fromList
-                [ ("projectId", A.toJSON spdxid)
-                , ("projectTitle", A.toJSON name)
-                ]
-          }
-      (graph, idsToIdxs, indxsToIds) = spdxDocumentToGraph spdx
-      trees =
-        map
-          (\root ->
-             let indx = Map.findWithDefault undefined root idsToIdxs
-              in G.lbft indx graph :: [G.LPath SPDXRelationship])
-          (getRootsFromDocument spdx)
+  let (graph, idsToIdxs, _) = spdxDocumentToGraph spdx
       addS ::
            [G.LNode SPDXRelationship]
         -> Maybe ([G.LNode SPDXRelationship], Either SPDXFile SPDXPackage)
@@ -215,13 +206,26 @@ spdxToOpossum (spdx@SPDXDocument { _SPDX_SPDXID = spdxid
          in case G.lab graph node of
               Just s -> Just (path, s)
               _ -> Nothing
-      inits =
-        concatMap
-          (Maybe.mapMaybe addS .
-           List.nub . concatMap List.inits . map (reverse . G.unLPath))
-          trees
-      pieces = map (initToOpossum graph files) inits
-   in mconcat (opossumMetadata : pieces)
+      pieces =
+        (map (initToOpossum graph files) .
+         concatMap
+           (Maybe.mapMaybe addS .
+            List.nub . concatMap List.inits . map (reverse . G.unLPath)) .
+         map
+           (\root ->
+              let indx = Map.findWithDefault undefined root idsToIdxs
+               in G.lbft indx graph :: [G.LPath SPDXRelationship]) .
+         getRootsFromDocument)
+          spdx
+   in mconcat
+        (mempty
+           { _metadata =
+               Map.fromList
+                 [ ("projectId", A.toJSON spdxid)
+                 , ("projectTitle", A.toJSON name)
+                 ]
+           } :
+         pieces)
 
 parseSpdxToOpossum :: FilePath -> IO Opossum
 parseSpdxToOpossum inputPath = do
