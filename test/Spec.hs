@@ -2,38 +2,36 @@
 -- SPDX-FileCopyrightText: TNG Technology Consulting GmbH <https://www.tngtech.com>
 --
 -- SPDX-License-Identifier: BSD-3-Clause
-
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-import           Control.Exception              ( evaluate )
-import qualified Data.Aeson                    as A
-import qualified Data.Aeson.Encode.Pretty      as A
-import qualified Data.ByteString.Char8         as C
-import qualified Data.ByteString.Lazy          as B
-import           Data.Either
-import           Data.FileEmbed                 ( embedFile )
-import qualified Data.List                     as List
-import qualified Data.Map                      as Map
-import qualified Data.Set                      as Set
-import qualified Data.Vector                   as V
-import qualified Data.Yaml                     as Y
-import           System.Exit
-import           System.FilePath                ( (</>) )
-import           Test.Hspec
-import           Test.QuickCheck
+import Control.Exception (evaluate)
+import qualified Data.Aeson as A
+import qualified Data.Aeson.Encode.Pretty as A
+import qualified Data.ByteString.Char8 as C
+import qualified Data.ByteString.Lazy as B
+import Data.Either
+import Data.FileEmbed (embedFile)
+import qualified Data.List as List
+import qualified Data.Map as Map
+import qualified Data.Set as Set
+import qualified Data.Vector as V
+import qualified Data.Yaml as Y
+import System.Exit
+import System.FilePath ((</>))
+import Test.Hspec
+import Test.QuickCheck
 
-import           SPDX.Document
+import SPDX.Document
 
-import           Opossum.Opossum
-import           Opossum.OpossumDependencyCheckUtils
-import           Opossum.OpossumSPDXUtils
-import           Opossum.OpossumScancodeUtils
-import           Opossum.OpossumScanossUtils
-import           Opossum.OpossumUtils
-
+import Opossum.Opossum
+import Opossum.OpossumDependencyCheckUtils
+import Opossum.OpossumSPDXUtils
+import Opossum.OpossumScancodeUtils
+import Opossum.OpossumScanossUtils
+import Opossum.OpossumUtils
 
 opossumFileBS :: B.ByteString
 opossumFileBS =
@@ -43,10 +41,21 @@ spdxYamlFileBS :: B.ByteString
 spdxYamlFileBS = B.fromStrict $(embedFile "test/data/document.spdx.yml")
 
 spdxJsonFileBS :: B.ByteString
-spdxJsonFileBS = B.fromStrict $(embedFile "test/data/SPDXJSONExample-v2.2.spdx.json")
+spdxJsonFileBS =
+  B.fromStrict $(embedFile "test/data/SPDXJSONExample-v2.2.spdx.json")
+
+spdxTernJsonFileBS :: B.ByteString
+spdxTernJsonFileBS =
+  B.fromStrict $(embedFile "test/data/httpd_2.4.51.tern.fixed.spdx.json")
 
 scancodeJsonBS :: B.ByteString
 scancodeJsonBS = B.fromStrict $(embedFile "test/data/tools-java.scancode.json")
+
+scanpipeJsonBS :: B.ByteString
+scanpipeJsonBS =
+  B.fromStrict
+    $(embedFile
+        "test/data/docker __osadl_debian-docker-base-image buster-amd64-211011.json")
 
 dependencyCheckJsonBS :: B.ByteString
 dependencyCheckJsonBS =
@@ -56,261 +65,244 @@ scanossJsonBS :: B.ByteString
 scanossJsonBS = B.fromStrict $(embedFile "test/data/zlib_sca.json")
 
 opossumSpec = do
-  describe "Opossum Model"
-    $ let
-        exmpResourses =
+  describe "Utils" $ do
+    it "test uuidFromString" $ do
+      uuidFromString "bla" `shouldBe` uuidFromString "bla"
+      uuidFromString "bla" `shouldNotBe` uuidFromString "blubb"
+  describe "Opossum Model" $
+    let exmpResourses =
           [ "root" </> "subfolder" </> "file1"
           , "root" </> "subfolder" </> "file2"
           , "root" </> "file3"
           ]
-        parsedResources = Resources
-          (Map.singleton
-            "root"
-            (Resources
-              (Map.singleton
-                "subfolder"
-                (Resources Map.empty (Set.fromList ["file1", "file2"]))
-              )
-              (Set.singleton "file3")
-            )
-          )
-          Set.empty
-        serializedResources = B.concat
-          [ "{"
-          , "\"root\":{"
-          , "\"subfolder\":{"
-          , "\"file1\":1,"
-          , "\"file2\":1"
-          , "},"
-          , "\"file3\":1"
-          , "}"
-          , "}"
-          ]
-        otherResources = Resources
-          (Map.singleton
-            "root"
-            (Resources
-              (Map.singleton
-                "other"
-                (Resources Map.empty (Set.singleton "file4"))
-              )
-              Set.empty
-            )
-          )
-          (Set.singleton "file5")
-        allResourcesSerialized
-          = "{\"root\":{\"other\":{\"file4\":1},\"subfolder\":{\"file1\":1,\"file2\":1},\"file3\":1},\"file5\":1}"
-      in
-        do
-          it "testFolderAndFileMerging" $ do
-            (fpToResources True "path/to/file")
-              <>         (fpToResources False "path/other/dir")
-              `shouldBe` Resources
-                           (Map.singleton
-                             "path"
-                             (Resources
-                               (Map.fromList
-                                 [ ( "to"
-                                   , Resources Map.empty
-                                                       (Set.singleton "file")
-                                   )
-                                 , ( "other"
-                                   , Resources
-                                     (Map.singleton "dir" mempty)
-                                     Set.empty
-                                   )
-                                 ]
-                               )
-                               Set.empty
-                             )
-                           )
-                           Set.empty
-            countFiles
-                (  (fpToResources True "path/to/file")
-                <> (fpToResources False "path/other/dir")
-                )
-              `shouldBe` 1
-
-          it "test resourcesToPaths" $ do
-            resourcesToPaths (Resources mempty mempty) `shouldBe` Set.fromList ["/"]
-            resourcesToPaths (Resources mempty (Set.singleton "file.c")) `shouldBe` Set.fromList ["/", "file.c"]
-            resourcesToPaths (Resources (Map.singleton "dir" (Resources mempty (Set.singleton "something.h"))) (Set.singleton "file.c")) `shouldBe` Set.fromList ["/", "file.c", "dir/", "dir/something.h"]
-          it "testFileListParsing" $ do
-            fpsToResources exmpResourses `shouldBe` parsedResources
-            (Set.fromList exmpResourses) `Set.isSubsetOf` (resourcesToPaths parsedResources)  `shouldBe` True
-          it "testFileListSerialization" $ do
-            A.encode parsedResources `shouldBe` serializedResources
-          it "testFileListDeSerialization" $ do
-            A.decode serializedResources `shouldBe` (Just parsedResources)
-          it "testMergeAndFileListSerialization" $ do
-            A.encode (parsedResources <> otherResources)
-              `shouldBe` allResourcesSerialized
-
-  describe "Opossum Model deserialization"
-    $ let
-        result         = (A.eitherDecode opossumFileBS :: Either String Opossum)
-        potentialError = case result of
-          Right _   -> Nothing
-          Left  err -> Just err
-        opossum = case result of
-          Right opossum' -> opossum'
-          Left  _        -> undefined
-      in
-        do
-
-          it "parsing of EA works, case 1" $ do
-            let
-              ea_str = B.fromStrict $ C.unlines
-                [ "{"
-                , "    \"packageName\": \"adduser\","
-                , "    \"packageVersion\": \"3.118\","
-                , "    \"url\": \"https://github.com/some/repo\","
-                , "    \"licenseName\": \"MIT AND GPL-2.0-or-later\","
-                , "    \"copyright\": \"Some Copyright\","
-                , "    \"source\": {"
-                , "        \"name\": \"tern\","
-                , "        \"documentConfidence\": 100"
-                , "    }"
-                , "}"
-                ]
-              expected_source = ExternalAttribution_Source "tern" 100
-              expected_coordinates = Coordinates Nothing
-                                                         Nothing
-                                                         (Just "adduser")
-                                                         (Just "3.118")
-                                                         Nothing
-              expected_ea = ExternalAttribution
-                expected_source
-                100
-                Nothing
-                Nothing
-                expected_coordinates
-                (Just "Some Copyright")
-                (Just "MIT AND GPL-2.0-or-later")
-                Nothing
-                (Just "https://github.com/some/repo")
-                mempty
-            ea <-
-              case
-                (A.eitherDecode ea_str :: Either
-                    String
-                    ExternalAttribution
-                )
-              of
-                Right ea' -> return ea'
-                Left  err -> fail err
-            ea `shouldBe` expected_ea
-
-          it "parsing of EA works, case 2" $ do
-            let
-              ea_str = B.fromStrict $ C.unlines
-                [ "{"
-                , "    \"packageName\": \"adduser\","
-                , "    \"packageVersion\": \"3.118\","
-                , "    \"url\": \"\","
-                , "    \"licenseName\": \"\","
-                , "    \"copyright\": \"Some Copyright\","
-                , "    \"source\": {"
-                , "        \"name\": \"tern\","
-                , "        \"documentConfidence\": 100"
-                , "    },"
-                , "    \"preSelected\": true"
-                , "}"
-                ]
-              expected_source = ExternalAttribution_Source "tern" 100
-              expected_coordinates = Coordinates Nothing
-                                                         Nothing
-                                                         (Just "adduser")
-                                                         (Just "3.118")
-                                                         Nothing
-              expected_ea = ExternalAttribution
-                expected_source
-                100
-                Nothing
-                Nothing
-                expected_coordinates
-                (Just "Some Copyright")
-                Nothing
-                Nothing
-                Nothing
-                justPreselectedFlags
-            ea <-
-              case
-                (A.eitherDecode ea_str :: Either
-                    String
-                    ExternalAttribution
-                )
-              of
-                Right ea' -> return ea'
-                Left  err -> fail err
-            ea `shouldBe` expected_ea
-
-          it "parsing should be successful" $ do
-            potentialError `shouldBe` Nothing
-          it "num of resources should match" $ do
-            countFiles (_resources opossum) `shouldBe` 58805
-          it "num of externalAttributions should match" $ do
-            length (_externalAttributions opossum) `shouldBe` 13798
-          it "num of resourcesToAttributions should match" $ do
-            length (_resourcesToAttributions opossum) `shouldBe` 36931
-          it "num of frequentLicenses should match" $ do
-            length (_frequentLicenses opossum) `shouldBe` 427
-
-  describe "Opossum Utils"
-    $ let source = ExternalAttribution_Source "test" 100
-          expected_coordinates version = Coordinates Nothing
-                                                             Nothing
-                                                             (Just "name")
-                                                             (Just version)
-                                                             Nothing
-          ea1 = ExternalAttribution source
-                                            100
-                                            Nothing
-                                            Nothing
-                                            (expected_coordinates "1.2")
-                                            Nothing
-                                            Nothing
-                                            Nothing
-                                            Nothing
-                                            mempty
-          ea2 = ExternalAttribution source
-                                            100
-                                            Nothing
-                                            Nothing
-                                            (expected_coordinates "1.3")
-                                            Nothing
-                                            Nothing
-                                            Nothing
-                                            Nothing
-                                            mempty
-          ea3 = ExternalAttribution source
-                                            100
-                                            Nothing
-                                            Nothing
-                                            (expected_coordinates "1.2")
-                                            Nothing
-                                            Nothing
-                                            Nothing
-                                            Nothing
-                                            justPreselectedFlags
-      in  do
-            it "mergifyEA" $ do
-              (ea1 `mergifyEA` ea1) `shouldBe` (Just ea1)
-              (ea1 `mergifyEA` ea2) `shouldBe` Nothing
-              (ea1 `mergifyEA` ea3) `shouldBe` (Just ea3)
-
+        parsedResources =
+          Resources
+            (Map.singleton
+               "root"
+               (Resources
+                  (Map.singleton
+                     "subfolder"
+                     (Resources Map.empty (Set.fromList ["file1", "file2"])))
+                  (Set.singleton "file3")))
+            Set.empty
+        serializedResources =
+          B.concat
+            [ "{"
+            , "\"root\":{"
+            , "\"subfolder\":{"
+            , "\"file1\":1,"
+            , "\"file2\":1"
+            , "},"
+            , "\"file3\":1"
+            , "}"
+            , "}"
+            ]
+        otherResources =
+          Resources
+            (Map.singleton
+               "root"
+               (Resources
+                  (Map.singleton
+                     "other"
+                     (Resources Map.empty (Set.singleton "file4")))
+                  Set.empty))
+            (Set.singleton "file5")
+        allResourcesSerialized =
+          "{\"root\":{\"other\":{\"file4\":1},\"subfolder\":{\"file1\":1,\"file2\":1},\"file3\":1},\"file5\":1}"
+     in do it "testFolderAndFileMerging" $ do
+             (fpToResources True "path/to/file") <>
+               (fpToResources False "path/other/dir") `shouldBe`
+               Resources
+                 (Map.singleton
+                    "path"
+                    (Resources
+                       (Map.fromList
+                          [ ("to", Resources Map.empty (Set.singleton "file"))
+                          , ( "other"
+                            , Resources (Map.singleton "dir" mempty) Set.empty)
+                          ])
+                       Set.empty))
+                 Set.empty
+             countFiles
+               ((fpToResources True "path/to/file") <>
+                (fpToResources False "path/other/dir")) `shouldBe`
+               1
+           it "test resourcesToPaths" $ do
+             resourcesToPaths (Resources mempty mempty) `shouldBe`
+               Set.fromList ["/"]
+             resourcesToPaths (Resources mempty (Set.singleton "file.c")) `shouldBe`
+               Set.fromList ["/", "file.c"]
+             resourcesToPaths
+               (Resources
+                  (Map.singleton
+                     "dir"
+                     (Resources mempty (Set.singleton "something.h")))
+                  (Set.singleton "file.c")) `shouldBe`
+               Set.fromList ["/", "file.c", "dir/", "dir/something.h"]
+           it "testFileListParsing" $ do
+             fpsToResources exmpResourses `shouldBe` parsedResources
+             (Set.fromList exmpResourses) `Set.isSubsetOf`
+               (resourcesToPaths parsedResources) `shouldBe`
+               True
+           it "testFileListSerialization" $ do
+             A.encode parsedResources `shouldBe` serializedResources
+           it "testFileListDeSerialization" $ do
+             A.decode serializedResources `shouldBe` (Just parsedResources)
+           it "testMergeAndFileListSerialization" $ do
+             A.encode (parsedResources <> otherResources) `shouldBe`
+               allResourcesSerialized
+  describe "Opossum Model deserialization" $
+    let result = (A.eitherDecode opossumFileBS :: Either String Opossum)
+        potentialError =
+          case result of
+            Right _ -> Nothing
+            Left err -> Just err
+        opossum =
+          case result of
+            Right opossum' -> opossum'
+            Left _ -> undefined
+     in do it "parsing of EA works, case 1" $ do
+             let ea_str =
+                   B.fromStrict $
+                   C.unlines
+                     [ "{"
+                     , "    \"packageName\": \"adduser\","
+                     , "    \"packageVersion\": \"3.118\","
+                     , "    \"url\": \"https://github.com/some/repo\","
+                     , "    \"licenseName\": \"MIT AND GPL-2.0-or-later\","
+                     , "    \"copyright\": \"Some Copyright\","
+                     , "    \"source\": {"
+                     , "        \"name\": \"tern\","
+                     , "        \"documentConfidence\": 100"
+                     , "    }"
+                     , "}"
+                     ]
+                 expected_source = ExternalAttribution_Source "tern" 100
+                 expected_coordinates =
+                   Coordinates
+                     Nothing
+                     Nothing
+                     (Just "adduser")
+                     (Just "3.118")
+                     Nothing
+                 expected_ea =
+                   ExternalAttribution
+                     expected_source
+                     100
+                     Nothing
+                     Nothing
+                     expected_coordinates
+                     (Just "Some Copyright")
+                     (Just "MIT AND GPL-2.0-or-later")
+                     Nothing
+                     (Just "https://github.com/some/repo")
+                     mempty
+             ea <-
+               case (A.eitherDecode ea_str :: Either String ExternalAttribution) of
+                 Right ea' -> return ea'
+                 Left err -> fail err
+             ea `shouldBe` expected_ea
+           it "parsing of EA works, case 2" $ do
+             let ea_str =
+                   B.fromStrict $
+                   C.unlines
+                     [ "{"
+                     , "    \"packageName\": \"adduser\","
+                     , "    \"packageVersion\": \"3.118\","
+                     , "    \"url\": \"\","
+                     , "    \"licenseName\": \"\","
+                     , "    \"copyright\": \"Some Copyright\","
+                     , "    \"source\": {"
+                     , "        \"name\": \"tern\","
+                     , "        \"documentConfidence\": 100"
+                     , "    },"
+                     , "    \"preSelected\": true"
+                     , "}"
+                     ]
+                 expected_source = ExternalAttribution_Source "tern" 100
+                 expected_coordinates =
+                   Coordinates
+                     Nothing
+                     Nothing
+                     (Just "adduser")
+                     (Just "3.118")
+                     Nothing
+                 expected_ea =
+                   ExternalAttribution
+                     expected_source
+                     100
+                     Nothing
+                     Nothing
+                     expected_coordinates
+                     (Just "Some Copyright")
+                     Nothing
+                     Nothing
+                     Nothing
+                     justPreselectedFlags
+             ea <-
+               case (A.eitherDecode ea_str :: Either String ExternalAttribution) of
+                 Right ea' -> return ea'
+                 Left err -> fail err
+             ea `shouldBe` expected_ea
+           it "parsing should be successful" $ do
+             potentialError `shouldBe` Nothing
+           it "num of resources should match" $ do
+             countFiles (_resources opossum) `shouldBe` 58805
+           it "num of externalAttributions should match" $ do
+             length (_externalAttributions opossum) `shouldBe` 13798
+           it "num of resourcesToAttributions should match" $ do
+             length (_resourcesToAttributions opossum) `shouldBe` 36931
+           it "num of frequentLicenses should match" $ do
+             length (_frequentLicenses opossum) `shouldBe` 427
+  describe "Opossum Utils" $
+    let source = ExternalAttribution_Source "test" 100
+        expected_coordinates version =
+          Coordinates Nothing Nothing (Just "name") (Just version) Nothing
+        ea1 =
+          ExternalAttribution
+            source
+            100
+            Nothing
+            Nothing
+            (expected_coordinates "1.2")
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            mempty
+        ea2 =
+          ExternalAttribution
+            source
+            100
+            Nothing
+            Nothing
+            (expected_coordinates "1.3")
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            mempty
+        ea3 =
+          ExternalAttribution
+            source
+            100
+            Nothing
+            Nothing
+            (expected_coordinates "1.2")
+            Nothing
+            Nothing
+            Nothing
+            Nothing
+            justPreselectedFlags
+     in do it "mergifyEA" $ do
+             (ea1 `mergifyEA` ea1) `shouldBe` (Just ea1)
+             (ea1 `mergifyEA` ea2) `shouldBe` Nothing
+             (ea1 `mergifyEA` ea3) `shouldBe` (Just ea3)
   describe "Opossum Utils SPDX Converter with yml" $ do
-    oposum_from_spdx_yml <-
-      runIO
-        $ case
-            (Y.decodeEither' (B.toStrict spdxYamlFileBS) :: Either
-                Y.ParseException
-                SPDXDocument
-            )
-          of
+    let oposum_from_spdx_yml =
+          case (Y.decodeEither' (B.toStrict spdxYamlFileBS) :: Either Y.ParseException SPDXDocument) of
             Right spdxFile -> spdxToOpossum spdxFile
-            Left  err      -> fail (show err)
-
+            Left err -> undefined
     it "num of resources from spdx should match" $ do
       countFiles (_resources oposum_from_spdx_yml) `shouldBe` 0
     it "num of externalAttributions from spdx should match" $ do
@@ -319,21 +311,26 @@ opossumSpec = do
       length (_resourcesToAttributions oposum_from_spdx_yml) `shouldBe` 298
     it "num of frequentLicenses should from spdx match" $ do
       length (_frequentLicenses oposum_from_spdx_yml) `shouldBe` 0
-
-    let (ExternalAttributionSources eas) = _externalAttributionSources oposum_from_spdx_yml
+    let (ExternalAttributionSources eas) =
+          _externalAttributionSources oposum_from_spdx_yml
     it "externalAttributionSources sohuld be witten" $ do
       (Map.keys eas) `shouldBe` ["SPDXPackage"]
-
   describe "Opossum Utils SPDX Converter with JSON" $ do
-    oposum_from_spdx_json <-
-      runIO
-        $ case (A.eitherDecode spdxJsonFileBS :: Either String SPDXDocument)
-          of
+    let oposum_from_spdx_json =
+          case (A.eitherDecode spdxJsonFileBS :: Either String SPDXDocument) of
             Right spdxFile -> spdxToOpossum spdxFile
-            Left  err      -> fail (show err)
+            Left err -> undefined
     it "num of resources from spdx should match" $ do
       countFiles (_resources oposum_from_spdx_json) `shouldBe` 4
-
+  describe "Opossum Utils SPDX Converter with tern JSON" $ do
+    let oposum_from_spdx_json =
+          case (A.eitherDecode spdxTernJsonFileBS :: Either String SPDXDocument) of
+            Right spdxFile -> spdxToOpossum spdxFile
+            Left err -> undefined
+    it "num of resources from spdx should match" $ do
+      writeOpossumStats oposum_from_spdx_json
+      length (_externalAttributions oposum_from_spdx_json) `shouldBe` 4
+      countFiles (_resources oposum_from_spdx_json) `shouldBe` 4
   describe "Opossum Utils ScanCode Converter" $ do
     it "should parse json file" $ do
       let decoded =
@@ -342,46 +339,49 @@ opossumSpec = do
           pomFile = head $ filter (\f -> _scfe_file f == "pom.xml") files
       (isRight decoded) `shouldBe` True
       _scfe_file pomFile `shouldBe` "pom.xml"
-      _scfe_copyrights pomFile
-        `shouldBe` ["Copyright (c) 2020 Source Auditor Inc. Gary O'Neall"]
-
+      _scfe_copyrights pomFile `shouldBe`
+        ["Copyright (c) 2020 Source Auditor Inc. Gary O'Neall"]
     opossumFromSC <- runIO $ parseScancodeBS scancodeJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromSC) `shouldBe` 105
-
-    let (ExternalAttributionSources eas) = _externalAttributionSources opossumFromSC
+    let (ExternalAttributionSources eas) =
+          _externalAttributionSources opossumFromSC
     it "externalAttributionSources sohuld be witten" $ do
       (List.sort $ Map.keys eas) `shouldBe` ["Scancode", "Scancode-Package"]
-
+  describe "Opossum Utils Scanpipe Converter" $ do
+    it "should parse json file" $ do
+      let decoded =
+            (A.eitherDecode scanpipeJsonBS :: Either String ScanpipeFile)
+          files =
+            (_spf_files . (fromRight (ScanpipeFile (Y.Null) mempty mempty)))
+              decoded
+          err =
+            case decoded of
+              Left err' -> err'
+              Right _ -> ""
+      err `shouldBe` ""
+      (isRight decoded) `shouldBe` True
+    opossumFromSC <- runIO $ parseScanpipeBS scanpipeJsonBS
+    it "should parse json to opossum" $ do
+      countFiles (_resources opossumFromSC) `shouldBe` 5050
   describe "Opossum Utils Dependency-Check Converter" $ do
-
     it "should parse json to Package" $ do
       let jsonStr = "{ \"id\": \"pkg:nuget\\/Antlr4BuildTasks@8.13\" }"
       let decoded =
             (A.eitherDecode jsonStr :: Either String DependencyCheckPackage)
       (isRight decoded) `shouldBe` True
-
     it "should parse json file" $ do
       let decoded =
-            (A.eitherDecode dependencyCheckJsonBS :: Either
-                String
-                DependencyCheckFile
-            )
+            (A.eitherDecode dependencyCheckJsonBS :: Either String DependencyCheckFile)
       (isRight decoded) `shouldBe` True
-
     opossumFromDC <- runIO $ parseDependencyCheckBS dependencyCheckJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromDC) `shouldBe` 62
-
   describe "Opossum Utils Scanoss Parser" $ do
     it "should parse json file" $ do
       let decoded =
-            (A.eitherDecode scanossJsonBS :: Either
-                String
-                (Map.Map String ScanossFindings)
-            )
+            (A.eitherDecode scanossJsonBS :: Either String (Map.Map String ScanossFindings))
       (isRight decoded) `shouldBe` True
-
     opossumFromSCA <- runIO $ parseScanossBS scanossJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromSCA) `shouldBe` 183

@@ -43,6 +43,7 @@ dependencies:
 - text
 - unordered-containers
 - uuid
+- utf8-string
 - vector
 - yaml
 - zlib

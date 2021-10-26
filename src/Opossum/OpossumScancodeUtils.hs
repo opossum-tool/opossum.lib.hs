@@ -2,7 +2,6 @@
 -- SPDX-FileCopyrightText: TNG Technology Consulting GmbH <https://www.tngtech.com>
 --
 -- SPDX-License-Identifier: BSD-3-Clause
-
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE GADTs #-}
@@ -10,51 +9,50 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
 module Opossum.OpossumScancodeUtils
   ( parseScancodeToOpossum
   , parseScancodeBS
   , ScancodeFile(..)
   , ScancodeFileEntry(..)
   , ScancodePackage(..)
+  , parseScanpipeToOpossum
+  , parseScanpipeBS
+  , ScanpipeFile(..)
   ) where
 
-import           Opossum.Opossum
-import           Opossum.OpossumUtils
-import           PURL.PURL
+import Opossum.Opossum
+import Opossum.OpossumUtils
+import PURL.PURL
 
-import qualified Control.Monad.State           as MTL
-import qualified Data.Aeson                    as A
-import qualified Data.Aeson.Encode.Pretty      as A
-import qualified Data.Aeson.Types              as A
-import qualified Data.ByteString.Lazy          as B
-import           Data.List                      ( intercalate )
-import qualified Data.List                     as List
-import qualified Data.Map                      as Map
-import           Data.Maybe                     ( fromMaybe
-                                                , isJust
-                                                , maybeToList
-                                                )
-import           Data.Monoid
-import qualified Data.Set                      as Set
-import qualified Data.Text                     as T
-import qualified Data.Vector                   as V
-import qualified Distribution.Parsec           as SPDX
-import qualified Distribution.SPDX             as SPDX
-import           SPDX.Document.Common           ( parseLicenseExpression
-                                                , parseLicenses
-                                                , renderSpdxLicense
-                                                , spdxMaybeToMaybe
-                                                )
-import qualified System.FilePath               as FP
-import           System.IO                      ( Handle
-                                                , hClose
-                                                , hPutStrLn
-                                                , stdout
-                                                )
-import qualified System.IO                     as IO
-import           System.Random                  ( randomIO )
+import qualified Control.Monad.State as MTL
+import qualified Data.Aeson as A
+import qualified Data.Aeson.Encode.Pretty as A
+import qualified Data.Aeson.Types as A
+import qualified Data.ByteString.Lazy as B
+import Data.List (intercalate)
+import qualified Data.List as List
+import qualified Data.Map as Map
+import Data.Maybe (fromMaybe, isJust, mapMaybe, maybeToList)
+import Data.Monoid
+import qualified Data.Set as Set
+import qualified Data.Text as T
+import qualified Data.UUID.V5 as UUID
+import qualified Data.Vector as V
+import qualified Distribution.Parsec as SPDX
+import qualified Distribution.SPDX as SPDX
+import SPDX.Document.Common
+  ( parseLicenseExpression
+  , parseLicenses
+  , renderSpdxLicense
+  , spdxMaybeToMaybe
+  )
+import qualified System.FilePath as FP
+import System.IO (Handle, hClose, hPutStrLn, stdout)
+import qualified System.IO as IO
+import System.Random (randomIO)
 
-import           Debug.Trace                    ( trace )
+import Debug.Trace (trace)
 
 {-
     {
@@ -138,222 +136,358 @@ import           Debug.Trace                    ( trace )
           "api_data_url": null
         }
 -}
-data ScancodePackage = ScancodePackage
-  { _scp_purl         :: Maybe PURL
-  , _scp_licenses     :: Maybe SPDX.LicenseExpression
-  , _scp_copyright    :: Maybe String
-  , _scp_dependencies :: [ScancodePackage]
-  }
+data ScancodePackage =
+  ScancodePackage
+    { _scp_purl :: Maybe PURL
+    , _scp_licenses :: Maybe SPDX.LicenseExpression
+    , _scp_copyright :: Maybe String
+    , _scp_dependencies :: [ScancodePackage]
+    }
   deriving (Eq, Show)
+
 instance A.FromJSON ScancodePackage where
-  parseJSON = A.withObject "ScancodePackage" $ \v -> do
-    purl <-
-      v
-      A..:? "purl"
-      >>=   (\case
-              Just purl -> return $ parsePURL purl
-              Nothing   -> return Nothing
-            )
-    dependencies <-
-      (     v
-      A..:? "dependencies"
-      >>=   (\case
-              Just dependencies -> mapM A.parseJSON dependencies
-              Nothing           -> return []
-            )
-      ) :: A.Parser [ScancodePackage]
-    license <-
-      v
-      A..:? "license_expression"
-      >>=   (\case
-              Just "unknown" -> return Nothing
-              Just lics ->
-                (return . spdxMaybeToMaybe . parseLicenseExpression) lics
-              Nothing -> return Nothing
-            )
-    copyright <- v A..:? "copyright"
-    return $ ScancodePackage purl license copyright dependencies
-data ScancodeFileEntry = ScancodeFileEntry
-  { _scfe_file       :: FilePath
-  , _scfe_is_file    :: Bool
-  , _scfe_license    :: Maybe SPDX.LicenseExpression
-  , _scfe_copyrights :: [String]
-  , _scfe_packages   :: [ScancodePackage]
-  }
+  parseJSON =
+    A.withObject "ScancodePackage" $ \v -> do
+      purl <-
+        v A..:? "purl" >>=
+        (\case
+           Just purl -> return $ parsePURL purl
+           Nothing -> return Nothing)
+      dependencies <-
+        (v A..:? "dependencies" >>=
+         (\case
+            Just dependencies -> mapM A.parseJSON dependencies
+            Nothing -> return [])) :: A.Parser [ScancodePackage]
+      license <-
+        v A..:? "license_expression" >>=
+        (\case
+           Just "unknown" -> return Nothing
+           Just lics ->
+             (return . spdxMaybeToMaybe . parseLicenseExpression) lics
+           Nothing -> return Nothing)
+      copyright <- v A..:? "copyright"
+      return $ ScancodePackage purl license copyright dependencies
+
+data ScancodeFileEntry =
+  ScancodeFileEntry
+    { _scfe_file :: FilePath
+    , _scfe_is_file :: Bool
+    , _scfe_license :: Maybe SPDX.LicenseExpression
+    , _scfe_copyrights :: [String]
+    , _scfe_packages :: [ScancodePackage]
+    }
   deriving (Eq, Show)
+
 instance A.FromJSON ScancodeFileEntry where
-  parseJSON = A.withObject "ScancodeFileEntry" $ \v -> do
-    path    <- v A..: "path"
-    is_file <-
-      (\case
-        ("file" :: String) -> True
-        _                  -> False
-      )
-      <$>  v
-      A..: "type"
+  parseJSON =
+    A.withObject "ScancodeFileEntry" $ \v -> do
+      path <- v A..: "path"
+      is_file <-
+        (\case
+           ("file" :: String) -> True
+           _ -> False) <$>
+        v A..: "type"
     -- sha1 <- v `getHash` "sha1"
     -- md5 <- v `getHash` "md5"
     -- sha256 <- v `getHash` "sha256"
     -- sha512 <- v `getHash` "sha512"
     -- let idFromHashes = mconcat $ sha1 ++ md5 ++ sha256 ++ sha512
-    let applyAll = appEndo . mconcat . map Endo
-    licenseTransformator <- do
-      licenseObjects    <- (v A..: "licenses" :: A.Parser [A.Object])
-      licenseNameTuples <- mapM
-        (\v' -> do
-          key     <- v' A..: "key" :: A.Parser T.Text
-          spdxkey <- v' A..:? "spdx_license_key" :: A.Parser (Maybe T.Text)
-          return (key, spdxkey)
-        )
-        licenseObjects
-      ( return
-        . (\fun -> T.unpack . fun . T.pack)
-        . applyAll
-        . map (\(k1, Just s1) -> T.replace k1 s1)
-        . List.sortBy
-            (\(k1, _) -> \(k2, _) -> (T.length k1) `compare` (T.length k2))
-        . filter (\(_, spdxkey) -> isJust spdxkey)
-        )
-        licenseNameTuples
-    license <-
-      v
-      A..:? "license_expressions"
-      >>=   ( return
-            . (\case
-                Just lics -> parseLicenses (map licenseTransformator lics)
-                Nothing   -> Nothing
-              )
-            )
-    copyrights <- do
-      listOfCopyrightObjects <-
-        (v A..:? "copyrights" :: A.Parser (Maybe A.Array))
-      case listOfCopyrightObjects of
-        Just cos ->
-          let getValueFromCopyrightObject = A.withObject "CopyrightsEntry"
-                $ \v' -> v' A..: "value" :: A.Parser String
-          in  mapM getValueFromCopyrightObject (V.toList cos)
-        Nothing -> return []
-    packages <- v A..: "packages"
-    return (ScancodeFileEntry path is_file license copyrights packages)
+      let applyAll = appEndo . mconcat . map Endo
+      licenseTransformator <-
+        do licenseObjects <- (v A..: "licenses" :: A.Parser [A.Object])
+           licenseNameTuples <-
+             mapM
+               (\v' -> do
+                  key <- v' A..: "key" :: A.Parser T.Text
+                  spdxkey <-
+                    v' A..:? "spdx_license_key" :: A.Parser (Maybe T.Text)
+                  return (key, spdxkey))
+               licenseObjects
+           (return .
+            (\fun -> T.unpack . fun . T.pack) .
+            applyAll .
+            map (\(k1, Just s1) -> T.replace k1 s1) .
+            List.sortBy
+              (\(k1, _) -> \(k2, _) -> (T.length k1) `compare` (T.length k2)) .
+            filter (\(_, spdxkey) -> isJust spdxkey))
+             licenseNameTuples
+      license <-
+        v A..:? "license_expressions" >>=
+        (return .
+         (\case
+            Just lics -> parseLicenses (map licenseTransformator lics)
+            Nothing -> Nothing))
+      copyrights <-
+        do listOfCopyrightObjects <-
+             (v A..:? "copyrights" :: A.Parser (Maybe A.Array))
+           case listOfCopyrightObjects of
+             Just cos ->
+               let getValueFromCopyrightObject =
+                     A.withObject "CopyrightsEntry" $ \v' ->
+                       v' A..: "value" :: A.Parser String
+                in mapM getValueFromCopyrightObject (V.toList cos)
+             Nothing -> return []
+      packages <-
+        (\case
+           Just ps -> ps
+           Nothing -> []) <$>
+        v A..:? "packages"
+      return (ScancodeFileEntry path is_file license copyrights packages)
 
-data ScancodeFile = ScancodeFile
-  { _scf_metadata :: A.Value
-  , _scf_files    :: [ScancodeFileEntry]
-  }
+data ScancodeFile =
+  ScancodeFile
+    { _scf_metadata :: A.Value
+    , _scf_files :: [ScancodeFileEntry]
+    }
   deriving (Eq, Show)
-instance A.FromJSON ScancodeFile where
-  parseJSON = A.withObject "ScancodeFile" $ \v -> do
-    ScancodeFile <$> v A..: "headers" <*> v A..: "files"
 
+instance A.FromJSON ScancodeFile where
+  parseJSON =
+    A.withObject "ScancodeFile" $ \v -> do
+      ScancodeFile <$> v A..: "headers" <*> v A..: "files"
+
+scancodePackageToEA :: ScancodePackage -> Maybe ExternalAttribution
+scancodePackageToEA scp@(ScancodePackage { _scp_purl = purl
+                                         , _scp_licenses = licenses
+                                         , _scp_copyright = copyright
+                                         , _scp_dependencies = dependencies
+                                         }) =
+  let source = ExternalAttribution_Source "Scancode-Package" 50
+      coordinatesFromPurl =
+        case purl of
+          Just purl -> purlToCoordinates purl
+          _ -> Coordinates Nothing Nothing Nothing Nothing Nothing
+   in Just $
+      ExternalAttribution
+        source
+        50
+        Nothing
+        Nothing
+        coordinatesFromPurl
+        (fmap T.pack copyright)
+        (fmap (T.pack . renderSpdxLicense) licenses)
+        Nothing
+        Nothing
+        justPreselectedFlags
 
 opossumFromScancodePackage :: ScancodePackage -> Maybe FilePath -> IO Opossum
-opossumFromScancodePackage (ScancodePackage { _scp_purl = purl, _scp_licenses = licenses, _scp_copyright = copyright, _scp_dependencies = dependencies }) providedPath
-  = let
-      typeFromPurl = case purl of
-        Just (PURL { _PURL_type = t }) -> "generic" `fromMaybe` (fmap show t)
-        _                              -> "generic"
-      pathFromPurl = typeFromPurl FP.</> case purl of
-        Just (PURL { _PURL_namespace = ns, _PURL_name = n, _PURL_version = v })
-          -> foldl1 (FP.</>)
-            $  (maybeToList ns)
-            ++ [(intercalate "@" $ [n] ++ (maybeToList v))]
-        _ -> "UNKNOWN"
-      path                = fromMaybe pathFromPurl providedPath
-      coordinatesFromPurl = case purl of
-        Just purl -> purlToCoordinates purl
-        _         -> Coordinates Nothing Nothing Nothing Nothing Nothing
-    in
-      do
-        uuid <- randomIO
-        let source    = ExternalAttribution_Source "Scancode-Package" 50
-        let resources = fpToResources True path
-        let ea = ExternalAttribution
-              source
-              50
-              Nothing
-              Nothing
-              coordinatesFromPurl
-              (fmap T.pack copyright)
-              (fmap (T.pack . renderSpdxLicense) licenses)
-              Nothing
-              Nothing
-              justPreselectedFlags
-        let eas = mkExternalAttributionSources source Nothing 30
-        let
-          o = mempty
-            { _resources                  = resources
-            , _externalAttributions       = Map.singleton uuid ea
-            , _resourcesToAttributions = Map.singleton ("/" FP.</> path) [uuid]
-            , _attributionBreakpoints     = case providedPath of
-              Just _  -> mempty
-              Nothing -> Set.singleton ("/" ++ typeFromPurl ++ "/")
-            , _externalAttributionSources = eas
-            }
-        os <- mapM (`opossumFromScancodePackage` Nothing) dependencies
-        return $ mconcat (o : (map (unshiftPathToOpossum path) os))
+opossumFromScancodePackage scp@(ScancodePackage { _scp_purl = purl
+                                                , _scp_dependencies = dependencies
+                                                }) providedPath =
+  let typeFromPurl =
+        case purl of
+          Just (PURL {_PURL_type = t}) -> "generic" `fromMaybe` (fmap show t)
+          _ -> "generic"
+      pathFromPurl =
+        typeFromPurl FP.</>
+        case purl of
+          Just (PURL {_PURL_namespace = ns, _PURL_name = n, _PURL_version = v}) ->
+            foldl1 (FP.</>) $
+            (maybeToList ns) ++ [(intercalate "@" $ [n] ++ (maybeToList v))]
+          _ -> "UNKNOWN"
+      path = fromMaybe pathFromPurl providedPath
+   in do uuid <- randomIO
+         let o =
+               (case scancodePackageToEA scp of
+                  Just ea ->
+                    mempty
+                      { _resources = fpToResources True path
+                      , _externalAttributions = Map.singleton uuid ea
+                      , _resourcesToAttributions =
+                          Map.singleton ("/" FP.</> path) [uuid]
+                      , _attributionBreakpoints =
+                          case providedPath of
+                            Just _ -> mempty
+                            Nothing ->
+                              Set.singleton ("/" ++ typeFromPurl ++ "/")
+                      , _externalAttributionSources =
+                          mkExternalAttributionSources (_source ea) Nothing 30
+                      }
+                  Nothing -> mempty)
+         os <- mapM (`opossumFromScancodePackage` Nothing) dependencies
+         return $ mconcat (o : (map (unshiftPathToOpossum path) os))
+
+scancodeFileEntryToEA :: ScancodeFileEntry -> Maybe ExternalAttribution
+scancodeFileEntryToEA (ScancodeFileEntry { _scfe_license = licenses
+                                         , _scfe_copyrights = copyrights
+                                         }) =
+  let source = ExternalAttribution_Source "Scancode" 50
+   in if not (null licenses) && not (null copyrights || licenses == Nothing)
+        then Just $
+             ExternalAttribution
+               source
+               50
+               Nothing
+               Nothing
+               (Coordinates Nothing Nothing Nothing Nothing Nothing)
+               ((Just . T.pack . unlines) copyrights)
+               (fmap (T.pack . renderSpdxLicense) licenses)
+               Nothing
+               Nothing
+               mempty
+        else Nothing
 
 scancodeFileEntryToOpossum :: ScancodeFileEntry -> IO Opossum
-scancodeFileEntryToOpossum (ScancodeFileEntry { _scfe_file = path, _scfe_is_file = is_file, _scfe_license = licenses, _scfe_copyrights = copyrights, _scfe_packages = packages })
-  = let
-      filesWithChildren =
-        if is_file then Set.singleton ("/" FP.</> path ++ "/") else mempty
+scancodeFileEntryToOpossum scfe@(ScancodeFileEntry { _scfe_file = path
+                                                   , _scfe_is_file = is_file
+                                                   , _scfe_license = licenses
+                                                   , _scfe_copyrights = copyrights
+                                                   , _scfe_packages = packages
+                                                   }) =
+  let filesWithChildren =
+        if is_file
+          then Set.singleton ("/" FP.</> path ++ "/")
+          else mempty
       opossumFromLicenseAndCopyright = do
         uuid <- randomIO
         let resources = fpToResources True path
-        if null copyrights && licenses == Nothing
-          then return $ mempty { _resources         = resources
-                               , _filesWithChildren = filesWithChildren
-                               }
-          else do
-            let source = ExternalAttribution_Source "Scancode" 50
-            let ea = ExternalAttribution
-                  source
-                  50
-                  Nothing
-                  Nothing
-                  (Coordinates Nothing Nothing Nothing Nothing Nothing)
-                  ((Just . T.pack . unlines) copyrights)
-                  (fmap (T.pack . renderSpdxLicense) licenses)
-                  Nothing
-                  Nothing
-                  mempty
-            let eas = mkExternalAttributionSources source Nothing 30
-            return $ mempty
-              { _resources                  = resources
-              , _externalAttributions       = Map.singleton uuid ea
-              , _resourcesToAttributions    = (Map.singleton ("/" FP.</> path)
-                                                             [uuid]
-                                              )
-              , _filesWithChildren          = filesWithChildren
-              , _externalAttributionSources = eas
-              }
-    in
-      do
-        o             <- opossumFromLicenseAndCopyright
-        oFromPackages <- case packages of
-          [] -> mempty
-          [p] -> opossumFromScancodePackage p (Just path)
-          _ -> mconcat <$> mapM (`opossumFromScancodePackage` Nothing) packages
-        return $ o <> oFromPackages
+        case scancodeFileEntryToEA scfe of
+          Just ea -> do
+            let eas = mkExternalAttributionSources (_source ea) Nothing 30
+            return $
+              mempty
+                { _resources = resources
+                , _externalAttributions = Map.singleton uuid ea
+                , _resourcesToAttributions =
+                    (Map.singleton ("/" FP.</> path) [uuid])
+                , _filesWithChildren = filesWithChildren
+                , _externalAttributionSources = eas
+                }
+          Nothing ->
+            return $
+            mempty
+              {_resources = resources, _filesWithChildren = filesWithChildren}
+   in do o <- opossumFromLicenseAndCopyright
+         oFromPackages <-
+           case packages of
+             [] -> mempty
+             [p] -> opossumFromScancodePackage p (Just path)
+             _ ->
+               mconcat <$> mapM (`opossumFromScancodePackage` Nothing) packages
+         return $ o <> oFromPackages
 
 parseScancodeBS :: B.ByteString -> IO Opossum
-parseScancodeBS bs = case (A.eitherDecode bs :: Either String ScancodeFile) of
-  Right (ScancodeFile metadata scFiles) -> fmap
-    (mempty { _metadata = Map.singleton "ScanCode" metadata } <>)
-    (mconcat $ map scancodeFileEntryToOpossum scFiles)
-  Left err -> do
-    hPutStrLn IO.stderr err
-    undefined -- TODO
+parseScancodeBS bs =
+  case (A.eitherDecode bs :: Either String ScancodeFile) of
+    Right (ScancodeFile metadata scFiles) ->
+      fmap
+        (mempty {_metadata = Map.singleton "ScanCode" metadata} <>)
+        (mconcat $ map scancodeFileEntryToOpossum scFiles)
+    Left err -> do
+      hPutStrLn IO.stderr err
+      undefined -- TODO
 
 parseScancodeToOpossum :: FilePath -> IO Opossum
 parseScancodeToOpossum inputPath = do
   hPutStrLn IO.stderr ("parse: " ++ inputPath)
-  let baseOpossum = mempty
-        { _metadata = Map.fromList
-                        [ ("projectId"       , A.toJSON ("0" :: String))
-                        , ("projectTitle"    , A.toJSON inputPath)
-                        , ("fileCreationDate", A.toJSON ("" :: String))
-                        ]
-        }
+  let baseOpossum =
+        mempty
+          { _metadata =
+              Map.fromList
+                [ ("projectId", A.toJSON ("0" :: String))
+                , ("projectTitle", A.toJSON inputPath)
+                , ("fileCreationDate", A.toJSON ("" :: String))
+                ]
+          }
   opossum <- B.readFile inputPath >>= parseScancodeBS
+  return (normaliseOpossum (baseOpossum <> opossum))
+
+data ScanpipeFileEntry =
+  ScanpipeFileEntry
+    { _spfe :: ScancodeFileEntry
+    , _spfe_forPackages :: [String]
+    , _spfe_status :: String
+    }
+  deriving (Eq, Show)
+
+instance A.FromJSON ScanpipeFileEntry where
+  parseJSON =
+    A.withObject "ScanpipeFileEntry" $ \v ->
+      ScanpipeFileEntry <$> (A.parseJSON (A.Object v)) <*> v A..: "for_packages" <*>
+      v A..: "status"
+
+data ScanpipePackage =
+  ScanpipePackage
+    { _spp :: ScancodePackage
+    , _spp_key :: String
+    }
+  deriving (Eq, Show)
+
+instance A.FromJSON ScanpipePackage where
+  parseJSON =
+    A.withObject "ScanpipePackage" $ \v -> do
+      ScanpipePackage <$> (A.parseJSON (A.Object v)) <*> v A..: "purl"
+
+data ScanpipeFile =
+  ScanpipeFile
+    { _spf_metadata :: A.Value
+    , _spf_packages :: [ScanpipePackage]
+    , _spf_files :: [ScanpipeFileEntry]
+    }
+  deriving (Eq, Show)
+
+instance A.FromJSON ScanpipeFile where
+  parseJSON =
+    A.withObject "ScanpipeFile" $ \v -> do
+      ScanpipeFile <$> v A..: "headers" <*> v A..: "packages" <*> v A..: "files"
+
+convertSPFToOpossum :: ScanpipeFile -> Opossum
+convertSPFToOpossum spf@(ScanpipeFile _ spPackages spFiles) =
+  let resources = fpsToResources $ map (_scfe_file . _spfe) spFiles
+      eas1 =
+        (Map.fromList .
+         mapMaybe
+           (\(ScanpipePackage scp key) ->
+              case scancodePackageToEA scp of
+                Just ea -> Just (uuidFromString key, ea)
+                Nothing -> Nothing))
+          spPackages
+      eas2 =
+        (Map.fromList .
+         mapMaybe
+           (\(ScanpipeFileEntry scfe _ _) ->
+              case scancodeFileEntryToEA scfe of
+                Just ea ->
+                  Just (uuidFromString (_scfe_file scfe ++ "scanpipefile"), ea)
+                Nothing -> Nothing))
+          spFiles
+      rtas =
+        Map.fromList $
+        map
+          (\(ScanpipeFileEntry (ScancodeFileEntry {_scfe_file = file}) ps _) ->
+             ( file
+             , (uuidFromString (file ++ "scanpipefile")) :
+               (map uuidFromString ps)))
+          spFiles
+   in mempty
+        { _resources = resources
+        , _externalAttributions = eas1 <> eas2
+        , _resourcesToAttributions = rtas
+            --  , _externalAttributionSources = undefined
+        }
+
+parseScanpipeBS :: B.ByteString -> IO Opossum
+parseScanpipeBS bs =
+  case (A.eitherDecode bs :: Either String ScanpipeFile) of
+    Right spf@(ScanpipeFile metadata sppackages spFiles) ->
+      return
+        ((mempty {_metadata = Map.singleton "Scanpipe" metadata} <>)
+           (convertSPFToOpossum spf))
+    Left err -> do
+      hPutStrLn IO.stderr err
+      undefined -- TODO
+
+parseScanpipeToOpossum :: FilePath -> IO Opossum
+parseScanpipeToOpossum inputPath = do
+  hPutStrLn IO.stderr ("parse: " ++ inputPath)
+  let baseOpossum =
+        mempty
+          { _metadata =
+              Map.fromList
+                [ ("projectId", A.toJSON ("0" :: String))
+                , ("projectTitle", A.toJSON inputPath)
+                , ("fileCreationDate", A.toJSON ("" :: String))
+                ]
+          }
+  opossum <- B.readFile inputPath >>= parseScanpipeBS
   return (normaliseOpossum (baseOpossum <> opossum))

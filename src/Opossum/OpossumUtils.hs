@@ -18,10 +18,13 @@ module Opossum.OpossumUtils
   , opossumFromFileTree
   , unshiftPathToResources
   , unshiftPathToOpossum
+  , uuidFromString
+  , uuidFromString'
   ) where
 
 import           Opossum.Opossum
 
+import qualified Codec.Binary.UTF8.String      as UTF8
 import qualified Codec.Compression.GZip        as GZip
 import qualified Data.Aeson                    as A
 import qualified Data.Aeson.Encode.Pretty      as A
@@ -33,6 +36,8 @@ import qualified Data.Set                      as Set
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import           Data.UUID                      ( UUID )
+import qualified Data.UUID                     as UUID
+import qualified Data.UUID.V5                  as UUID
 import qualified Data.Vector                   as V
 import           System.Directory               ( withCurrentDirectory )
 import           System.Directory.Extra         ( listFilesRecursive )
@@ -48,6 +53,12 @@ import           System.Random                  ( randomIO )
 import           Text.Regex                     ( mkRegex
                                                 , subRegex
                                                 )
+
+uuidFromString :: String -> UUID.UUID
+uuidFromString = UUID.generateNamed UUID.nil . UTF8.encode
+
+uuidFromString' :: Show a => a -> UUID.UUID
+uuidFromString' = uuidFromString . show
 
 mergifyCopyright :: Maybe Text -> Maybe Text -> Maybe Text
 mergifyCopyright left    Nothing = left
@@ -158,16 +169,25 @@ unDot (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas, _file
 
 normaliseOpossum :: Opossum -> Opossum
 normaliseOpossum opossum = case unDot opossum of
-  opossum'@Opossum { _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _baseUrlsForSources = bufss }
-    -> let normaliseId :: FilePath -> FilePath
-           normaliseId fp = FP.normalise
-             $ if isPathAFileInResources fp rs then fp else fp ++ "/"
-       in  opossum'
-             { _resourcesToAttributions = Map.mapKeysWith (++) normaliseId rtas
-             , _attributionBreakpoints  = Set.map normaliseId abs
-             , _filesWithChildren       = Set.map normaliseId fwcs
-             , _baseUrlsForSources      = Map.mapKeys normaliseId bufss
-             }
+  opossum'@Opossum { _resources = rs, _resourcesToAttributions = rtas, _attributionBreakpoints = abs, _filesWithChildren = fwcs, _baseUrlsForSources = bufss, _externalAttributions = eas }
+    -> let
+         normaliseId :: FilePath -> FilePath
+         normaliseId fp =
+           FP.normalise . ('/' :) $ if isPathAFileInResources fp rs
+             then fp
+             else fp ++ "/"
+         eaKeys = Map.keys eas
+       in
+         opossum'
+           { _resourcesToAttributions = ( Map.filter (/= [])
+                                        . Map.map (filter (`elem` eaKeys))
+                                        . Map.mapKeysWith (++) normaliseId
+                                        )
+                                          rtas
+           , _attributionBreakpoints  = Set.map normaliseId abs
+           , _filesWithChildren       = Set.map normaliseId fwcs
+           , _baseUrlsForSources      = Map.mapKeys normaliseId bufss
+           }
 
 dropDir :: FilePath -> Opossum -> Opossum
 dropDir directoryName (opossum@Opossum { _resources = rs, _resourcesToAttributions = rtas })
