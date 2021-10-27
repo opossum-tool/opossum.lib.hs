@@ -2,13 +2,14 @@
 -- SPDX-FileCopyrightText: TNG Technology Consulting GmbH <https://www.tngtech.com>
 --
 -- SPDX-License-Identifier: BSD-3-Clause
+{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE LambdaCase                #-}
+{-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE TupleSections             #-}
+{-# LANGUAGE TypeFamilies              #-}
 
 module Opossum.OpossumScancodeUtils
   ( parseScancodeToOpossum
@@ -21,38 +22,35 @@ module Opossum.OpossumScancodeUtils
   , ScanpipeFile(..)
   ) where
 
-import Opossum.Opossum
-import Opossum.OpossumUtils
-import PURL.PURL
+import           Opossum.Opossum
+import           Opossum.OpossumUtils
+import           PURL.PURL
 
-import qualified Control.Monad.State as MTL
-import qualified Data.Aeson as A
+import qualified Control.Monad.State      as MTL
+import qualified Data.Aeson               as A
 import qualified Data.Aeson.Encode.Pretty as A
-import qualified Data.Aeson.Types as A
-import qualified Data.ByteString.Lazy as B
-import Data.List (intercalate)
-import qualified Data.List as List
-import qualified Data.Map as Map
-import Data.Maybe (fromMaybe, isJust, mapMaybe, maybeToList)
-import Data.Monoid
-import qualified Data.Set as Set
-import qualified Data.Text as T
-import qualified Data.UUID.V5 as UUID
-import qualified Data.Vector as V
-import qualified Distribution.Parsec as SPDX
-import qualified Distribution.SPDX as SPDX
-import SPDX.Document.Common
-  ( parseLicenseExpression
-  , parseLicenses
-  , renderSpdxLicense
-  , spdxMaybeToMaybe
-  )
-import qualified System.FilePath as FP
-import System.IO (Handle, hClose, hPutStrLn, stdout)
-import qualified System.IO as IO
-import System.Random (randomIO)
-
-import Debug.Trace (trace)
+import qualified Data.Aeson.Types         as A
+import qualified Data.ByteString.Lazy     as B
+import           Data.List                (intercalate)
+import qualified Data.List                as List
+import qualified Data.Map                 as Map
+import           Data.Maybe               (fromMaybe, isJust, mapMaybe,
+                                           maybeToList)
+import           Data.Monoid
+import qualified Data.Set                 as Set
+import qualified Data.Text                as T
+import qualified Data.UUID.V5             as UUID
+import qualified Data.Vector              as V
+import qualified Distribution.Parsec      as SPDX
+import qualified Distribution.SPDX        as SPDX
+import           SPDX.Document.Common     (parseLicenseExpression,
+                                           parseLicenses, renderSpdxLicense,
+                                           spdxMaybeToMaybe)
+import qualified System.FilePath          as FP
+import           System.IO                (Handle, hClose, hPutStrLn, stdout)
+import qualified System.IO                as IO
+import           System.Random            (randomIO)
+import           Text.Printf              (printf)
 
 {-
     {
@@ -138,9 +136,9 @@ import Debug.Trace (trace)
 -}
 data ScancodePackage =
   ScancodePackage
-    { _scp_purl :: Maybe PURL
-    , _scp_licenses :: Maybe SPDX.LicenseExpression
-    , _scp_copyright :: Maybe String
+    { _scp_purl         :: Maybe PURL
+    , _scp_licenses     :: Maybe SPDX.LicenseExpression
+    , _scp_copyright    :: Maybe String
     , _scp_dependencies :: [ScancodePackage]
     }
   deriving (Eq, Show)
@@ -152,12 +150,12 @@ instance A.FromJSON ScancodePackage where
         v A..:? "purl" >>=
         (\case
            Just purl -> return $ parsePURL purl
-           Nothing -> return Nothing)
+           Nothing   -> return Nothing)
       dependencies <-
         (v A..:? "dependencies" >>=
          (\case
             Just dependencies -> mapM A.parseJSON dependencies
-            Nothing -> return [])) :: A.Parser [ScancodePackage]
+            Nothing           -> return [])) :: A.Parser [ScancodePackage]
       license <-
         v A..:? "license_expression" >>=
         (\case
@@ -170,11 +168,11 @@ instance A.FromJSON ScancodePackage where
 
 data ScancodeFileEntry =
   ScancodeFileEntry
-    { _scfe_file :: FilePath
-    , _scfe_is_file :: Bool
-    , _scfe_license :: Maybe SPDX.LicenseExpression
+    { _scfe_file       :: FilePath
+    , _scfe_is_file    :: Bool
+    , _scfe_license    :: Maybe SPDX.LicenseExpression
     , _scfe_copyrights :: [String]
-    , _scfe_packages :: [ScancodePackage]
+    , _scfe_packages   :: [ScancodePackage]
     }
   deriving (Eq, Show)
 
@@ -185,7 +183,7 @@ instance A.FromJSON ScancodeFileEntry where
       is_file <-
         (\case
            ("file" :: String) -> True
-           _ -> False) <$>
+           _                  -> False) <$>
         v A..: "type"
     -- sha1 <- v `getHash` "sha1"
     -- md5 <- v `getHash` "md5"
@@ -216,7 +214,7 @@ instance A.FromJSON ScancodeFileEntry where
         (return .
          (\case
             Just lics -> parseLicenses (map licenseTransformator lics)
-            Nothing -> Nothing))
+            Nothing   -> Nothing))
       copyrights <-
         do listOfCopyrightObjects <-
              (v A..:? "copyrights" :: A.Parser (Maybe A.Array))
@@ -237,7 +235,7 @@ instance A.FromJSON ScancodeFileEntry where
 data ScancodeFile =
   ScancodeFile
     { _scf_metadata :: A.Value
-    , _scf_files :: [ScancodeFileEntry]
+    , _scf_files    :: [ScancodeFileEntry]
     }
   deriving (Eq, Show)
 
@@ -256,7 +254,7 @@ scancodePackageToEA scp@(ScancodePackage { _scp_purl = purl
       coordinatesFromPurl =
         case purl of
           Just purl -> purlToCoordinates purl
-          _ -> Coordinates Nothing Nothing Nothing Nothing Nothing
+          _         -> Coordinates Nothing Nothing Nothing Nothing Nothing
    in Just $
       ExternalAttribution
         source
@@ -277,7 +275,7 @@ opossumFromScancodePackage scp@(ScancodePackage { _scp_purl = purl
   let typeFromPurl =
         case purl of
           Just (PURL {_PURL_type = t}) -> "generic" `fromMaybe` (fmap show t)
-          _ -> "generic"
+          _                            -> "generic"
       pathFromPurl =
         typeFromPurl FP.</>
         case purl of
@@ -392,11 +390,29 @@ parseScancodeToOpossum inputPath = do
   opossum <- B.readFile inputPath >>= parseScancodeBS
   return (normaliseOpossum (baseOpossum <> opossum))
 
+data ScanpipeLayer =
+  ScanpipeLayer
+    { _spl_sha256             :: String
+    , _spl_layer_id           :: String
+    , _spl_created_by         :: String
+    , _spl_archive_location   :: FilePath
+    , _spl_extracted_location :: FilePath
+    }
+  deriving (Eq, Show)
+
+instance A.FromJSON ScanpipeLayer where
+  parseJSON =
+    A.withObject "ScanpipeLayer" $ \v -> do
+      ScanpipeLayer <$> v A..: "sha256" <*> v A..: "layer_id" <*>
+        v A..: "created_by" <*>
+        v A..: "archive_location" <*>
+        v A..: "extracted_location"
+
 data ScanpipeFileEntry =
   ScanpipeFileEntry
-    { _spfe :: ScancodeFileEntry
+    { _spfe             :: ScancodeFileEntry
     , _spfe_forPackages :: [String]
-    , _spfe_status :: String
+    , _spfe_status      :: String
     }
   deriving (Eq, Show)
 
@@ -408,7 +424,7 @@ instance A.FromJSON ScanpipeFileEntry where
 
 data ScanpipePackage =
   ScanpipePackage
-    { _spp :: ScancodePackage
+    { _spp     :: ScancodePackage
     , _spp_key :: String
     }
   deriving (Eq, Show)
@@ -421,25 +437,73 @@ instance A.FromJSON ScanpipePackage where
 data ScanpipeFile =
   ScanpipeFile
     { _spf_metadata :: A.Value
+    , _spf_layers   :: [ScanpipeLayer]
     , _spf_packages :: [ScanpipePackage]
-    , _spf_files :: [ScanpipeFileEntry]
+    , _spf_files    :: [ScanpipeFileEntry]
     }
   deriving (Eq, Show)
 
 instance A.FromJSON ScanpipeFile where
   parseJSON =
     A.withObject "ScanpipeFile" $ \v -> do
-      ScanpipeFile <$> v A..: "headers" <*> v A..: "packages" <*> v A..: "files"
+      let layersParser =
+            v A..: "headers" >>=
+            (\case
+               header:_ ->
+                 header A..: "extra_data" >>= (A..: "images") >>=
+                 (\case
+                    image:_ -> image A..: "layers"
+                    _       -> return [])
+               _ -> return [])
+      ScanpipeFile <$> v A..: "headers" <*> layersParser <*> v A..: "packages" <*>
+        v A..: "files"
+
+layerPathReworkFun :: [ScanpipeLayer] -> FilePath -> FilePath
+layerPathReworkFun layers =
+  let tuples :: [(FilePath, FilePath)]
+      tuples =
+        (zipWith (\i -> (, printf "Layer_%03d" (i :: Int))) [1 ..] .
+         map _spl_extracted_location)
+          layers
+      layerPathReworkFun' :: [(FilePath, FilePath)] -> FilePath -> FilePath
+      layerPathReworkFun' [] input = input
+      layerPathReworkFun' ((el, rp):oTuples) input =
+        case List.stripPrefix el input of
+          Just stripped -> rp ++ stripped
+          Nothing       -> layerPathReworkFun' oTuples input
+   in layerPathReworkFun' tuples
+
+scanpipeLayerToEA :: ScanpipeLayer -> ExternalAttribution
+scanpipeLayerToEA (ScanpipeLayer {_spl_created_by = cmd}) =
+  let source = ExternalAttribution_Source "Scanpipe-Layer" 0
+   in ExternalAttribution
+        source
+        50
+        (Just (T.pack cmd))
+        Nothing
+        (Coordinates Nothing Nothing Nothing Nothing Nothing)
+        Nothing
+        Nothing
+        Nothing
+        Nothing
+        justExcludeFromNoticeFlags
 
 convertSPFToOpossum :: ScanpipeFile -> Opossum
-convertSPFToOpossum spf@(ScanpipeFile _ spPackages spFiles) =
-  let resources = fpsToResources $ map (_scfe_file . _spfe) spFiles
+convertSPFToOpossum spf@(ScanpipeFile _ spLayers spPackages spFiles) =
+  let reworkPath = layerPathReworkFun spLayers
+      eas0 =
+        (Map.fromList .
+         map
+           (\spl@ScanpipeLayer {_spl_layer_id = layer_id} ->
+              (uuidFromString layer_id, scanpipeLayerToEA spl)))
+          spLayers
       eas1 =
         (Map.fromList .
          mapMaybe
            (\(ScanpipePackage scp key) ->
               case scancodePackageToEA scp of
-                Just ea -> Just (uuidFromString key, ea)
+                Just ea ->
+                  Just (uuidFromString key, ea {_flags = justPreselectedFlags})
                 Nothing -> Nothing))
           spPackages
       eas2 =
@@ -452,16 +516,25 @@ convertSPFToOpossum spf@(ScanpipeFile _ spPackages spFiles) =
                 Nothing -> Nothing))
           spFiles
       rtas =
-        Map.fromList $
-        map
-          (\(ScanpipeFileEntry (ScancodeFileEntry {_scfe_file = file}) ps _) ->
-             ( file
-             , (uuidFromString (file ++ "scanpipefile")) :
-               (map uuidFromString ps)))
-          spFiles
+        Map.fromListWith (++) . concat $
+        [ map
+            (\(ScanpipeFileEntry (ScancodeFileEntry {_scfe_file = file}) ps _) ->
+               ( reworkPath file
+               , (uuidFromString (file ++ "scanpipefile")) :
+                 (map uuidFromString ps)))
+            spFiles
+        , map
+            (\(ScanpipeLayer { _spl_layer_id = layer_id
+                             , _spl_extracted_location = file
+                             }) -> (reworkPath file, [uuidFromString layer_id]))
+            spLayers
+        ]
+      resources =
+        fpsToResources $
+        concat [map (reworkPath . _scfe_file . _spfe) spFiles, Map.keys rtas]
    in mempty
         { _resources = resources
-        , _externalAttributions = eas1 <> eas2
+        , _externalAttributions = eas0 <> eas1 <> eas2
         , _resourcesToAttributions = rtas
             --  , _externalAttributionSources = undefined
         }
@@ -469,7 +542,7 @@ convertSPFToOpossum spf@(ScanpipeFile _ spPackages spFiles) =
 parseScanpipeBS :: B.ByteString -> IO Opossum
 parseScanpipeBS bs =
   case (A.eitherDecode bs :: Either String ScanpipeFile) of
-    Right spf@(ScanpipeFile metadata sppackages spFiles) ->
+    Right spf@(ScanpipeFile metadata _ _ _) ->
       return
         ((mempty {_metadata = Map.singleton "Scanpipe" metadata} <>)
            (convertSPFToOpossum spf))

@@ -2,36 +2,36 @@
 -- SPDX-FileCopyrightText: TNG Technology Consulting GmbH <https://www.tngtech.com>
 --
 -- SPDX-License-Identifier: BSD-3-Clause
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
-import Control.Exception (evaluate)
-import qualified Data.Aeson as A
-import qualified Data.Aeson.Encode.Pretty as A
-import qualified Data.ByteString.Char8 as C
-import qualified Data.ByteString.Lazy as B
-import Data.Either
-import Data.FileEmbed (embedFile)
-import qualified Data.List as List
-import qualified Data.Map as Map
-import qualified Data.Set as Set
-import qualified Data.Vector as V
-import qualified Data.Yaml as Y
-import System.Exit
-import System.FilePath ((</>))
-import Test.Hspec
-import Test.QuickCheck
+import           Control.Exception                   (evaluate)
+import qualified Data.Aeson                          as A
+import qualified Data.Aeson.Encode.Pretty            as A
+import qualified Data.ByteString.Char8               as C
+import qualified Data.ByteString.Lazy                as B
+import           Data.Either
+import           Data.FileEmbed                      (embedFile)
+import qualified Data.List                           as List
+import qualified Data.Map                            as Map
+import qualified Data.Set                            as Set
+import qualified Data.Vector                         as V
+import qualified Data.Yaml                           as Y
+import           System.Exit
+import           System.FilePath                     ((</>))
+import           Test.Hspec
+import           Test.QuickCheck
 
-import SPDX.Document
+import           SPDX.Document
 
-import Opossum.Opossum
-import Opossum.OpossumDependencyCheckUtils
-import Opossum.OpossumSPDXUtils
-import Opossum.OpossumScancodeUtils
-import Opossum.OpossumScanossUtils
-import Opossum.OpossumUtils
+import           Opossum.Opossum
+import           Opossum.OpossumDependencyCheckUtils
+import           Opossum.OpossumSPDXUtils
+import           Opossum.OpossumScancodeUtils
+import           Opossum.OpossumScanossUtils
+import           Opossum.OpossumUtils
 
 opossumFileBS :: B.ByteString
 opossumFileBS =
@@ -54,8 +54,7 @@ scancodeJsonBS = B.fromStrict $(embedFile "test/data/tools-java.scancode.json")
 scanpipeJsonBS :: B.ByteString
 scanpipeJsonBS =
   B.fromStrict
-    $(embedFile
-        "test/data/docker __osadl_debian-docker-base-image buster-amd64-211011.json")
+    $(embedFile "test/data/docker __tomcat 10.0.6-jdk11-openjdk-buster v3.json")
 
 dependencyCheckJsonBS :: B.ByteString
 dependencyCheckJsonBS =
@@ -155,12 +154,12 @@ opossumSpec = do
     let result = (A.eitherDecode opossumFileBS :: Either String Opossum)
         potentialError =
           case result of
-            Right _ -> Nothing
+            Right _  -> Nothing
             Left err -> Just err
         opossum =
           case result of
             Right opossum' -> opossum'
-            Left _ -> undefined
+            Left _         -> undefined
      in do it "parsing of EA works, case 1" $ do
              let ea_str =
                    B.fromStrict $
@@ -200,7 +199,7 @@ opossumSpec = do
              ea <-
                case (A.eitherDecode ea_str :: Either String ExternalAttribution) of
                  Right ea' -> return ea'
-                 Left err -> fail err
+                 Left err  -> fail err
              ea `shouldBe` expected_ea
            it "parsing of EA works, case 2" $ do
              let ea_str =
@@ -242,7 +241,7 @@ opossumSpec = do
              ea <-
                case (A.eitherDecode ea_str :: Either String ExternalAttribution) of
                  Right ea' -> return ea'
-                 Left err -> fail err
+                 Left err  -> fail err
              ea `shouldBe` expected_ea
            it "parsing should be successful" $ do
              potentialError `shouldBe` Nothing
@@ -302,13 +301,13 @@ opossumSpec = do
     let oposum_from_spdx_yml =
           case (Y.decodeEither' (B.toStrict spdxYamlFileBS) :: Either Y.ParseException SPDXDocument) of
             Right spdxFile -> spdxToOpossum spdxFile
-            Left err -> undefined
+            Left err       -> undefined
     it "num of resources from spdx should match" $ do
       countFiles (_resources oposum_from_spdx_yml) `shouldBe` 0
     it "num of externalAttributions from spdx should match" $ do
-      length (_externalAttributions oposum_from_spdx_yml) `shouldBe` 352
+      length (_externalAttributions oposum_from_spdx_yml) `shouldBe` 1054
     it "num of resourcesToAttributions from spdx should match" $ do
-      length (_resourcesToAttributions oposum_from_spdx_yml) `shouldBe` 298
+      length (_resourcesToAttributions oposum_from_spdx_yml) `shouldBe` 595
     it "num of frequentLicenses should from spdx match" $ do
       length (_frequentLicenses oposum_from_spdx_yml) `shouldBe` 0
     let (ExternalAttributionSources eas) =
@@ -319,18 +318,18 @@ opossumSpec = do
     let oposum_from_spdx_json =
           case (A.eitherDecode spdxJsonFileBS :: Either String SPDXDocument) of
             Right spdxFile -> spdxToOpossum spdxFile
-            Left err -> undefined
+            Left err       -> undefined
     it "num of resources from spdx should match" $ do
-      countFiles (_resources oposum_from_spdx_json) `shouldBe` 4
+      countFiles (_resources oposum_from_spdx_json) `shouldBe` 3
   describe "Opossum Utils SPDX Converter with tern JSON" $ do
     let oposum_from_spdx_json =
           case (A.eitherDecode spdxTernJsonFileBS :: Either String SPDXDocument) of
             Right spdxFile -> spdxToOpossum spdxFile
-            Left err -> undefined
+            Left err       -> undefined
     it "num of resources from spdx should match" $ do
       writeOpossumStats oposum_from_spdx_json
-      length (_externalAttributions oposum_from_spdx_json) `shouldBe` 4
-      countFiles (_resources oposum_from_spdx_json) `shouldBe` 4
+      length (_externalAttributions oposum_from_spdx_json) `shouldBe` 120
+      countFiles (_resources oposum_from_spdx_json) `shouldBe` 0
   describe "Opossum Utils ScanCode Converter" $ do
     it "should parse json file" $ do
       let decoded =
@@ -349,21 +348,20 @@ opossumSpec = do
     it "externalAttributionSources sohuld be witten" $ do
       (List.sort $ Map.keys eas) `shouldBe` ["Scancode", "Scancode-Package"]
   describe "Opossum Utils Scanpipe Converter" $ do
+    let decoded = (A.eitherDecode scanpipeJsonBS :: Either String ScanpipeFile)
+        files = (_spf_files . fromRight undefined) decoded
+        layers = (_spf_layers . fromRight undefined) decoded
+        err =
+          case decoded of
+            Left err' -> err'
+            Right _   -> ""
     it "should parse json file" $ do
-      let decoded =
-            (A.eitherDecode scanpipeJsonBS :: Either String ScanpipeFile)
-          files =
-            (_spf_files . (fromRight (ScanpipeFile (Y.Null) mempty mempty)))
-              decoded
-          err =
-            case decoded of
-              Left err' -> err'
-              Right _ -> ""
       err `shouldBe` ""
-      (isRight decoded) `shouldBe` True
+      isRight decoded `shouldBe` True
+    it "should contain layer information" $ do length layers `shouldBe` 10
     opossumFromSC <- runIO $ parseScanpipeBS scanpipeJsonBS
     it "should parse json to opossum" $ do
-      countFiles (_resources opossumFromSC) `shouldBe` 5050
+      countFiles (_resources opossumFromSC) `shouldBe` 12690
   describe "Opossum Utils Dependency-Check Converter" $ do
     it "should parse json to Package" $ do
       let jsonStr = "{ \"id\": \"pkg:nuget\\/Antlr4BuildTasks@8.13\" }"
