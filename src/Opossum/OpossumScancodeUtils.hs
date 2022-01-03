@@ -38,14 +38,13 @@ import           Data.Maybe               (fromMaybe, isJust, mapMaybe,
                                            maybeToList)
 import           Data.Monoid
 import qualified Data.Set                 as Set
+import           Data.String              (fromString)
 import qualified Data.Text                as T
 import qualified Data.UUID.V5             as UUID
 import qualified Data.Vector              as V
 import qualified Distribution.Parsec      as SPDX
 import qualified Distribution.SPDX        as SPDX
-import           SPDX.Document.Common     (parseLicenseExpression,
-                                           parseLicenses, renderSpdxLicense,
-                                           spdxMaybeToMaybe)
+import           SPDX.Document            as SPDX
 import qualified System.FilePath          as FP
 import           System.IO                (Handle, hClose, hPutStrLn, stdout)
 import qualified System.IO                as IO
@@ -137,7 +136,7 @@ import           Text.Printf              (printf)
 data ScancodePackage =
   ScancodePackage
     { _scp_purl         :: Maybe PURL
-    , _scp_licenses     :: Maybe SPDX.LicenseExpression
+    , _scp_licenses     :: SPDX.MaybeLicenseExpression
     , _scp_copyright    :: Maybe String
     , _scp_dependencies :: [ScancodePackage]
     }
@@ -156,13 +155,7 @@ instance A.FromJSON ScancodePackage where
          (\case
             Just dependencies -> mapM A.parseJSON dependencies
             Nothing           -> return [])) :: A.Parser [ScancodePackage]
-      license <-
-        v A..:? "license_expression" >>=
-        (\case
-           Just "unknown" -> return Nothing
-           Just lics ->
-             (return . spdxMaybeToMaybe . parseLicenseExpression) lics
-           Nothing -> return Nothing)
+      license <- fmap (fromMaybe mempty) $ v A..:? "license_expression"
       copyright <- v A..:? "copyright"
       return $ ScancodePackage purl license copyright dependencies
 
@@ -170,7 +163,7 @@ data ScancodeFileEntry =
   ScancodeFileEntry
     { _scfe_file       :: FilePath
     , _scfe_is_file    :: Bool
-    , _scfe_license    :: Maybe SPDX.LicenseExpression
+    , _scfe_license    :: SPDX.MaybeLicenseExpression
     , _scfe_copyrights :: [String]
     , _scfe_packages   :: [ScancodePackage]
     }
@@ -213,8 +206,8 @@ instance A.FromJSON ScancodeFileEntry where
         v A..:? "license_expressions" >>=
         (return .
          (\case
-            Just lics -> parseLicenses (map licenseTransformator lics)
-            Nothing   -> Nothing))
+            Just lics -> mconcat (map (fromString . licenseTransformator) lics)
+            Nothing   -> SPDX.MLicExp SPDX.NOASSERTION))
       copyrights <-
         do listOfCopyrightObjects <-
              (v A..:? "copyrights" :: A.Parser (Maybe A.Array))
@@ -263,7 +256,8 @@ scancodePackageToEA scp@(ScancodePackage { _scp_purl = purl
         Nothing
         coordinatesFromPurl
         (fmap T.pack copyright)
-        (fmap (T.pack . renderSpdxLicense) licenses)
+        ((fmap (T.pack . show) . SPDX.spdxMaybeToMaybe . SPDX.unMLicExp)
+           licenses)
         Nothing
         Nothing
         justPreselectedFlags
@@ -310,7 +304,8 @@ scancodeFileEntryToEA (ScancodeFileEntry { _scfe_license = licenses
                                          , _scfe_copyrights = copyrights
                                          }) =
   let source = ExternalAttribution_Source "Scancode" 50
-   in if not (null licenses) && not (null copyrights || licenses == Nothing)
+      licenses' = (SPDX.spdxMaybeToMaybe . SPDX.unMLicExp) licenses
+   in if not (null licenses') && not (null copyrights || licenses' == Nothing)
         then Just $
              ExternalAttribution
                source
@@ -319,7 +314,7 @@ scancodeFileEntryToEA (ScancodeFileEntry { _scfe_license = licenses
                Nothing
                (Coordinates Nothing Nothing Nothing Nothing Nothing)
                ((Just . T.pack . unlines) copyrights)
-               (fmap (T.pack . renderSpdxLicense) licenses)
+               (fmap (T.pack . show) licenses')
                Nothing
                Nothing
                mempty
