@@ -225,7 +225,7 @@ instance A.FromJSON ScanossFinding where
         v A..:? "latest" <*>
         v A..:? "url" <*>
         v A..:? "file_url" <*>
-        v A..: "dependencies" <*>
+        (fmap (Maybe.fromMaybe []) $ v A..:? "dependencies") <*>
         v A..: "licenses" <*>
         v A..: "copyrights" <*>
         return comment
