@@ -336,10 +336,18 @@ opossumSpec = do
             (A.eitherDecode scancodeJsonBS :: Either String ScancodeFile)
           files = (_scf_files . (fromRight (ScancodeFile (Y.Null) []))) decoded
           pomFile = head $ filter (\f -> _scfe_file f == "pom.xml") files
+          mslFile =
+            head $
+            filter
+              (\f ->
+                 _scfe_file f ==
+                 "src/main/java/org/spdx/tools/MatchingStandardLicenses.java")
+              files
       (isRight decoded) `shouldBe` True
       _scfe_file pomFile `shouldBe` "pom.xml"
       _scfe_copyrights pomFile `shouldBe`
         ["Copyright (c) 2020 Source Auditor Inc. Gary O'Neall"]
+      renderScancodeFileEntryLicense mslFile `shouldBe` (Just "Apache-2.0")
     opossumFromSC <- runIO $ parseScancodeBS scancodeJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromSC) `shouldBe` 105

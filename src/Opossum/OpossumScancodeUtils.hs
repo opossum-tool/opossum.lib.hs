@@ -16,6 +16,7 @@ module Opossum.OpossumScancodeUtils
   , parseScancodeBS
   , ScancodeFile(..)
   , ScancodeFileEntry(..)
+  , renderScancodeFileEntryLicense
   , ScancodePackage(..)
   , parseScanpipeToOpossum
   , parseScanpipeBS
@@ -299,13 +300,19 @@ opossumFromScancodePackage scp@(ScancodePackage { _scp_purl = purl
          os <- mapM (`opossumFromScancodePackage` Nothing) dependencies
          return $ mconcat (o : (map (unshiftPathToOpossum path) os))
 
+renderScancodeFileEntryLicense :: ScancodeFileEntry -> Maybe T.Text
+renderScancodeFileEntryLicense (ScancodeFileEntry {_scfe_license = licenses}) =
+  case (SPDX.spdxMaybeToMaybe . SPDX.unMLicExp) licenses of
+    Just licenses'' -> Just ((T.pack . show) licenses)
+    Nothing         -> Nothing
+
 scancodeFileEntryToEA :: ScancodeFileEntry -> Maybe ExternalAttribution
-scancodeFileEntryToEA (ScancodeFileEntry { _scfe_license = licenses
-                                         , _scfe_copyrights = copyrights
-                                         }) =
+scancodeFileEntryToEA (scfe@ScancodeFileEntry { _scfe_license = licenses
+                                              , _scfe_copyrights = copyrights
+                                              }) =
   let source = ExternalAttribution_Source "Scancode" 50
       licenses' = (SPDX.spdxMaybeToMaybe . SPDX.unMLicExp) licenses
-   in if not (null licenses') && not (null copyrights || licenses' == Nothing)
+   in if not (null licenses') && not (null copyrights)
         then Just $
              ExternalAttribution
                source
@@ -314,7 +321,7 @@ scancodeFileEntryToEA (ScancodeFileEntry { _scfe_license = licenses
                Nothing
                (Coordinates Nothing Nothing Nothing Nothing Nothing)
                ((Just . T.pack . unlines) copyrights)
-               (fmap (T.pack . show) licenses')
+               (renderScancodeFileEntryLicense scfe)
                Nothing
                Nothing
                mempty
