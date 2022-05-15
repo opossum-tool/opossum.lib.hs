@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 resolver:
-  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/9.yaml
+  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/6.yaml
 
 packages:
 - .
@@ -13,5 +13,6 @@ extra-deps:
   commit: 25e7877930485c549a7b665b0593e49396c5ab76
 - git: https://github.com/maxhbr/packageurl-hs
   commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
-- spdx-1.0.0.2@sha256:7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed,2008
+- git: https://github.com/phadej/spdx
+  commit: ef1807e08299150e4b42dfb33e87e2982be8d49c
 

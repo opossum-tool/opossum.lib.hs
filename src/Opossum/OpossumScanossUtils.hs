@@ -28,9 +28,9 @@ import qualified Control.Monad.State        as MTL
 import qualified Data.Aeson                 as A
 import qualified Data.Aeson.Encode.Pretty   as A
 import qualified Data.Aeson.Types           as A
+import qualified Data.Aeson.KeyMap          as AKM
 import qualified Data.ByteString.Lazy       as B
 import qualified Data.ByteString.Lazy.Char8 as C8
-import qualified Data.HashMap.Strict        as HM
 import           Data.List                  (intercalate)
 import qualified Data.List                  as List
 import qualified Data.Map                   as Map
@@ -215,7 +215,7 @@ instance A.FromJSON ScanossFinding where
              T.pack .
              C8.unpack .
              A.encodePretty .
-             HM.filterWithKey (\key -> const (not (key `elem` keysToFilter))))
+             AKM.filterWithKey (\key -> const (not (key `elem` keysToFilter))))
               v
       ScanossFinding <$> v A..: "id" <*> v A..: "matched" <*>
         (fmap (Maybe.mapMaybe (parsePURL)) $ v A..: "purl") <*>

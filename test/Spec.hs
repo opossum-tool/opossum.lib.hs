@@ -88,11 +88,11 @@ opossumSpec = do
           B.concat
             [ "{"
             , "\"root\":{"
+            , "\"file3\":1,"
             , "\"subfolder\":{"
             , "\"file1\":1,"
             , "\"file2\":1"
-            , "},"
-            , "\"file3\":1"
+            , "}"
             , "}"
             , "}"
             ]
@@ -107,7 +107,7 @@ opossumSpec = do
                   Set.empty))
             (Set.singleton "file5")
         allResourcesSerialized =
-          "{\"root\":{\"other\":{\"file4\":1},\"subfolder\":{\"file1\":1,\"file2\":1},\"file3\":1},\"file5\":1}"
+          "{\"file5\":1,\"root\":{\"file3\":1,\"other\":{\"file4\":1},\"subfolder\":{\"file1\":1,\"file2\":1}}}"
      in do it "testFolderAndFileMerging" $ do
              (fpToResources True "path/to/file") <>
                (fpToResources False "path/other/dir") `shouldBe`

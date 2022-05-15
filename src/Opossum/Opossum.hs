@@ -36,8 +36,9 @@ module Opossum.Opossum
 import qualified Data.Aeson               as A
 import qualified Data.Aeson.Encode.Pretty as A
 import qualified Data.Aeson.Types         as A
+import qualified Data.Aeson.Key           as AKey
+import qualified Data.Aeson.KeyMap        as AKM
 import qualified Data.ByteString.Lazy     as B
-import qualified Data.HashMap.Strict      as HM
 import qualified Data.List                as List
 import qualified Data.Map                 as Map
 import           Data.Maybe               (isJust)
@@ -73,10 +74,10 @@ instance A.ToJSON Resources where
     let pairsFromDirs =
           map
             (\(fragment, resources) ->
-               ((T.pack fragment) A..= (A.toJSON resources)))
+               ((AKey.fromString fragment) A..= (A.toJSON resources)))
             (Map.toList dirs)
         pairsFromFiles =
-          map (\fragment -> (T.pack fragment) A..= (1 :: Int)) $
+          map (\fragment -> (AKey.fromString fragment) A..= (1 :: Int)) $
           Set.toList files
      in A.object (pairsFromFiles ++ pairsFromDirs)
 
@@ -100,7 +101,7 @@ instance A.FromJSON Resources where
                    return (fp, rs))
                 (filter (\(_, v') -> isObject v') list)
             return (Map.fromList parsedList)
-       in do let vList = map (\(t, v') -> (T.unpack t, v')) $ HM.toList v
+       in do let vList = map (\(t, v') -> (AKey.toString t, v')) $ AKM.toList v
              dirs <- getDirs vList
              return (Resources dirs (getFiles vList))
 
@@ -246,7 +247,7 @@ opoossumExternalAttributionFlagsPreObjectList flags =
   let flagToJSON :: (ExternalAttribution_Flags -> Bool) -> String -> [A.Pair]
       flagToJSON pred name =
         if pred flags
-          then [(T.pack name) A..= True]
+          then [(AKey.fromString name) A..= True]
           else []
    in concat
         [ flagToJSON _isFirstParty "firstParty"
@@ -266,7 +267,7 @@ instance A.FromJSON ExternalAttribution_Flags where
               (\case
                  Just b  -> b
                  Nothing -> False)
-              (v A..:? (T.pack name))
+              (v A..:? (AKey.fromString name))
           readStringFlag :: String -> A.Parser Bool
           readStringFlag name =
             fmap
@@ -274,7 +275,7 @@ instance A.FromJSON ExternalAttribution_Flags where
                  Just "" -> False
                  Just _  -> True
                  Nothing -> False)
-              (v A..:? (T.pack name) :: A.Parser (Maybe String))
+              (v A..:? (AKey.fromString name) :: A.Parser (Maybe String))
        in ExternalAttribution_Flags <$> readFlag "firstParty" <*>
           readFlag "preSelected" <*>
           readFlag "excludeFromNotice" <*>

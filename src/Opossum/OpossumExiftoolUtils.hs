@@ -23,8 +23,9 @@ import qualified Control.Monad.State      as MTL
 import qualified Data.Aeson               as A
 import qualified Data.Aeson.Encode.Pretty as A
 import qualified Data.Aeson.Types         as A
+import qualified Data.Aeson.Key           as AKey
+import qualified Data.Aeson.KeyMap        as AKM
 import qualified Data.ByteString.Lazy     as B
-import qualified Data.HashMap.Strict      as HM
 import           Data.List                (intercalate)
 import qualified Data.List                as List
 import qualified Data.Map                 as Map
@@ -43,18 +44,18 @@ import           System.Random            (randomIO)
 
 import           Debug.Trace              (trace)
 
-keysForName :: [T.Text]
+keysForName :: [AKey.Key]
 keysForName =
   [ "InternalName"
   , "ProjectPropertyGroupAssemblyName"
   , "ProjectPropertyGroupRootNamespace"
   ]
 
-keysForVendor :: [T.Text]
+keysForVendor :: [AKey.Key]
 keysForVendor =
   ["ProjectItemGroupReferenceInclude", "ProjectItemGroupReferenceName"]
 
-keysForVersion :: [T.Text]
+keysForVersion :: [AKey.Key]
 keysForVersion =
   [ "ProjectPropertyGroupProductVersion"
   , "ProductVersion"
@@ -62,13 +63,13 @@ keysForVersion =
   , "ProductVersionNumber"
   ]
 
-keysForCopyright :: [T.Text]
+keysForCopyright :: [AKey.Key]
 keysForCopyright = ["LegalCopyright", "CompanyName"]
 
-keysForComment :: [T.Text]
+keysForComment :: [AKey.Key]
 keysForComment = ["FileDescription", "Comments", "comment"]
 
-findFirstForKeys :: [T.Text] -> A.Object -> Maybe T.Text
+findFirstForKeys :: [AKey.Key] -> A.Object -> Maybe T.Text
 findFirstForKeys keys o =
   Maybe.listToMaybe $
   Maybe.mapMaybe
@@ -80,7 +81,7 @@ findFirstForKeys keys o =
                  then Nothing
                  else Just tStrip
          _ -> Nothing)
-    (map HM.lookup keys)
+    (map AKM.lookup keys)
 
 exiftoolEntryToEA :: A.Object -> Maybe ExternalAttribution
 exiftoolEntryToEA o =

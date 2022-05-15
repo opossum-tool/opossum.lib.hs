@@ -6,37 +6,41 @@
 packages:
 - completed:
     name: spdx-tools
-    version: 0.1.0.0
-    git: https://github.com/maxhbr/spdx-tools-hs
     pantry-tree:
-      size: 6385
       sha256: 253d0c0879adac34c3f6f85efd77657766e280b596f522c0be4ca6591032b6fd
+      size: 6385
     commit: 25e7877930485c549a7b665b0593e49396c5ab76
-  original:
     git: https://github.com/maxhbr/spdx-tools-hs
+    version: 0.1.0.0
+  original:
     commit: 25e7877930485c549a7b665b0593e49396c5ab76
+    git: https://github.com/maxhbr/spdx-tools-hs
 - completed:
     name: packageurl
-    version: 0.1.0.0
-    git: https://github.com/maxhbr/packageurl-hs
     pantry-tree:
-      size: 570
       sha256: f51f1e469594528921baa6fd2cc1e4812af57e26055e6478d3039fe29564c68d
+      size: 570
     commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
-  original:
     git: https://github.com/maxhbr/packageurl-hs
-    commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
-- completed:
-    hackage: spdx-1.0.0.2@sha256:7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed,2008
-    pantry-tree:
-      size: 569
-      sha256: 42983d9d32b1d9a09196543a0062eac3fee7546a308f9b99159cb78f1be0665d
+    version: 0.1.0.0
   original:
-    hackage: spdx-1.0.0.2@sha256:7dfac9b454ff2da0abb7560f0ffbe00ae442dd5cb76e8be469f77e6988a70fed,2008
+    commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
+    git: https://github.com/maxhbr/packageurl-hs
+- completed:
+    name: spdx
+    pantry-tree:
+      sha256: 00df55038fd4b10d8a86e3edd4c9cc4f9eb9622136db8cc9252b480a220d5fe1
+      size: 1462
+    commit: ef1807e08299150e4b42dfb33e87e2982be8d49c
+    git: https://github.com/phadej/spdx
+    version: 1.0.0.3
+  original:
+    commit: ef1807e08299150e4b42dfb33e87e2982be8d49c
+    git: https://github.com/phadej/spdx
 snapshots:
 - completed:
-    size: 586923
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/9.yaml
-    sha256: 9f9fe35c949414146840a985fb228fd397c504d1781b834bfc9ab935f4d27df6
+    sha256: fb634b19f31da06684bb07ce02a20c75a3162138f279b388905b03ebd57bb50f
+    size: 618876
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/6.yaml
   original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/9.yaml
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/6.yaml
