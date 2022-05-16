@@ -18,13 +18,13 @@ packages:
 - completed:
     name: packageurl
     pantry-tree:
-      sha256: f51f1e469594528921baa6fd2cc1e4812af57e26055e6478d3039fe29564c68d
-      size: 570
-    commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
+      sha256: 8b6fd73871ec59b03fbe2878db98dac0769ffd37e7f8d75de142cdcfc4181257
+      size: 519
+    commit: 81d3701a1a630e529862d3c639a69e09848f7cf6
     git: https://github.com/maxhbr/packageurl-hs
     version: 0.1.0.0
   original:
-    commit: 5d4de0e17311e033e90c89afc6249722b42ce5a1
+    commit: 81d3701a1a630e529862d3c639a69e09848f7cf6
     git: https://github.com/maxhbr/packageurl-hs
 - completed:
     name: spdx
