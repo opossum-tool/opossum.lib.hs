@@ -16,6 +16,7 @@ import           Data.Either
 import           Data.FileEmbed                      (embedFile)
 import qualified Data.List                           as List
 import qualified Data.Map                            as Map
+import           Data.Maybe                          (fromJust)
 import qualified Data.Set                            as Set
 import qualified Data.Vector                         as V
 import qualified Data.Yaml                           as Y
@@ -331,6 +332,25 @@ opossumSpec = do
       length (_externalAttributions oposum_from_spdx_json) `shouldBe` 120
       countFiles (_resources oposum_from_spdx_json) `shouldBe` 0
   describe "Opossum Utils ScanCode Converter" $ do
+    it "should render licenses for packages correctly" $ do
+      let package = ScancodePackage { _scp_purl = Nothing
+                                    , _scp_licenses = "MIT AND Apache-2.0"
+                                    , _scp_copyright = Nothing
+                                    , _scp_dependencies = []
+                                    }
+          eaFromPackage = fromJust $ scancodePackageToEA package
+          licenseStringInEA = (fromJust . _licenseName) eaFromPackage
+      licenseStringInEA `shouldBe` "MIT AND Apache-2.0"
+    it "should render licenses for FileEntries correctly" $ do
+      let file = ScancodeFileEntry { _scfe_file = "/not/existing/path"
+                                   , _scfe_is_file = True
+                                   , _scfe_license = "MIT AND Apache-2.0"
+                                   , _scfe_copyrights = []
+                                   , _scfe_packages = []
+                                   }
+          eaFromFile = fromJust $ scancodeFileEntryToEA file 
+          licenseStringInEA = (fromJust . _licenseName) eaFromFile
+      licenseStringInEA `shouldBe` "MIT AND Apache-2.0"
     it "should parse json file" $ do
       let decoded =
             (A.eitherDecode scancodeJsonBS :: Either String ScancodeFile)
@@ -347,7 +367,6 @@ opossumSpec = do
       _scfe_file pomFile `shouldBe` "pom.xml"
       _scfe_copyrights pomFile `shouldBe`
         ["Copyright (c) 2020 Source Auditor Inc. Gary O'Neall"]
-      renderScancodeFileEntryLicense mslFile `shouldBe` (Just "Apache-2.0")
     opossumFromSC <- runIO $ parseScancodeBS scancodeJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromSC) `shouldBe` 105

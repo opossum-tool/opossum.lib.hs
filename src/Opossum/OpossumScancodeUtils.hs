@@ -16,8 +16,9 @@ module Opossum.OpossumScancodeUtils
   , parseScancodeBS
   , ScancodeFile(..)
   , ScancodeFileEntry(..)
-  , renderScancodeFileEntryLicense
+  , scancodeFileEntryToEA
   , ScancodePackage(..)
+  , scancodePackageToEA
   , parseScanpipeToOpossum
   , parseScanpipeBS
   , ScanpipeFile(..)
@@ -51,6 +52,12 @@ import           System.IO                (Handle, hClose, hPutStrLn, stdout)
 import qualified System.IO                as IO
 import           System.Random            (randomIO)
 import           Text.Printf              (printf)
+
+renderLicense :: MaybeLicenseExpression -> Maybe T.Text
+renderLicense licenses = 
+  case licenses of
+    (SPDX.MLicExp (SPDX.SPDXJust _)) -> (Just . T.pack . show) licenses
+    _                                -> Nothing
 
 {-
     {
@@ -257,8 +264,7 @@ scancodePackageToEA scp@(ScancodePackage { _scp_purl = purl
         Nothing
         coordinatesFromPurl
         (fmap T.pack copyright)
-        ((fmap (T.pack . show) . SPDX.spdxMaybeToMaybe . SPDX.unMLicExp)
-           licenses)
+        (renderLicense licenses)
         Nothing
         Nothing
         justPreselectedFlags
@@ -300,19 +306,16 @@ opossumFromScancodePackage scp@(ScancodePackage { _scp_purl = purl
          os <- mapM (`opossumFromScancodePackage` Nothing) dependencies
          return $ mconcat (o : (map (unshiftPathToOpossum path) os))
 
-renderScancodeFileEntryLicense :: ScancodeFileEntry -> Maybe T.Text
-renderScancodeFileEntryLicense (ScancodeFileEntry {_scfe_license = licenses}) =
-  case (SPDX.spdxMaybeToMaybe . SPDX.unMLicExp) licenses of
-    Just licenses'' -> Just ((T.pack . show) licenses)
-    Nothing         -> Nothing
-
 scancodeFileEntryToEA :: ScancodeFileEntry -> Maybe ExternalAttribution
 scancodeFileEntryToEA (scfe@ScancodeFileEntry { _scfe_license = licenses
                                               , _scfe_copyrights = copyrights
                                               }) =
   let source = ExternalAttribution_Source "Scancode" 50
-      licenses' = (SPDX.spdxMaybeToMaybe . SPDX.unMLicExp) licenses
-   in if not (null licenses') && not (null copyrights)
+      hasLicenses = case licenses of
+                     (SPDX.MLicExp (SPDX.SPDXJust _)) -> True 
+                     _                                -> False
+      hasCopyrights = not (null copyrights)
+   in if hasLicenses || hasCopyrights
         then Just $
              ExternalAttribution
                source
@@ -321,7 +324,7 @@ scancodeFileEntryToEA (scfe@ScancodeFileEntry { _scfe_license = licenses
                Nothing
                (Coordinates Nothing Nothing Nothing Nothing Nothing)
                ((Just . T.pack . unlines) copyrights)
-               (renderScancodeFileEntryLicense scfe)
+               (renderLicense licenses)
                Nothing
                Nothing
                mempty
