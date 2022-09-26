@@ -303,12 +303,13 @@ data ExternalAttribution =
     , _licenseName           :: Maybe T.Text
     , _licenseText           :: Maybe T.Text
     , _url                   :: Maybe T.Text
+    , _criticality           :: Maybe T.Text
     , _flags                 :: ExternalAttribution_Flags
     }
   deriving (Show, Generic, Eq)
 
 instance A.ToJSON ExternalAttribution where
-  toJSON (ExternalAttribution source attributionConfidence comment originId coordinates copyright licenseName licenseText url flags) =
+  toJSON (ExternalAttribution source attributionConfidence comment originId coordinates copyright licenseName licenseText url criticality flags) =
     objectNoNulls
       ([ "source" A..= source
        , "attributionConfidence" A..= attributionConfidence
@@ -318,6 +319,7 @@ instance A.ToJSON ExternalAttribution where
        , "licenseText" A..= licenseText
        , "originId" A..= originId
        , "url" A..= url
+       , "criticality" A..= criticality
        ] ++
        (opoossumCoordinatesPreObjectList coordinates) ++
        (opoossumExternalAttributionFlagsPreObjectList flags))
@@ -356,6 +358,12 @@ instance A.FromJSON ExternalAttribution where
              Just "" -> Nothing
              l       -> l)
           (v A..:? "url")
+      criticality <-
+        fmap
+          (\case
+             Just "" -> Nothing
+             l       -> l)
+          (v A..:? "criticality")
       flags <- A.parseJSON (A.Object v) :: A.Parser ExternalAttribution_Flags
       return
         (ExternalAttribution
@@ -368,6 +376,7 @@ instance A.FromJSON ExternalAttribution where
            licenseName
            licenseText
            url
+           criticality
            flags)
 
 eaIsSignificant :: ExternalAttribution -> Bool

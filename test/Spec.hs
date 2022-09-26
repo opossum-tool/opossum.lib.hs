@@ -196,6 +196,7 @@ opossumSpec = do
                      (Just "MIT AND GPL-2.0-or-later")
                      Nothing
                      (Just "https://github.com/some/repo")
+                     Nothing
                      mempty
              ea <-
                case (A.eitherDecode ea_str :: Either String ExternalAttribution) of
@@ -238,6 +239,7 @@ opossumSpec = do
                      Nothing
                      Nothing
                      Nothing
+                     Nothing
                      justPreselectedFlags
              ea <-
                case (A.eitherDecode ea_str :: Either String ExternalAttribution) of
@@ -269,6 +271,7 @@ opossumSpec = do
             Nothing
             Nothing
             Nothing
+            Nothing
             mempty
         ea2 =
           ExternalAttribution
@@ -281,6 +284,7 @@ opossumSpec = do
             Nothing
             Nothing
             Nothing
+            Nothing
             mempty
         ea3 =
           ExternalAttribution
@@ -289,6 +293,7 @@ opossumSpec = do
             Nothing
             Nothing
             (expected_coordinates "1.2")
+            Nothing
             Nothing
             Nothing
             Nothing

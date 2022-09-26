@@ -69,6 +69,7 @@ spdxFileToEA (SPDXFile { _SPDXFile_SPDXID = spdxid
         fmap (T.pack . renderSpdxLicense) (spdxMaybeToMaybe license)
     , _licenseText = Nothing -- TODO
     , _url = Nothing
+    , _criticality = Nothing
     , _flags = mempty
     }
 
@@ -117,6 +118,7 @@ spdxPackageToEA (SPDXPackage { _SPDXPackage_SPDXID = spdxid
         fmap (T.pack . renderSpdxLicense) (spdxMaybeToMaybe license)
     , _licenseText = Nothing -- TODO
     , _url = Nothing
+    , _criticality = Nothing
     , _flags = justPreselectedFlags
     }
 

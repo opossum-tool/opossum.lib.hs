@@ -75,7 +75,7 @@ cleanupLicense (Just t ) = case T.stripPrefix ", " t of
 
 mergifyEA
   :: ExternalAttribution -> ExternalAttribution -> Maybe ExternalAttribution
-mergifyEA left@(ExternalAttribution { _source = ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _flags = flags }) (right@ExternalAttribution { _source = ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _flags = flags' })
+mergifyEA left@(ExternalAttribution { _source = ExternalAttribution_Source source _, _attributionConfidence = attributionConfidence, _comment = comment, _originId = originId, _coordinates = coordinates, _copyright = copyright, _licenseName = licenseName, _licenseText = licenseText, _criticality = criticality, _flags = flags }) (right@ExternalAttribution { _source = ExternalAttribution_Source source' _, _attributionConfidence = attributionConfidence', _comment = comment', _originId = originId', _coordinates = coordinates', _copyright = copyright', _licenseName = licenseName', _licenseText = licenseText', _criticality = criticality', _flags = flags' })
   = if left
        == right
        || (and
