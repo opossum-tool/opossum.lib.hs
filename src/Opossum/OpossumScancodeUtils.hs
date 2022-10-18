@@ -267,6 +267,7 @@ scancodePackageToEA scp@(ScancodePackage { _scp_purl = purl
         (renderLicense licenses)
         Nothing
         Nothing
+        Nothing
         justPreselectedFlags
 
 opossumFromScancodePackage :: ScancodePackage -> Maybe FilePath -> IO Opossum
@@ -325,6 +326,7 @@ scancodeFileEntryToEA (scfe@ScancodeFileEntry { _scfe_license = licenses
                (Coordinates Nothing Nothing Nothing Nothing Nothing)
                ((Just . T.pack . unlines) copyrights)
                (renderLicense licenses)
+               Nothing
                Nothing
                Nothing
                mempty
@@ -487,6 +489,7 @@ scanpipeLayerToEA (ScanpipeLayer {_spl_created_by = cmd}) =
         (Just (T.pack cmd))
         Nothing
         (Coordinates Nothing Nothing Nothing Nothing Nothing)
+        Nothing
         Nothing
         Nothing
         Nothing

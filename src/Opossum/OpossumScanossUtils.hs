@@ -285,6 +285,7 @@ scanossFindingsToOpossum (fn, ScanossFindings fs) =
                 licenses
                 Nothing
                 (_ScanossFinding_url f)
+                Nothing
                 mempty
         let eas = mkExternalAttributionSources source Nothing 5
         -- TODO: dependencies

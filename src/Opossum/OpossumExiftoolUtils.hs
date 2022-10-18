@@ -105,6 +105,7 @@ exiftoolEntryToEA o =
                Nothing
                Nothing
                Nothing
+               Nothing
                mempty
         else Nothing
 

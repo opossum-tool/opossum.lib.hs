@@ -495,6 +495,7 @@ dependencyCheckDependencyToOpossum (dcd@DependencyCheckDependency { _dcd_isVirtu
                 , _licenseName = Nothing
                 , _licenseText = Nothing
                 , _url = url
+                , _criticality = Nothing
                 , _flags = mempty {_isFollowUp = vulnerabilities /= []}
                 }
             opossum =
