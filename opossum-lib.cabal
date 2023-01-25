@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -61,6 +61,7 @@ library
     , uuid
     , vector
     , yaml
+    , zip-archive
     , zlib
   default-language: Haskell2010
 
@@ -98,6 +99,7 @@ executable opossum-lib-exe
     , uuid
     , vector
     , yaml
+    , zip-archive
     , zlib
   default-language: Haskell2010
 
@@ -138,5 +140,6 @@ test-suite opossum-lib-test
     , uuid
     , vector
     , yaml
+    , zip-archive
     , zlib
   default-language: Haskell2010

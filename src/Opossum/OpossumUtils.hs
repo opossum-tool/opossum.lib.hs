@@ -26,6 +26,7 @@ import           Opossum.Opossum
 
 import qualified Codec.Binary.UTF8.String      as UTF8
 import qualified Codec.Compression.GZip        as GZip
+import qualified Codec.Archive.Zip             as Zip
 import qualified Data.Aeson                    as A
 import qualified Data.Aeson.Encode.Pretty      as A
 import qualified Data.Aeson.Types              as A
@@ -230,10 +231,27 @@ unshiftPathToOpossum prefix (opossum@Opossum { _resources = rs, _resourcesToAttr
           }
 
 parseOpossum :: FP.FilePath -> IO Opossum
+parseOpossum fp | FP.takeExtension fp == ".gz" = do
+  hPutStrLn IO.stderr ("parse: " ++ fp)
+  bs <- GZip.decompress <$> B.readFile fp
+  parseOpossumBS bs
+parseOpossum fp | FP.takeExtension fp == ".opossum" = do
+  hPutStrLn IO.stderr ("parse: " ++ fp)
+  archive <- Zip.toArchive <$>  B.readFile fp
+
+  let inputName = "input.json" -- TODO: is that name fixed or do we need to implement guessing?
+  case Zip.findEntryByPath inputName archive of 
+    Just entry -> do
+      parseOpossumBS (Zip.fromEntry entry)
+    Nothing -> 
+      fail ("failed to find " ++ inputName ++ " in " ++ fp)
 parseOpossum fp = do
   hPutStrLn IO.stderr ("parse: " ++ fp)
-  bs <- (if (FP.takeExtension fp) == ".gz" then GZip.decompress else id)
-    <$> B.readFile fp
+  bs <- B.readFile fp
+  parseOpossumBS bs
+
+parseOpossumBS :: B.ByteString -> IO Opossum
+parseOpossumBS bs = do
   case A.eitherDecode' bs of
     Right opossum -> return opossum
     Left  err     -> do
