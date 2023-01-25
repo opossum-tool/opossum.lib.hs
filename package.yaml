@@ -47,6 +47,7 @@ dependencies:
 - vector
 - yaml
 - zlib
+- zip-archive
 # spdx stuff:
 - Cabal
 - spdx

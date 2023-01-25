@@ -4,6 +4,7 @@ Source: https://github.com/opossum-tool/opossum.lib.hs
 Files: *.json
        *.json.gz
        .gitignore
+       *.opossum
 Copyright: Maximilian Huber
            TNG Technology Consulting GmbH <https://www.tngtech.com>
 License: BSD-3-Clause
