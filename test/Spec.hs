@@ -14,10 +14,12 @@ import qualified Data.ByteString.Char8               as C
 import qualified Data.ByteString.Lazy                as B
 import           Data.Either
 import           Data.FileEmbed                      (embedFile)
+import qualified System.FilePath                     as FP
 import qualified Data.List                           as List
 import qualified Data.Map                            as Map
 import           Data.Maybe                          (fromJust)
 import qualified Data.Set                            as Set
+import           Data.UUID
 import qualified Data.Vector                         as V
 import qualified Data.Yaml                           as Y
 import           System.Exit
@@ -37,6 +39,9 @@ import           Opossum.OpossumUtils
 opossumFileBS :: B.ByteString
 opossumFileBS =
   B.fromStrict $(embedFile "test/data/zephyr-bundle.json.opossum.json")
+
+dotOpossumFilePath :: FP.FilePath
+dotOpossumFilePath = "test/data/synthetic_minimal_zipped_example.opossum"
 
 spdxYamlFileBS :: B.ByteString
 spdxYamlFileBS = B.fromStrict $(embedFile "test/data/document.spdx.yml")
@@ -415,6 +420,14 @@ opossumSpec = do
     opossumFromSCA <- runIO $ parseScanossBS scanossJsonBS
     it "should parse json to opossum" $ do
       countFiles (_resources opossumFromSCA) `shouldBe` 183
+  describe "Opossum Utils Opossum File Parser" $ do
+    it "should parse .opossum file to opossum" $ do
+      dotOpossumInputResult <- parseOpossum dotOpossumFilePath
+      let resultProjectId = _metadata dotOpossumInputResult Map.! "projectId"
+      let resultFirstResourceToAttributions = toString (head (_resourcesToAttributions dotOpossumInputResult Map.! "/src/index.html"))
+      resultProjectId `shouldBe` "12345-42"
+      resultFirstResourceToAttributions `shouldBe` "578b448b-2ba8-4285-810f-ce7b11ac260c"
+      countFiles (_resources dotOpossumInputResult) `shouldBe` 3
 
 main :: IO ()
 main = hspec $ opossumSpec
