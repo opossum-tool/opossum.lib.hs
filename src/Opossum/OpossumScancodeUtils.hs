@@ -2,7 +2,7 @@
 -- SPDX-FileCopyrightText: TNG Technology Consulting GmbH <https://www.tngtech.com>
 --
 -- SPDX-License-Identifier: BSD-3-Clause
-{-# LANGUAGE DeriveGeneric             #-}
+
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE LambdaCase                #-}
@@ -52,9 +52,10 @@ import           System.IO                (Handle, hClose, hPutStrLn, stdout)
 import qualified System.IO                as IO
 import           System.Random            (randomIO)
 import           Text.Printf              (printf)
+import qualified Data.Functor
 
 renderLicense :: MaybeLicenseExpression -> Maybe T.Text
-renderLicense licenses = 
+renderLicense licenses =
   case licenses of
     (SPDX.MLicExp (SPDX.SPDXJust _)) -> (Just . T.pack . show) licenses
     _                                -> Nothing
@@ -207,15 +208,14 @@ instance A.FromJSON ScancodeFileEntry where
             applyAll .
             map (\(k1, Just s1) -> T.replace k1 s1) .
             List.sortBy
-              (\(k1, _) -> \(k2, _) -> (T.length k1) `compare` (T.length k2)) .
+              (\ (k1, _) (k2, _) -> T.length k1 `compare` T.length k2) .
             filter (\(_, spdxkey) -> isJust spdxkey))
              licenseNameTuples
       license <-
-        v A..:? "license_expressions" >>=
-        (return .
+        (v A..:? "license_expressions") Data.Functor.<&>
          (\case
             Just lics -> mconcat (map (fromString . licenseTransformator) lics)
-            Nothing   -> SPDX.MLicExp SPDX.NOASSERTION))
+            Nothing   -> SPDX.MLicExp SPDX.NOASSERTION)
       copyrights <-
         do listOfCopyrightObjects <-
              (v A..:? "copyrights" :: A.Parser (Maybe A.Array))
@@ -242,8 +242,7 @@ data ScancodeFile =
 
 instance A.FromJSON ScancodeFile where
   parseJSON =
-    A.withObject "ScancodeFile" $ \v -> do
-      ScancodeFile <$> v A..: "headers" <*> v A..: "files"
+    A.withObject "ScancodeFile" $ \v -> ScancodeFile <$> v A..: "headers" <*> v A..: "files"
 
 scancodePackageToEA :: ScancodePackage -> Maybe ExternalAttribution
 scancodePackageToEA scp@(ScancodePackage { _scp_purl = purl
@@ -276,14 +275,14 @@ opossumFromScancodePackage scp@(ScancodePackage { _scp_purl = purl
                                                 }) providedPath =
   let typeFromPurl =
         case purl of
-          Just (PURL {_PURL_type = t}) -> "generic" `fromMaybe` (fmap show t)
+          Just (PURL {_PURL_type = t}) -> maybe "generic" show t
           _                            -> "generic"
       pathFromPurl =
         typeFromPurl FP.</>
         case purl of
           Just (PURL {_PURL_namespace = ns, _PURL_name = n, _PURL_version = v}) ->
             foldl1 (FP.</>) $
-            (maybeToList ns) ++ [(intercalate "@" $ [n] ++ (maybeToList v))]
+            maybeToList ns ++ [intercalate "@" $ n : maybeToList v]
           _ -> "UNKNOWN"
       path = fromMaybe pathFromPurl providedPath
    in do uuid <- randomIO
@@ -305,15 +304,15 @@ opossumFromScancodePackage scp@(ScancodePackage { _scp_purl = purl
                       }
                   Nothing -> mempty)
          os <- mapM (`opossumFromScancodePackage` Nothing) dependencies
-         return $ mconcat (o : (map (unshiftPathToOpossum path) os))
+         return $ mconcat (o : map (unshiftPathToOpossum path) os)
 
 scancodeFileEntryToEA :: ScancodeFileEntry -> Maybe ExternalAttribution
-scancodeFileEntryToEA (scfe@ScancodeFileEntry { _scfe_license = licenses
+scancodeFileEntryToEA scfe@ScancodeFileEntry { _scfe_license = licenses
                                               , _scfe_copyrights = copyrights
-                                              }) =
+                                              } =
   let source = ExternalAttribution_Source "Scancode" 50
       hasLicenses = case licenses of
-                     (SPDX.MLicExp (SPDX.SPDXJust _)) -> True 
+                     (SPDX.MLicExp (SPDX.SPDXJust _)) -> True
                      _                                -> False
       hasCopyrights = not (null copyrights)
    in if hasLicenses || hasCopyrights
@@ -354,7 +353,7 @@ scancodeFileEntryToOpossum scfe@(ScancodeFileEntry { _scfe_file = path
                 { _resources = resources
                 , _externalAttributions = Map.singleton uuid ea
                 , _resourcesToAttributions =
-                    (Map.singleton ("/" FP.</> path) [uuid])
+                    Map.singleton ("/" FP.</> path) [uuid]
                 , _filesWithChildren = filesWithChildren
                 , _externalAttributionSources = eas
                 }
@@ -409,11 +408,10 @@ data ScanpipeLayer =
 
 instance A.FromJSON ScanpipeLayer where
   parseJSON =
-    A.withObject "ScanpipeLayer" $ \v -> do
-      ScanpipeLayer <$> v A..: "sha256" <*> v A..: "layer_id" <*>
-        v A..: "created_by" <*>
-        v A..: "archive_location" <*>
-        v A..: "extracted_location"
+    A.withObject "ScanpipeLayer" $ \v -> ScanpipeLayer <$> v A..: "sha256" <*> v A..: "layer_id" <*>
+    v A..: "created_by" <*>
+    v A..: "archive_location" <*>
+    v A..: "extracted_location"
 
 data ScanpipeFileEntry =
   ScanpipeFileEntry
@@ -426,7 +424,7 @@ data ScanpipeFileEntry =
 instance A.FromJSON ScanpipeFileEntry where
   parseJSON =
     A.withObject "ScanpipeFileEntry" $ \v ->
-      ScanpipeFileEntry <$> (A.parseJSON (A.Object v)) <*> v A..: "for_packages" <*>
+      ScanpipeFileEntry <$> A.parseJSON (A.Object v) <*> v A..: "for_packages" <*>
       v A..: "status"
 
 data ScanpipePackage =
@@ -438,8 +436,7 @@ data ScanpipePackage =
 
 instance A.FromJSON ScanpipePackage where
   parseJSON =
-    A.withObject "ScanpipePackage" $ \v -> do
-      ScanpipePackage <$> (A.parseJSON (A.Object v)) <*> v A..: "purl"
+    A.withObject "ScanpipePackage" $ \v -> ScanpipePackage <$> A.parseJSON (A.Object v) <*> v A..: "purl"
 
 data ScanpipeFile =
   ScanpipeFile
@@ -524,22 +521,19 @@ convertSPFToOpossum spf@(ScanpipeFile _ spLayers spPackages spFiles) =
                 Nothing -> Nothing))
           spFiles
       rtas =
-        Map.fromListWith (++) . concat $
-        [ map
+        Map.fromListWith (++) (map
             (\(ScanpipeFileEntry (ScancodeFileEntry {_scfe_file = file}) ps _) ->
                ( reworkPath file
-               , (uuidFromString (file ++ "scanpipefile")) :
-                 (map uuidFromString ps)))
-            spFiles
-        , map
+               , uuidFromString (file ++ "scanpipefile") :
+                 map uuidFromString ps))
+            spFiles ++ map
             (\(ScanpipeLayer { _spl_layer_id = layer_id
                              , _spl_extracted_location = file
                              }) -> (reworkPath file, [uuidFromString layer_id]))
-            spLayers
-        ]
+            spLayers)
       resources =
-        fpsToResources $
-        concat [map (reworkPath . _scfe_file . _spfe) spFiles, Map.keys rtas]
+        fpsToResources
+        (map (reworkPath . _scfe_file . _spfe) spFiles ++ Map.keys rtas)
    in mempty
         { _resources = resources
         , _externalAttributions = eas0 <> eas1 <> eas2
@@ -552,8 +546,8 @@ parseScanpipeBS bs =
   case (A.eitherDecode bs :: Either String ScanpipeFile) of
     Right spf@(ScanpipeFile metadata _ _ _) ->
       return
-        ((mempty {_metadata = Map.singleton "Scanpipe" metadata} <>)
-           (convertSPFToOpossum spf))
+        (mempty {_metadata = Map.singleton "Scanpipe" metadata} <>
+           convertSPFToOpossum spf)
     Left err -> do
       hPutStrLn IO.stderr err
       undefined -- TODO
